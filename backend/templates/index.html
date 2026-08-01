@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT-Based Autonomous Rangoli Drawing Robot</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="project-title">
+                <h1>IoT-Based Autonomous Rangoli Drawing Robot</h1>
+                <span class="sub-title">Final Year B.Tech Engineering Project Dashboard</span>
+            </div>
+            <div class="esp-status-badge">
+                <span class="status-indicator" id="espStatusDot"></span>
+                <span id="espStatusText">ESP32: Ready (192.168.4.1)</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Left Column: Robot Canvas Viewport & Controls -->
+        <div class="left-column">
+            <!-- Simulator Canvas Card -->
+            <div class="card viewport-card">
+                <div class="card-title">
+                    <span>Robot Simulation Canvas</span>
+                    <span class="grid-badge">600 × 600 mm (8×8 Grid)</span>
+                </div>
+
+                <div class="canvas-wrapper">
+                    <canvas id="simCanvas" width="600" height="600"></canvas>
+                </div>
+
+                <!-- Live Progress Bar -->
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <span>Drawing Progress</span>
+                        <span id="txtProgress">0%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="barProgress" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <!-- Replay & Drawing Controls -->
+                <div class="control-actions">
+                    <button id="btnDemo" class="btn btn-secondary">Load Demo Path</button>
+                    <button id="btnStart" class="btn btn-primary" disabled>▶ Start</button>
+                    <button id="btnPause" class="btn btn-warning" disabled>⏸ Pause</button>
+                    <button id="btnReset" class="btn btn-danger" disabled>↺ Reset</button>
+                </div>
+            </div>
+
+            <!-- OpenCV Image Processing Pipeline Results -->
+            <div class="card" id="pipelineCard" style="display: none;">
+                <div class="card-title">OpenCV Image Processing Stages</div>
+                <div class="pipeline-grid">
+                    <div class="stage-box">
+                        <div class="stage-label">1. Original Image</div>
+                        <img id="imgOriginal" alt="Original">
+                    </div>
+                    <div class="stage-box">
+                        <div class="stage-label">2. Grayscale</div>
+                        <img id="imgGrayscale" alt="Grayscale">
+                    </div>
+                    <div class="stage-box">
+                        <div class="stage-label">3. Threshold</div>
+                        <img id="imgThreshold" alt="Threshold">
+                    </div>
+                    <div class="stage-box">
+                        <div class="stage-label">4. Skeleton Edges</div>
+                        <img id="imgEdges" alt="Edges">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Status & Setup Sidebar -->
+        <div class="right-column">
+            <!-- Status & Speed Configuration -->
+            <div class="card">
+                <div class="card-title">Robot Status & Speed</div>
+                
+                <div class="status-summary-grid">
+                    <div class="status-cell">
+                        <div class="status-label">Robot State</div>
+                        <div class="status-val highlight-blue" id="valState">IDLE</div>
+                    </div>
+                    <div class="status-cell">
+                        <div class="status-label">Current Grid</div>
+                        <div class="status-val" id="valGrid">A1</div>
+                    </div>
+                    <div class="status-cell">
+                        <div class="status-label">Robot Position</div>
+                        <div class="status-val" id="valPose">0, 0 mm</div>
+                    </div>
+                    <div class="status-cell">
+                        <div class="status-label">Powder Dispenser</div>
+                        <div class="status-val badge-off" id="valPowder">OFF</div>
+                    </div>
+                </div>
+
+                <!-- Speed Selection -->
+                <div class="speed-selector-group">
+                    <label class="section-label">Drawing Speed:</label>
+                    <div class="speed-options">
+                        <label class="speed-option">
+                            <input type="radio" name="speedOpt" value="slow"> Slow (50 mm/s)
+                        </label>
+                        <label class="speed-option">
+                            <input type="radio" name="speedOpt" value="medium" checked> Medium (80 mm/s)
+                        </label>
+                        <label class="speed-option">
+                            <input type="radio" name="speedOpt" value="fast"> Fast (120 mm/s)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Estimated Completion Time Widget -->
+                <div class="time-estimate-box">
+                    <div class="time-label">Estimated Completion Time</div>
+                    <div class="time-val" id="valEstTime">00:00</div>
+                    <div class="time-sub" id="valTimeDetail">Path: 0.0 m | Delays: 0.0s</div>
+                </div>
+            </div>
+
+            <!-- Image Upload Section -->
+            <div class="card">
+                <div class="card-title">Upload Custom Rangoli Design</div>
+                <form id="uploadForm">
+                    <div class="upload-box">
+                        <input type="file" id="imageInput" accept="image/*" required>
+                    </div>
+                    <button type="submit" id="processBtn" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                        Process Rangoli Image
+                    </button>
+                </form>
+            </div>
+
+            <!-- ESP32 Wireless Sender Section -->
+            <div class="card">
+                <div class="card-title">ESP32 Hardware Connection</div>
+                <div class="input-group">
+                    <label style="font-size: 0.8rem; color: var(--text-muted);">ESP32 Wi-Fi IP Address:</label>
+                    <input type="text" id="espIp" value="192.168.4.1" class="text-input">
+                </div>
+                <button type="button" id="btnSendWifi" class="btn btn-success" style="width: 100%; margin-top: 10px;" disabled>
+                    📡 Send Motion Commands to ESP32
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
