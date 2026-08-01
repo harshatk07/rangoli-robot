@@ -1,0 +1,5 @@
+planner,total_path_length_m,draw_travel_m,dry_travel_m,num_turns,num_wheel_crossings,num_dispenser_actuations,estimated_completion_time_s,predicted_smudge_risk_score,average_speed_mm_s,peak_speed_mm_s,average_heading_error_deg,motion_smoothness_jerk,stroke_preservation_rate_pct,data_provenance
+SGP,3.829,3.271,0.557,25,0,3,65.7,0.0692,58.3,150.0,0.18,3056.96,100.0,[Simulated Benchmark Outcome]
+MR_PSP,3.829,3.271,0.557,25,0,3,65.7,0.0692,58.3,150.0,0.18,3056.96,100.0,[Simulated Benchmark Outcome]
+APP,3.829,3.271,0.557,25,0,3,65.7,0.0692,58.3,150.0,0.18,3056.96,100.0,[Simulated Benchmark Outcome]
+PSRM_P,3.829,3.271,0.557,25,0,3,65.7,0.0692,58.3,150.0,0.18,3056.96,100.0,[Simulated Benchmark Outcome]
