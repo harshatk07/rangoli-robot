@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Cache
+core/__pycache__/
+tests/__pycache__/
+
+# Generated output
+static/uploads/
+experiments/
+
+# OS
+.DS_Store
+Thumbs.db

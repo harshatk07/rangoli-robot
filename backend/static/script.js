@@ -106,18 +106,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Draw Planned Vector Path Layer (Gray = Travel, Green = Drawing)
     function drawPlannedPathLayer() {
         if (!executionSegments) return;
-
-        ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 4]);
 
         executionSegments.forEach(seg => {
             const pts = seg.pts;
             if (pts.length < 2) return;
 
             ctx.beginPath();
+            if (seg.type === 'DRAW') {
+                ctx.strokeStyle = '#10b981'; // Green = Drawing path
+                ctx.lineWidth = 2.0;
+                ctx.setLineDash([]);
+            } else {
+                ctx.strokeStyle = 'rgba(100, 116, 139, 0.7)'; // Gray = Travel path
+                ctx.lineWidth = 1.2;
+                ctx.setLineDash([4, 4]);
+            }
+
             ctx.moveTo(pts[0][0], pts[0][1]);
             for (let i = 1; i < pts.length; i++) {
                 ctx.lineTo(pts[i][0], pts[i][1]);
@@ -128,42 +135,51 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.setLineDash([]);
     }
 
+    // Draw Robot Body (Blue) & Outrigger Nozzle (Red) Layer
     function drawRobotLayer(x, y, thetaDeg) {
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate((thetaDeg * Math.PI) / 180.0);
 
+        // Robot Chassis (Blue)
         ctx.fillStyle = '#1e293b';
-        ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#3b82f6'; // Blue = Robot body
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.arc(0, 0, 18, 0, 2 * Math.PI);
         ctx.fill();
         ctx.stroke();
 
+        // Left & Right Wheels
         ctx.fillStyle = '#0f172a';
         ctx.fillRect(-12, -22, 14, 5);
         ctx.fillRect(-12, 17, 14, 5);
 
-        ctx.fillStyle = 'rgba(236, 72, 153, 0.3)';
-        ctx.strokeStyle = '#ec4899';
+        // Hopper Circle
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
+        ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.arc(0, 0, 9, 0, 2 * Math.PI);
         ctx.fill();
         ctx.stroke();
 
-        ctx.strokeStyle = '#ec4899';
+        // Front Nozzle Arm Outrigger (+60mm offset)
+        ctx.strokeStyle = '#94a3b8';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(60, 0);
         ctx.stroke();
 
-        ctx.fillStyle = isPowderOn ? '#ec4899' : '#64748b';
+        // Nozzle Position (Red = Active Nozzle)
+        ctx.fillStyle = '#ef4444'; // Red = Nozzle position
+        ctx.strokeStyle = isPowderOn ? '#f43f5e' : '#b91c1c';
+        ctx.lineWidth = isPowderOn ? 2.0 : 1.0;
         ctx.beginPath();
-        ctx.arc(60, 0, 4, 0, 2 * Math.PI);
+        ctx.arc(60, 0, 5, 0, 2 * Math.PI);
         ctx.fill();
+        ctx.stroke();
 
         ctx.restore();
     }
@@ -380,15 +396,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     executionSegments = data.execution_segments;
                     espCommands = data.esp32_commands;
 
+                    // Display Intermediate Stages & Diagnostics
                     if (data.image_urls) {
                         const pipelineCard = document.getElementById('pipelineCard');
                         if (pipelineCard) pipelineCard.style.display = 'block';
 
                         const t = Date.now();
-                        document.getElementById('imgOriginal').src = data.image_urls.original + '?t=' + t;
-                        document.getElementById('imgGrayscale').src = data.image_urls.grayscale + '?t=' + t;
-                        document.getElementById('imgThreshold').src = data.image_urls.threshold + '?t=' + t;
-                        document.getElementById('imgEdges').src = data.image_urls.edges + '?t=' + t;
+                        const elOrig = document.getElementById('imgOriginal');
+                        const elGray = document.getElementById('imgGrayscale');
+                        const elThresh = document.getElementById('imgThreshold');
+                        const elMorph = document.getElementById('imgMorphology');
+                        const elEdges = document.getElementById('imgEdges');
+
+                        if (elOrig && data.image_urls.original) elOrig.src = data.image_urls.original + '?t=' + t;
+                        if (elThresh && data.image_urls.threshold) elThresh.src = data.image_urls.threshold + '?t=' + t;
+                        if (elMorph && data.image_urls.morphology) elMorph.src = data.image_urls.morphology + '?t=' + t;
+                        if (elEdges && (data.image_urls.contours || data.image_urls.edges)) {
+                            elEdges.src = (data.image_urls.contours || data.image_urls.edges) + '?t=' + t;
+                        }
+                        if (elGray && (data.image_urls.overlay || data.image_urls.grayscale)) {
+                            elGray.src = (data.image_urls.overlay || data.image_urls.grayscale) + '?t=' + t;
+                        }
+
+                        if (data.final_engineering_report) {
+                            const r = data.final_engineering_report;
+                            const diagEl = document.getElementById('diagDetails');
+                            const badgeEl = document.getElementById('txtDiagBadge');
+                            if (badgeEl) badgeEl.textContent = `${r.valid_contours} SVG Contours`;
+                            if (diagEl) {
+                                diagEl.textContent = `Type: ${r.image_type} | Contours: ${r.valid_contours} | Pts: ${r.raw_points}→${r.optimized_points} (${r.reduction_pct}%) | Cmds: ${r.robot_commands} | Draw: ${r.draw_distance_m}m | Travel: ${r.travel_distance_m}m | Total: ${r.total_distance_m}m | Turns: ${r.total_turns} | Discontinuities: ${r.discontinuities_count} | Est Time: ${r.estimated_time_s}s | Avg Speed: ${r.average_speed_mm_s}mm/s | Process: ${r.processing_time_ms}ms`;
+                            }
+                        } else if (data.diagnostics) {
+                            const d = data.diagnostics;
+                            const diagEl = document.getElementById('diagDetails');
+                            const badgeEl = document.getElementById('txtDiagBadge');
+                            if (badgeEl) badgeEl.textContent = `${d.final_svg_paths || 0} Paths Extracted`;
+                            if (diagEl) {
+                                diagEl.textContent = `Contours: ${d.valid_contours_count} | Pts: ${d.raw_points_count}→${d.optimized_points_count} (${d.point_reduction_pct}%) | Cmds: ${d.robot_commands_count} | Draw: ${d.draw_travel_m}m | Travel: ${d.dry_travel_m}m | Est Time: ${d.estimated_drawing_time_s}s | Process: ${d.processing_time_ms}ms`;
+                            }
+                        }
                     }
 
                     totalPathLengthMm = 0.0;
@@ -405,8 +451,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (btnSendWifi) btnSendWifi.disabled = false;
 
                     resetSimulation();
+                } else if (data.failed_stage) {
+                    alert(`Processing Failed at Stage:\n${data.failed_stage}`);
                 } else {
-                    alert('Error: ' + data.error);
+                    alert('Error: ' + (data.error || 'Unknown error'));
                 }
             } catch (err) {
                 alert('Processing failed: ' + err.message);

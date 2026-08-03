@@ -58,24 +58,34 @@
 
             <!-- OpenCV Image Processing Pipeline Results -->
             <div class="card" id="pipelineCard" style="display: none;">
-                <div class="card-title">OpenCV Image Processing Stages</div>
-                <div class="pipeline-grid">
+                <div class="card-title">
+                    <span>OpenCV Image Processing Stages</span>
+                    <span class="grid-badge" id="txtDiagBadge">Pipeline Diagnostics</span>
+                </div>
+                <div class="pipeline-grid" style="grid-template-columns: repeat(5, 1fr);">
                     <div class="stage-box">
                         <div class="stage-label">1. Original Image</div>
                         <img id="imgOriginal" alt="Original">
                     </div>
                     <div class="stage-box">
-                        <div class="stage-label">2. Grayscale</div>
-                        <img id="imgGrayscale" alt="Grayscale">
-                    </div>
-                    <div class="stage-box">
-                        <div class="stage-label">3. Threshold</div>
+                        <div class="stage-label">2. White Boundary</div>
                         <img id="imgThreshold" alt="Threshold">
                     </div>
                     <div class="stage-box">
-                        <div class="stage-label">4. Skeleton Edges</div>
-                        <img id="imgEdges" alt="Edges">
+                        <div class="stage-label">3. Morphology</div>
+                        <img id="imgMorphology" alt="Morphology">
                     </div>
+                    <div class="stage-box">
+                        <div class="stage-label">4. Extracted Contours</div>
+                        <img id="imgEdges" alt="Contours">
+                    </div>
+                    <div class="stage-box">
+                        <div class="stage-label">5. Robot Preview</div>
+                        <img id="imgGrayscale" alt="Grayscale">
+                    </div>
+                </div>
+                <div id="diagDetails" style="margin-top: 10px; font-size: 0.78rem; color: var(--text-muted); background: #090d16; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--card-border);">
+                    Contours: 0 | Removed: 0 | SVG Paths: 0 | Total Length: 0.0 m | Est Time: 0s
                 </div>
             </div>
         </div>
