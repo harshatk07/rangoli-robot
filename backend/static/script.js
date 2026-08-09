@@ -300,6 +300,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (animFrame) cancelAnimationFrame(animFrame);
         isRunning = false;
         isPaused = false;
+        segIdx = 0;
+        ptIdx = 0;
+        lerpProgress = 0.0;
 
         powderCtx.clearRect(0, 0, 600, 600);
 
