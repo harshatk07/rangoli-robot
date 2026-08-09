@@ -810,64 +810,193 @@ async def import_image_from_url(request: Request):
 
 @app.post("/api/process")
 @app.post("/api/process/{image_id}")
-async def process_image(image_id: Optional[str] = None, request: Request = None):
-    data = {}
-    if request:
-        try:
-            data = await request.json()
-        except Exception:
-            pass
+async def process_image(
+    image_id: Optional[str] = None,
+    file: Optional[UploadFile] = File(None),
+    image: Optional[UploadFile] = File(None),
+    request: Request = None
+):
+    """
+    End-to-End Image Processing Pipeline for Rangoli Designs.
+    Accepts direct file upload (file/image) or image_id reference.
+    No silent fake circular fallbacks — returns exact pipeline stage errors on failure.
+    """
+    import traceback
+    t_start = time.time()
 
-    target_image_id = image_id or data.get("image_id") or data.get("image_name") or "uploaded_image.png"
-    file_path = os.path.join(UPLOAD_FOLDER, target_image_id)
+    upload_file = file or image
+    target_image_id = None
+    file_path = None
 
-    if not os.path.exists(file_path):
-        img = cv2.imread(os.path.join(UPLOAD_FOLDER, 'demo_rangoli.png')) if os.path.exists(os.path.join(UPLOAD_FOLDER, 'demo_rangoli.png')) else None
-        if img is None:
-            img = 255 * (1 - cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (400, 400)))
-        cv2.imwrite(file_path, img)
+    # Step 1: Direct File Upload Handling
+    if upload_file:
+        filename = upload_file.filename or f"upload_{int(time.time()*1000)}.png"
+        cleanup_old_uploads(filename)
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        with open(file_path, "wb") as f:
+            content = await upload_file.read()
+            f.write(content)
+        target_image_id = filename
+        print(f"[PIPELINE] Direct file upload received: {filename} ({len(content)} bytes)")
+    else:
+        # Step 2: JSON or Query Param Reference
+        data = {}
+        if request:
+            try:
+                data = await request.json()
+            except Exception:
+                pass
+        target_image_id = image_id or data.get("image_id") or data.get("image_name")
+        if target_image_id:
+            file_path = os.path.join(UPLOAD_FOLDER, target_image_id)
 
-    # 1. Preprocess & Background Removal
-    valid_contours, saved_images, diag_info = preprocess_rangoli_image(file_path)
-    binary_img = saved_images.get('binary_mask') if saved_images else None
-    if binary_img is not None:
-        nobg_path = os.path.join(UPLOAD_FOLDER, f"nobg_{target_image_id}")
-        cv2.imwrite(nobg_path, binary_img)
+    # Step 3: Fallback to most recent uploaded file if no image_id passed
+    if not target_image_id or not file_path or not os.path.exists(file_path):
+        uploads = [f for f in os.listdir(UPLOAD_FOLDER) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp', '.svg')) and not f.startswith('nobg_')]
+        if uploads:
+            uploads.sort(key=lambda x: os.path.getmtime(os.path.join(UPLOAD_FOLDER, x)), reverse=True)
+            target_image_id = uploads[0]
+            file_path = os.path.join(UPLOAD_FOLDER, target_image_id)
+            print(f"[PIPELINE] Using most recent uploaded file: {target_image_id}")
 
-    # 2. Vectorization & Polylines
-    raw_paths, _ = contours_to_polylines(valid_contours)
+    # Step 4: Strict Error Response (NO FAKE CIRCLES GENERATED)
+    if not target_image_id or not file_path or not os.path.exists(file_path):
+        print(f"[PIPELINE ERROR] Image Validation Failed: File not found.")
+        return JSONResponse(content={
+            "status": "error",
+            "failed_stage": "IMAGE_VALIDATION",
+            "error": "No valid Rangoli image file found. Please upload a PNG, JPG, WEBP, or SVG file first."
+        }, status_code=400)
 
-    # 3. Grid & Path Planning
-    planner = GridPlanner(canvas_width_mm=610.0, canvas_height_mm=610.0)
-    planned_segments = planner.plan_grid_aware_path(raw_paths)
+    print(f"[PIPELINE] Starting end-to-end processing for: {target_image_id}")
 
-    # 4. Kinematics Generation
-    solver = KinematicSolver(wheelbase_mm=120.0, wheel_diameter_mm=44.0)
-    esp32_cmds = solver.generate_commands(planned_segments)
+    try:
+        raw_paths = []
+        is_svg = target_image_id.lower().endswith('.svg')
 
-    execution_segments = []
-    for seg in planned_segments:
-        execution_segments.append({
-            "type": seg.get("type", "DRAW"),
-            "dispense": seg.get("dispense", True),
-            "grid": seg.get("grid", False),
-            "pts": seg.get("pts", [])
+        # Step 5: SVG Direct Vector Path Extraction
+        if is_svg:
+            print(f"[PIPELINE] SVG format detected. Performing direct vector path parsing...")
+            try:
+                from core.vectorizer import parse_svg_to_continuous_paths
+                raw_paths = parse_svg_to_continuous_paths(file_path)
+                print(f"[PIPELINE] SVG direct path parsing complete: {len(raw_paths)} vector paths extracted")
+            except Exception as e_svg:
+                print(f"[PIPELINE WARNING] Direct SVG parsing failed: {e_svg}. Falling back to raster processing...")
+                is_svg = False
+
+        # Step 6: Raster Image Processing Pipeline (PNG, JPG, WEBP)
+        if not is_svg:
+            # 6a. Image Decoding & Validation
+            img_test = cv2.imread(file_path)
+            if img_test is None:
+                print(f"[PIPELINE ERROR] Image Decoding Failed for {file_path}")
+                return JSONResponse(content={
+                    "status": "error",
+                    "failed_stage": "IMAGE_DECODING",
+                    "error": f"Failed to decode image '{target_image_id}'. The file format may be unsupported or corrupted."
+                }, status_code=400)
+
+            print(f"[PIPELINE] Image decoded successfully. Resolution: {img_test.shape[1]} x {img_test.shape[0]} px")
+
+            # 6b. Background Removal & Contour Extraction
+            valid_contours, saved_images, diag_info = preprocess_rangoli_image(file_path, output_dir=UPLOAD_FOLDER)
+            print(f"[PIPELINE] Background removal & threshold complete. Contours extracted: {len(valid_contours)}")
+
+            if not valid_contours or len(valid_contours) == 0:
+                stage_err = diag_info.get('failed_stage', 'No clear Rangoli boundary contours found in image.')
+                print(f"[PIPELINE ERROR] Contour Extraction Failed: {stage_err}")
+                return JSONResponse(content={
+                    "status": "error",
+                    "failed_stage": "CONTOUR_EXTRACTION",
+                    "error": f"Image processing failed at Contour Extraction: {stage_err}"
+                }, status_code=400)
+
+            binary_img = saved_images.get('binary_mask') if saved_images else None
+            if binary_img is not None:
+                nobg_path = os.path.join(UPLOAD_FOLDER, f"nobg_{target_image_id}")
+                cv2.imwrite(nobg_path, binary_img)
+
+            # 6c. Vectorization & Polylines
+            raw_paths, vstats = contours_to_polylines(valid_contours)
+            print(f"[PIPELINE] Vector paths generated: {len(raw_paths)} polylines ({vstats.get('optimized_points_count', 0)} points)")
+
+        if not raw_paths or len(raw_paths) == 0:
+            print(f"[PIPELINE ERROR] Path Generation Failed: No valid polylines produced.")
+            return JSONResponse(content={
+                "status": "error",
+                "failed_stage": "PATH_GENERATION",
+                "error": "Failed to generate vector paths from extracted contours."
+            }, status_code=400)
+
+        # Step 7: Grid Aware Path Planning & Workspace Scaling (610 x 610 mm)
+        planner = GridPlanner(canvas_width_mm=610.0, canvas_height_mm=610.0)
+        planned_segments = planner.plan_grid_aware_path(raw_paths)
+        print(f"[PIPELINE] Workspace Grid Planning & Scaling complete: {len(planned_segments)} segments")
+
+        # Step 8: Kinematics Generation for ESP32
+        solver = KinematicSolver(wheelbase_mm=120.0, wheel_diameter_mm=44.0)
+        esp32_cmds = solver.generate_commands(planned_segments)
+        print(f"[PIPELINE] Kinematic motion generation complete: {len(esp32_cmds)} ESP32 commands generated")
+
+        execution_segments = []
+        draw_dist_mm = 0.0
+        travel_dist_mm = 0.0
+
+        for seg in planned_segments:
+            pts = seg.get("pts", [])
+            seg_type = seg.get("type", "DRAW")
+            dispense = seg.get("dispense", True)
+
+            for i in range(len(pts) - 1):
+                d = math.hypot(pts[i+1][0] - pts[i][0], pts[i+1][1] - pts[i][1])
+                if seg_type == "DRAW" and dispense:
+                    draw_dist_mm += d
+                else:
+                    travel_dist_mm += d
+
+            execution_segments.append({
+                "type": seg_type,
+                "dispense": dispense,
+                "grid": seg.get("grid", False),
+                "pts": pts
+            })
+
+        proc_time_ms = round((time.time() - t_start) * 1000.0, 1)
+        print(f"[PIPELINE] Pipeline finished in {proc_time_ms} ms. Drawing dist: {draw_dist_mm/1000:.2f} m, Travel dist: {travel_dist_mm/1000:.2f} m")
+
+        return JSONResponse(content={
+            "status": "success",
+            "imageId": target_image_id,
+            "filename": target_image_id,
+            "execution_segments": execution_segments,
+            "esp32_commands": esp32_cmds,
+            "statistics": {
+                "drawing_distance_m": round(draw_dist_mm / 1000.0, 2),
+                "travel_distance_m": round(travel_dist_mm / 1000.0, 2),
+                "number_of_paths": len(execution_segments),
+                "number_of_turns": sum(max(0, len(s.get("pts", [])) - 2) for s in execution_segments),
+                "processing_time_ms": proc_time_ms
+            },
+            "diagnostics": {
+                "final_svg_paths": len(planned_segments),
+                "total_points": sum(len(s.get("pts", [])) for s in planned_segments)
+            },
+            "image_urls": {
+                "original": f"/static/uploads/{target_image_id}",
+                "nobg": f"/static/uploads/nobg_{target_image_id}" if os.path.exists(os.path.join(UPLOAD_FOLDER, f"nobg_{target_image_id}")) else f"/static/uploads/{target_image_id}",
+                "overlay": f"/static/uploads/{target_image_id}"
+            }
         })
 
-    return JSONResponse(content={
-        "status": "success",
-        "execution_segments": execution_segments,
-        "esp32_commands": esp32_cmds,
-        "diagnostics": {
-            "final_svg_paths": len(planned_segments),
-            "total_points": sum(len(s.get("pts", [])) for s in planned_segments)
-        },
-        "image_urls": {
-            "original": f"/static/uploads/{target_image_id}",
-            "nobg": f"/static/uploads/nobg_{target_image_id}",
-            "overlay": f"/static/uploads/nobg_{target_image_id}"
-        }
-    })
+    except Exception as e:
+        traceback.print_exc()
+        return JSONResponse(content={
+            "status": "error",
+            "failed_stage": "PIPELINE_EXECUTION",
+            "error": f"Image processing pipeline exception: {str(e)}"
+        }, status_code=500)
+
 
 
 @app.get("/api/demo_path")

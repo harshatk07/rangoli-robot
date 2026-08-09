@@ -581,7 +581,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     resetSimulation();
                 } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
+                    executionSegments = [];
+                    espCommands = [];
+                    resetSimulation();
+                    alert(`[${data.failed_stage || 'PIPELINE_ERROR'}] Image Processing Failed:\n\n${data.error || 'Unknown pipeline error'}`);
                 }
             } catch (err) {
                 alert('Processing failed: ' + err.message);
