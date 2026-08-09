@@ -3,79 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autonomous Rangoli Drawing Robot</title>
+    <title>IoT BASED AUTONOMOUS RANGOLI DRAWING ROBOT</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Master Stylesheet (Cache-Buster v=5.0) -->
-    <link rel="stylesheet" href="/static/style.css?v=5.0">
+    <!-- Master Production Stylesheet -->
+    <link rel="stylesheet" href="/static/style.css?v=6.0">
 </head>
 <body>
 
-    <!-- Header Across Top Width -->
+    <!-- Header Across Entire Top Width -->
     <header class="app-header">
         <div class="header-container">
-            <div class="header-title-box">
-                <h1>Autonomous Rangoli Drawing Robot</h1>
-                <div class="header-subtitle">IoT Final Year B.Tech Project &bull; Workspace: 610 × 610 mm (2 × 2 ft)</div>
+            <div class="header-brand-box">
+                <!-- College Seal Emblem -->
+                <img src="/static/uploads/pscmr_logo.png" alt="PSCMR College Seal" class="college-logo-img">
+                <div class="header-title-box">
+                    <h1>IoT BASED AUTONOMOUS RANGOLI DRAWING ROBOT</h1>
+                    <div class="college-subtitle">Potti Sriramulu Chalavadi Mallikarjuna Rao College of Engineering & Technology, Vijayawada</div>
+                    <div class="header-meta">
+                        <span class="dept-badge">Department of CSE (IoT)</span>
+                        <span class="meta-divider">•</span>
+                        <span>IoT Final Year B.Tech Project</span>
+                        <span class="meta-divider">•</span>
+                        <span class="team-meta-badge">TEAM NO. 12</span>
+                        <span class="meta-divider">•</span>
+                        <span>Workspace: 610 × 610 mm (2 × 2 ft)</span>
+                    </div>
+                </div>
             </div>
 
-            <!-- ESP32 Status Pill Badge -->
+            <!-- Header Controls: DEMO / REAL Toggle & Discover Robots -->
             <div class="header-right-actions">
+                <div class="mode-switch-group">
+                    <button type="button" id="btnModeDemo" class="btn-mode" onclick="setRobotMode('DEMO')">
+                        🟡 DEMO ROBOT
+                    </button>
+                    <button type="button" id="btnModeReal" class="btn-mode active" onclick="setRobotMode('REAL')">
+                        🟢 REAL ROBOT
+                    </button>
+                </div>
+
+                <button type="button" id="btnScanRobots" class="btn btn-primary btn-scan-header" onclick="openRobotDiscoveryModal()">
+                    🔵 Discover Robots
+                </button>
+
                 <div class="header-status-pill" id="headerStatusPill">
-                    <span class="status-dot-pulse" id="espStatusDot" style="background-color: #10B981;"></span>
-                    <span id="espStatusText">🟢 ESP32 STATUS Connected (IDLE)</span>
+                    <span class="status-dot-pulse" id="espStatusDot" style="background-color: #EF4444;"></span>
+                    <span id="espStatusText">🔴 REAL ROBOT — Disconnected</span>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Dashboard Layout -->
+    <!-- Main Dashboard Body Layout -->
     <main class="page-layout">
         <div class="main-dashboard">
             
-            <!-- Left Column: Upload & Workspace Preview -->
+            <!-- Left Column: Workspace Canvas & Execution Controls -->
             <div class="left-column">
                 
-                <!-- 1. Upload Rangoli Design -->
-                <section class="card upload-card" id="sectionUpload">
-                    <div class="card-header">
-                        <h2>1. Upload Rangoli Design</h2>
-                        <div class="subtitle">Drag & Drop, Browse, Paste Image (Ctrl+V), or enter image URL (.jpg, .png, .webp, .svg)</div>
-                    </div>
-
-                    <form id="uploadForm" enctype="multipart/form-data">
-                        <!-- Primary Dropzone Interface -->
-                        <div class="upload-dropzone" id="dropzone">
-                            <div class="dropzone-icon">📥</div>
-                            <div class="dropzone-text">
-                                <strong>Drag & Drop Rangoli File Here</strong>
-                                <span>or click to browse from device (JPG, PNG, WEBP, SVG up to 20MB)</span>
-                            </div>
-                            <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp,image/svg+xml">
-                        </div>
-
-                        <!-- Error Message Banner -->
-                        <div id="uploadErrorMessage" class="upload-error-banner" style="display: none;"></div>
-
-                        <!-- Or Paste Image URL Input Row -->
-                        <div class="url-input-container">
-                            <label>Or Paste Image URL:</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input type="url" id="imageUrlInput" class="text-input" placeholder="https://example.com/rangoli_design.png">
-                                <button type="button" id="btnLoadUrl" class="btn btn-primary btn-import-url">Import</button>
-                            </div>
-                        </div>
-                    </form>
-                </section>
-
-                <!-- 2. Workspace Preview (610 x 610 mm) -->
+                <!-- Workspace Preview Card (610 x 610 mm) -->
                 <section class="card workspace-card">
                     <div class="card-header">
-                        <h2>2. Workspace Preview (610 × 610 mm)</h2>
+                        <h2>Workspace Preview (610 × 610 mm)</h2>
+                        <div class="subtitle">Real-time vector trajectory rendering & kinematics telemetry</div>
                     </div>
 
                     <div class="canvas-workspace-wrapper">
@@ -88,41 +83,105 @@
                             <span class="legend-item"><span class="legend-dot dot-travel"></span> Travel Path (Gray)</span>
                         </div>
 
-                        <div class="canvas-viewport" id="canvasContainer">
+                        <div class="canvas-viewport" id="canvasContainer" style="position: relative;">
                             <canvas id="simCanvas" width="610" height="610"></canvas>
+                            
+                            <!-- Empty Workspace Overlay Component -->
+                            <div class="workspace-empty-overlay" id="workspaceEmptyOverlay">
+                                <div class="empty-overlay-content">
+                                    <div class="dropzone-icon" style="font-size: 2.2rem; margin-bottom: 8px;">📥</div>
+                                    <h3>No Rangoli Design Loaded</h3>
+                                    <p>Upload a Rangoli design image to generate path and begin simulation</p>
+                                    <button type="button" class="btn btn-primary" onclick="document.getElementById('imageInput').click()" style="margin-top: 12px; font-weight: 700;">
+                                        🔵 Upload Design
+                                    </button>
+                                </div>
+                            </div>
 
                             <!-- Robot Vector Marker Overlay -->
-                            <svg id="robotSvgVisual" class="robot-vector-marker" width="44" height="48" viewBox="0 0 44 48" style="position: absolute; top: 10px; left: 10px; z-index: 10; pointer-events: none;">
+                            <svg id="robotSvgVisual" class="robot-vector-marker" width="44" height="48" viewBox="0 0 44 48" style="position: absolute; top: 0; left: 0; display: none; z-index: 10; pointer-events: none; transition: transform 0.05s linear;">
                                 <g transform="translate(22, 24)">
                                     <rect x="-16" y="-18" width="32" height="36" rx="6" fill="#0F172A" stroke="#334155" stroke-width="2"/>
                                     <rect x="-12" y="-14" width="24" height="28" rx="4" fill="#1E293B"/>
-                                    <circle id="robotStatusLed" cx="0" cy="-6" r="3" fill="#10B981"/>
+                                    <circle id="robotStatusLed" cx="0" cy="-6" r="3" fill="#EF4444"/>
                                     <polygon points="0,-20 -5,-14 5,-14" fill="#3B82F6"/>
                                     <circle id="robotDispenserNozzle" cx="0" cy="18" r="4" fill="#64748B"/>
                                 </g>
                             </svg>
                         </div>
+                    </div>
+                </section>
 
-                        <!-- Bottom Drawing Progress Bar -->
-                        <div class="sim-progress-footer">
-                            <span>Drawing Progress</span>
-                            <span id="valProgressPct" style="font-weight: 700; color: #2563EB;">0%</span>
+                <!-- Drawing Progress Card -->
+                <section class="card progress-card">
+                    <div class="sim-progress-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="font-size: 1.05rem; font-weight: 700; color: #0F172A;">Drawing Progress</h2>
+                        <span class="progress-pct-badge" id="valProgressPct" style="font-size: 0.95rem; font-weight: 700; color: #2563EB;">0%</span>
+                    </div>
+                    <div class="sim-progress-track" style="background: #E2E8F0; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 10px;">
+                        <div class="sim-progress-fill" id="barProgress" style="width: 0%; height: 100%; background: #2563EB; transition: width 0.2s;"></div>
+                    </div>
+                </section>
+
+                <!-- Processing Pipeline Card -->
+                <section class="card pipeline-card" id="processingCard">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2>Processing Status</h2>
+                        <span class="status-badge badge-idle" id="processStepBadge">IDLE</span>
+                    </div>
+                    
+                    <div class="pipeline-grid" style="display: flex; gap: 16px; margin-top: 12px;">
+                        <div class="pipeline-stage stage-waiting" id="chkUpload" style="font-size: 0.82rem; color: #64748B;">
+                            <span class="stage-icon">○</span> Upload Complete
+                        </div>
+                        <div class="pipeline-stage stage-waiting" id="chkBG" style="font-size: 0.82rem; color: #64748B;">
+                            <span class="stage-icon">○</span> Background Removed
                         </div>
                     </div>
                 </section>
 
             </div>
 
-            <!-- Right Column: Size, Width, Stats, Controls -->
+            <!-- Right Column: Single Upload Card, Options & Technical Metrics -->
             <div class="right-column">
                 
-                <!-- 4. Drawing Size -->
+                <!-- Upload Rangoli Design Card -->
+                <section class="card upload-card" id="sectionUpload">
+                    <div class="card-header">
+                        <h2>Upload Rangoli Design</h2>
+                        <div class="subtitle" style="font-size: 0.8rem; color: #64748B;">Drag & drop image file or import via web URL</div>
+                    </div>
+
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <!-- Primary Dropzone Interface -->
+                        <div class="upload-dropzone" id="dropzone" style="border: 2px dashed #93C5FD; background: #EFF6FF; border-radius: 10px; padding: 24px; text-align: center; cursor: pointer;">
+                            <div class="dropzone-icon" style="font-size: 2rem; margin-bottom: 8px;">📥</div>
+                            <div class="dropzone-text" style="font-size: 0.92rem; color: #1E293B;">
+                                <strong>Drag & Drop Rangoli File Here</strong><br>
+                                <span style="font-size: 0.78rem; color: #64748B;">or click to browse from device (JPG, PNG, WEBP, SVG up to 20MB)</span>
+                            </div>
+                            <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp,image/svg+xml">
+                        </div>
+
+                        <!-- Error Message Banner -->
+                        <div id="uploadErrorMessage" class="upload-error-banner" style="display: none; margin-top: 12px; padding: 10px; font-size: 0.84rem; background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B; border-radius: 8px;"></div>
+
+                        <!-- Secondary URL Action Button -->
+                        <div class="url-secondary-action" style="margin-top: 12px; text-align: center;">
+                            <button type="button" id="btnOpenUrlModal" class="btn-url-secondary" style="background: transparent; border: 1px solid #CBD5E1; color: #2563EB; padding: 8px 16px; border-radius: 6px; font-size: 0.84rem; font-weight: 600; cursor: pointer;">
+                                🌐 Use Image URL
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- Drawing Size -->
                 <section class="card drawing-options-card" id="sectionSettings">
                     <div class="card-header">
-                        <h2>4. Drawing Size</h2>
+                        <h2>Drawing Size</h2>
                     </div>
-                    <div class="setting-group">
-                        <div class="setting-options-grid">
+                    <div class="setting-group" style="margin-top: 10px;">
+                        <div class="setting-options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                             <label class="option-btn"><input type="radio" name="sizeOpt" value="small"><span>Small (300 × 300 mm)</span></label>
                             <label class="option-btn"><input type="radio" name="sizeOpt" value="medium"><span>Medium (450 × 450 mm)</span></label>
                             <label class="option-btn"><input type="radio" name="sizeOpt" value="large"><span>Large (525 × 525 mm)</span></label>
@@ -131,13 +190,13 @@
                     </div>
                 </section>
 
-                <!-- 5. Line Width -->
+                <!-- Line Width -->
                 <section class="card drawing-options-card" style="margin-top: 16px;">
                     <div class="card-header">
-                        <h2>5. Line Width</h2>
+                        <h2>Line Width</h2>
                     </div>
-                    <div class="setting-group">
-                        <div class="setting-options-grid grid-3">
+                    <div class="setting-group" style="margin-top: 10px;">
+                        <div class="setting-options-grid grid-3" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                             <label class="option-btn"><input type="radio" name="widthOpt" value="2"><span>2 mm</span></label>
                             <label class="option-btn active"><input type="radio" name="widthOpt" value="3" checked><span>3 mm (Default)</span></label>
                             <label class="option-btn"><input type="radio" name="widthOpt" value="4"><span>4 mm</span></label>
@@ -145,68 +204,64 @@
                     </div>
                 </section>
 
-                <!-- 6. Drawing Statistics -->
+                <!-- Drawing Statistics -->
                 <section class="card statistics-card" style="margin-top: 16px;">
                     <div class="card-header">
-                        <h2>6. Drawing Statistics</h2>
+                        <h2>Drawing Statistics</h2>
                     </div>
 
-                    <div class="info-metrics-grid">
-                        <div class="metric-box">
-                            <span class="metric-label">ESTIMATED DRAWING TIME</span>
-                            <span class="metric-value" id="valEstTime">00:00</span>
+                    <div class="info-metrics-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px;">
+                            <span class="metric-label" style="display: block; font-size: 0.7rem; color: #64748B; font-weight: 700;">ESTIMATED DRAWING TIME</span>
+                            <span class="metric-value" id="valEstTime" style="font-size: 1.05rem; font-weight: 700; color: #0F172A;">00:00</span>
                         </div>
-                        <div class="metric-box">
-                            <span class="metric-label">REMAINING TIME</span>
-                            <span class="metric-value" id="valRemTime">00:00</span>
+                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px;">
+                            <span class="metric-label" style="display: block; font-size: 0.7rem; color: #64748B; font-weight: 700;">REMAINING TIME</span>
+                            <span class="metric-value" id="valRemTime" style="font-size: 1.05rem; font-weight: 700; color: #0F172A;">00:00</span>
                         </div>
-                        <div class="metric-box">
-                            <span class="metric-label">DRAWING DISTANCE</span>
-                            <span class="metric-value" id="valDrawDist">0.0 m</span>
+                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px;">
+                            <span class="metric-label" style="display: block; font-size: 0.7rem; color: #64748B; font-weight: 700;">DRAWING DISTANCE</span>
+                            <span class="metric-value" id="valDrawDist" style="font-size: 1.05rem; font-weight: 700; color: #0F172A;">0.0 m</span>
                         </div>
-                        <div class="metric-box">
-                            <span class="metric-label">TRAVEL DISTANCE</span>
-                            <span class="metric-value" id="valTravelDist">0.0 m</span>
+                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px;">
+                            <span class="metric-label" style="display: block; font-size: 0.7rem; color: #64748B; font-weight: 700;">TRAVEL DISTANCE</span>
+                            <span class="metric-value" id="valTravelDist" style="font-size: 1.05rem; font-weight: 700; color: #0F172A;">0.0 m</span>
                         </div>
-                        <div class="metric-box">
-                            <span class="metric-label">ESTIMATED POWDER USAGE</span>
-                            <span class="metric-value" id="valPowderUsage">0 g</span>
+                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px;">
+                            <span class="metric-label" style="display: block; font-size: 0.7rem; color: #64748B; font-weight: 700;">ESTIMATED POWDER USAGE</span>
+                            <span class="metric-value" id="valPowderUsage" style="font-size: 1.05rem; font-weight: 700; color: #0F172A;">0 g</span>
                         </div>
-                        <div class="metric-box">
-                            <span class="metric-label">PROGRESS</span>
-                            <span class="metric-value" id="valStatProgress">0 %</span>
+                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px;">
+                            <span class="metric-label" style="display: block; font-size: 0.7rem; color: #64748B; font-weight: 700;">PROGRESS</span>
+                            <span class="metric-value" id="valStatProgress" style="font-size: 1.05rem; font-weight: 700; color: #0F172A;">0 %</span>
                         </div>
-                        <div class="metric-box">
-                            <span class="metric-label">NUMBER OF PATHS</span>
-                            <span class="metric-value" id="valPathCount">0</span>
+                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px;">
+                            <span class="metric-label" style="display: block; font-size: 0.7rem; color: #64748B; font-weight: 700;">NUMBER OF PATHS</span>
+                            <span class="metric-value" id="valPathCount" style="font-size: 1.05rem; font-weight: 700; color: #0F172A;">0</span>
                         </div>
-                        <div class="metric-box">
-                            <span class="metric-label">NUMBER OF TURNS</span>
-                            <span class="metric-value" id="valTurnCount">0</span>
+                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px;">
+                            <span class="metric-label" style="display: block; font-size: 0.7rem; color: #64748B; font-weight: 700;">NUMBER OF TURNS</span>
+                            <span class="metric-value" id="valTurnCount" style="font-size: 1.05rem; font-weight: 700; color: #0F172A;">0</span>
                         </div>
-                    </div>
-
-                    <div class="status-footer-row">
-                        <span class="status-footer-label">Robot Status:</span>
-                        <span class="status-badge badge-idle" id="valState">IDLE</span>
                     </div>
                 </section>
 
-                <!-- 7. Robot Controls -->
+                <!-- Robot Operation Controls -->
                 <section class="card robot-controls-card" id="sectionRobotControls" style="margin-top: 16px;">
                     <div class="card-header">
-                        <h2>7. Robot Controls</h2>
+                        <h2>Robot Operations</h2>
                     </div>
 
-                    <div class="primary-control-row" style="display: flex; gap: 10px; margin-top: 10px;">
-                        <button type="button" id="btnModeSim" class="btn btn-mode-toggle active" style="flex: 1;">📊 Simulation</button>
-                        <button type="button" id="btnStartDrawing" class="btn btn-primary btn-start-drawing" style="flex: 1.5; font-weight: 700;">🚀 Start Drawing</button>
+                    <div class="primary-control-wrapper" id="primaryControlContainer" style="margin-top: 10px;">
+                        <button type="button" id="btnStartDrawing" class="btn btn-primary btn-lg btn-start-drawing" style="width: 100%; padding: 14px; font-size: 1.1rem; font-weight: 700; background: #2563EB; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            🚀 START SIMULATION
+                        </button>
                     </div>
 
                     <div class="hardware-controls-row" style="display: flex; gap: 10px; margin-top: 10px;">
-                        <button type="button" id="btnPause" class="btn btn-pause" disabled style="flex: 1;">⏸️ Pause</button>
-                        <button type="button" id="btnResume" class="btn btn-resume" disabled style="flex: 1;">▶️ Resume</button>
-                        <button type="button" id="btnStop" class="btn btn-stop" disabled style="flex: 1;">⏹️ Stop</button>
+                        <button type="button" id="btnPause" class="btn btn-pause" disabled style="flex: 1; padding: 10px;">⏸️ Pause</button>
+                        <button type="button" id="btnResume" class="btn btn-resume" disabled style="flex: 1; padding: 10px;">▶️ Resume</button>
+                        <button type="button" id="btnStop" class="btn btn-stop" disabled style="flex: 1; padding: 10px;">⏹️ Stop</button>
                     </div>
 
                     <div class="emergency-stop-container" style="margin-top: 12px;">
@@ -220,13 +275,55 @@
         </div>
     </main>
 
+    <!-- URL Import Modal -->
+    <div id="urlUploadModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-card url-modal-card" style="width: 460px; border-top: 4px solid #2563EB;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #0F172A; margin: 0;">Import Rangoli from URL</h3>
+                <button id="closeUrlModal" class="modal-close" type="button" aria-label="Close" style="position: static; width: 32px; height: 32px; font-size: 20px;">&times;</button>
+            </div>
+            <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 16px; line-height: 1.4;">
+                Paste a <strong>direct image web link</strong> ending in .jpg, .png, .webp, or .svg<br>
+                <span style="font-size: 0.78rem; color: #94A3B8;">(Tip: Right-click any web image and select "Copy Image Address")</span>
+            </p>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Image URL</label>
+                <input type="url" id="imageUrlInput" class="text-input" placeholder="https://example.com/rangoli.png">
+            </div>
+
+            <div id="urlModalErrorMessage" style="display: none; margin-bottom: 16px; padding: 12px 14px; font-size: 0.82rem; background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B; border-radius: 8px;"></div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" id="btnCancelUrl" class="btn btn-secondary" style="font-size: 0.88rem; padding: 9px 18px;">Cancel</button>
+                <button type="button" id="btnLoadUrl" class="btn btn-primary" style="font-size: 0.88rem; padding: 9px 20px; font-weight: 700;">Import Image</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Robot Discovery Modal -->
+    <div id="robotDiscoveryModal" class="modal-overlay" style="display: none;">
+        <div class="robot-discovery-modal">
+            <button id="closeRobotDiscovery" class="modal-close" type="button" aria-label="Close" onclick="closeRobotDiscoveryModal()">&times;</button>
+            <div class="modal-header">
+                <div>
+                    <h2>Discover Cloud Robots</h2>
+                    <p>Find ESP32 robots connected through secure WSS</p>
+                </div>
+            </div>
+            <div id="robotDiscoveryContent">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="app-footer">
-        <div class="footer-title">Autonomous Rangoli Drawing Robot</div>
-        <div class="footer-sub">Final Year B.Tech Project &bull; Workspace Size: 610 × 610 mm (2 × 2 ft)</div>
+        <div class="footer-title">IoT BASED AUTONOMOUS RANGOLI DRAWING ROBOT</div>
+        <div class="footer-sub">PSCMR College of Engineering and Technology • Department of CSE (IoT) • TEAM NO. 12</div>
     </footer>
 
     <!-- Frontend Application Logic Script -->
-    <script src="/static/script.js?v=5.0"></script>
+    <script src="/static/script.js?v=6.0"></script>
 </body>
 </html>
