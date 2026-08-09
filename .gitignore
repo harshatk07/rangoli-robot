@@ -22,6 +22,8 @@ outputs/
 static/uploads/*
 !static/uploads/pscmr_logo.png
 !static/uploads/demo_rangoli.png
+!static/uploads/rangoli_dashboard_preview.jpg
+!static/uploads/rangoli_pipeline_preview.jpg
 !static/uploads/.gitkeep
 
 # OS

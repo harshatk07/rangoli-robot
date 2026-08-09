@@ -4,7 +4,8 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110.0-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![PlatformIO](https://img.shields.io/badge/PlatformIO-ESP32--S3-F6821F?style=for-the-badge&logo=platformio&logoColor=white)](https://platformio.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
-[![Status](https://img.shields.io/badge/Hardware%20Status-Software%20Ready%20%7C%20Awaiting%20ESP32-success?style=for-the-badge)](#-current-limitations--hardware-requirements)
+[![Software Status](https://img.shields.io/badge/Software-100%25%20Ready%20%26%20Verified-brightgreen?style=for-the-badge)](#-project-status)
+[![Hardware Status](https://img.shields.io/badge/Hardware-Pending%20Physical%20Assembly-yellow?style=for-the-badge)](#-project-status)
 
 > **PSCMR College of Engineering and Technology**  
 > *Department of Computer Science & Engineering (IoT)*  
@@ -13,18 +14,37 @@
 
 ---
 
-## 📸 Screenshots & Demonstration
+## 📊 Project Status
 
-| Web Dashboard (610 × 610 mm Workspace) | Image Vectorization Pipeline |
+| Component Layer | Implementation Status | Verification Method |
+| :--- | :---: | :--- |
+| **Web Dashboard UI** | 🟢 **Software Ready** | Verified across desktop browsers (DEMO & REAL modes) |
+| **FastAPI REST & WSS Backend** | 🟢 **Software Ready** | Tested via PyUnit & Uvicorn ASGI server |
+| **Image Upload & SSRF Importer** | 🟢 **Software Ready** | End-to-end verified with direct public image URLs |
+| **Image Processing & Path Generation** | 🟢 **Software Ready** | Tested via 14 contour extraction & polyline solver |
+| **DEMO Kinematic Simulator** | 🟢 **Software Ready** | Interactive 2D differential-drive canvas rendering |
+| **WSS Robot Protocol & Security** | 🟢 **Software Ready** | Validated using Python ESP32 hardware emulator |
+| **ESP32-S3 Microcontroller** | 🟡 **Hardware Pending** | C++ firmware compiled cleanly via PlatformIO |
+| **Motor Drivers & Encoders** | 🟡 **Hardware Pending** | Awaiting physical wiring & motor assembly |
+| **Powder Dispensing Servo Mechanism** | 🟡 **Hardware Pending** | Awaiting 3D chassis & servo valve installation |
+
+> [!NOTE]
+> **Implementation Clarification**: All software layers, vectorization pipelines, WSS backend protocols, and C++ firmware modules are **100% written, compiled, and verified via automated test suites**. Physical REAL robot operation will be validated once the ESP32 hardware components are acquired and wired.
+
+---
+
+## 📸 System Screenshots & Demonstrations
+
+| Web Dashboard ($610 \times 610\text{ mm}$ Workspace) | Automated Vectorization Pipeline |
 | :---: | :---: |
-| ![Dashboard Interface Placeholder](static/uploads/demo_rangoli.png) | ![Vector Extraction Placeholder](static/uploads/pscmr_logo.png) |
-| *Real-time vector trajectory preview & dual DEMO/REAL robot execution toggle* | *Binarization, contour isolation & continuous G-Code/motion generation* |
+| ![Web Dashboard Preview](static/uploads/rangoli_dashboard_preview.jpg) | ![Image Vectorization Pipeline](static/uploads/rangoli_pipeline_preview.jpg) |
+| *Real-time vector trajectory rendering & kinematics telemetry* | *Raster image binarization, contour isolation & continuous motion G-Code* |
 
 ---
 
 ## 🚀 Quick Start
 
-Get the local simulation dashboard running in less than 2 minutes on Windows PowerShell:
+Run the full local simulation server on Windows PowerShell in less than 2 minutes:
 
 ```powershell
 git clone https://github.com/harshatk07/rangoli-robot.git
@@ -37,81 +57,46 @@ Copy-Item .env.example .env
 uvicorn app:app --host 127.0.0.1 --port 5000
 ```
 
-Open your browser and navigate to:
-- 🌐 **Dashboard UI**: [http://127.0.0.1:5000](http://127.0.0.1:5000)
+Access the local server endpoints:
+- 🖥️ **Web Dashboard**: [http://127.0.0.1:5000](http://127.0.0.1:5000)
 - 🏥 **Health Check API**: [http://127.0.0.1:5000/health](http://127.0.0.1:5000/health)
 
 ---
 
 ## ✨ Key Features
 
-- 🖼️ **Multi-Format Image Importer**: Upload local `JPG`, `PNG`, `WEBP`, or `SVG` files via drag-and-drop or import direct public web URLs with SSRF protection.
-- 🎨 **Adaptive Rangoli Vectorizer**: Converts raster Rangoli art into smoothed, continuous motion vectors with background removal and boundary isolation.
-- 📐 **$610 \times 610\text{ mm}$ Kinematic Canvas**: Real-time canvas preview mapped 1:1 to a physical $2 \times 2\text{ ft}$ workspace with adjustable line width ($2\text{ mm}$, $3\text{ mm}$, $4\text{ mm}$) and scale controls.
-- 🟡 **DEMO Simulation Mode**: Full browser-side kinematic trajectory simulation (no physical hardware required).
-- 🔴 **REAL Hardware Mode**: Secure outbound WebSocket (`wss://`) control layer connecting Render FastAPI backend to physical ESP32-S3 microcontroller.
-- 📶 **Captive Portal Wi-Fi Provisioning**: Automated SoftAP (`RangoliRobot-Setup` @ `192.168.4.1`) for browser-based Wi-Fi credential setup and NVS flash storage.
-- 🛡️ **Hardware Failsafe Watchdog**: Automatic powder valve shutoff and motor deceleration upon WSS signal loss, 15-second heartbeat timeout, or emergency stop.
+- 🖼️ **Multi-Format Image Importer**: Upload local `JPG`, `PNG`, `WEBP`, or `SVG` files or import direct public web URLs with SSRF protection.
+- 🎨 **Adaptive Rangoli Vectorizer**: Converts raster Rangoli artwork into continuous motion polylines using background removal and contour isolation.
+- 📐 **$610 \times 610\text{ mm}$ Kinematic Canvas**: Real-time canvas mapped 1:1 to a physical $2 \times 2\text{ ft}$ workspace with adjustable line widths ($2\text{ mm}$, $3\text{ mm}$, $4\text{ mm}$) and path scaling.
+- 🟡 **DEMO Simulation Mode**: Complete browser-side kinematic simulation (no physical hardware required).
+- 🔴 **REAL Hardware Mode**: Outbound WebSocket (`wss://`) protocol layer connecting Render FastAPI backend to physical ESP32-S3 microcontroller.
+- 📶 **Captive Portal Provisioning**: Automated SoftAP (`RangoliRobot-Setup` @ `192.168.4.1`) for browser-based Wi-Fi credential setup and NVS flash storage.
+- 🛡️ **Hardware Safety Watchdog**: Automatic powder valve shutoff and motor halt upon WSS signal loss, 15-second heartbeat timeout, or emergency stop trigger.
 
 ---
 
 ## 🏗️ System Architecture
 
-### Process Dataflow Pipeline
-
-```text
-Rangoli Image
-     ↓
-Image Processing (Binarization & Background Removal)
-     ↓
-Vectorization (Contour Extraction & Polyline Reduction)
-     ↓
-Path Planning (610 × 610 mm Workspace Scale & Toolpath Optimization)
-     ↓
-Kinematic Command Generation
-     ↓
-FastAPI Backend (Render Cloud / Local Host)
-     ↓
-Outbound Secure WebSockets (wss://)
-     ↓
-ESP32-S3 Microcontroller
-     ↓
-Motor Driver (PWM & Encoders) + Powder Valve Servo
-     ↓
-Autonomous Rangoli Drawing Execution
-```
-
-### System Component Diagram
+### Hardware & Software Communication Architecture
 
 ```mermaid
-graph TD
-    subgraph Browser ["Web Browser (User Dashboard)"]
-        UI["HTML5 / Vanilla CSS / JS Dashboard"]
-        Canvas["Interactive 610x610 mm Canvas"]
-    end
+graph LR
+    Browser["Browser UI Dashboard"] -->|REST API / WebSockets| FastAPI["FastAPI Backend Server"]
+    FastAPI -->|Outbound WSS /robot/ws| ESP32["ESP32-S3 Microcontroller"]
+    ESP32 -->|PWM & Direction| Driver["Motor Driver (TB6612FNG)"]
+    Driver -->|Drive Power| Motors["DC Motors & Encoders"]
+    ESP32 -->|PWM Signal| Servo["Powder Dispenser Servo"]
+```
 
-    subgraph Backend ["FastAPI Backend (Render Cloud / Local)"]
-        API["FastAPI REST & ASGI WSS Server"]
-        CV["OpenCV Image Vectorizer"]
-        DB[(SQLite / PostgreSQL DB)]
-        Manager["WSS Connection Manager"]
-    end
+### Image Processing & Motion Vector Pipeline
 
-    subgraph ESP32 ["ESP32-S3 Hardware / Emulator"]
-        WSS_Client["Outbound WSS Client"]
-        NVS["NVS Flash Storage"]
-        CP["Captive Portal (192.168.4.1)"]
-        Motors["Motor Driver (PWM/Encoders)"]
-        Servo["Powder Servo Dispenser"]
-    end
-
-    UI <-->|HTTP REST / Browser WS| API
-    API <-->|Outbound WSS /robot/ws| WSS_Client
-    Manager <--> DB
-    CV --> Manager
-    WSS_Client --> Motors
-    WSS_Client --> Servo
-    CP --> NVS
+```mermaid
+graph LR
+    A["Rangoli Image (Upload / URL)"] --> B["Binarization & Background Removal"]
+    B --> C["Vector Contour Extraction"]
+    C --> D["610 × 610 mm Workspace Path Planning"]
+    D --> E["Kinematic Command Generation"]
+    E --> F["Robot Job Dispatch"]
 ```
 
 ---
@@ -152,7 +137,7 @@ rangoli_robot/
 ├── static/                     # Static CSS, JS & Media assets
 │   ├── style.css               # Production stylesheet (85px compact header system)
 │   ├── script.js              # Frontend state manager & canvas simulator
-│   └── uploads/                # Uploaded Rangoli image directory
+│   └── uploads/                # Uploaded Rangoli image directory & preview media
 ├── scratch/                    # Development scripts & hardware emulator
 │   └── test_robot_emulator.py  # Standalone Python ESP32 WSS hardware emulator
 └── tests/                      # Automated unit test suite
@@ -171,11 +156,9 @@ rangoli_robot/
 
 ---
 
-## 🛠️ Windows Installation — Step-by-Step
+## 🛠️ Step-by-Step Windows Installation
 
-Follow these exact steps to set up the project on Windows PowerShell:
-
-### 1. Verify Python 3.12 & Git
+### 1. Verify Prerequisites
 
 ```powershell
 py -3.12 --version
@@ -196,7 +179,7 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-*(If PowerShell blocks script execution, run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` once).*
+*(If script execution is blocked, run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` once).*
 
 ### 4. Upgrade Pip & Install Dependencies
 
@@ -215,42 +198,41 @@ Copy-Item .env.example .env
 
 ## 🏃 Run Locally
 
-Start the local FastAPI ASGI web server using Uvicorn:
+Start the local server using Uvicorn:
 
 ```powershell
 uvicorn app:app --host 127.0.0.1 --port 5000
 ```
 
-### Access Local Endpoints
+Access local endpoints:
 - 🖥️ **Web Dashboard**: [http://127.0.0.1:5000](http://127.0.0.1:5000)
 - 🏥 **Health Check Endpoint**: [http://127.0.0.1:5000/health](http://127.0.0.1:5000/health)
-- 📡 **Robots Discovery API**: [http://127.0.0.1:5000/api/robots](http://127.0.0.1:5000/api/robots)
 
 ---
 
-## 🟡 DEMO Mode (No Hardware Required)
+## 🟡 DEMO Mode (Software Simulation)
 
-You do **not** need physical ESP32 hardware to test or demonstrate the application:
+No physical hardware is required to test or demonstrate software functionality:
 
 1. Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
-2. The header status pill defaults to **🟡 DEMO ROBOT — Simulation Only**.
-3. Upload a Rangoli image (or click **Use Image URL**).
+2. The header defaults to **🟡 DEMO ROBOT — Simulation Only**.
+3. Upload a Rangoli image (or click **🌐 Use Image URL**).
 4. Select drawing scale (Full $610 \times 610\text{ mm}$) and line width ($3\text{ mm}$).
 5. Click **🚀 START SIMULATION**.
-6. Watch the real-time differential-drive kinematic robot trajectory move across the interactive vector canvas.
+6. View real-time 2D differential-drive kinematics on the vector canvas.
 
 ---
 
 ## 🔴 REAL Robot Mode
 
-In REAL mode, control commands flow from the web browser to the physical robot via outbound WebSockets:
+In REAL mode, control commands flow from the web browser to the ESP32 via outbound WebSockets:
 
 ```text
-Browser UI  ──(HTTP/WSS)──>  FastAPI Backend  ──(Outbound WSS /robot/ws)──>  ESP32-S3 Robot
+Browser UI  ──(HTTP/WSS)──>  FastAPI Backend  ──(Outbound WSS /robot/ws)──>  ESP32-S3 Microcontroller
 ```
 
 > [!IMPORTANT]
-> **No Inbound LAN Connections**: The FastAPI backend **never** scans your local network or initiates incoming connections to `192.168.x.x`. The ESP32 robot always initiates the secure outbound WebSocket connection to the server.
+> **No Inbound LAN Scanning**: The FastAPI server **never** scans your local network or initiates incoming connections to `192.168.x.x`. The ESP32 robot always initiates the secure outbound WebSocket connection to the server.
 
 ---
 
@@ -267,7 +249,7 @@ pio run
 
 ### 2. Hardware Pin Mapping (`firmware/include/config.h`)
 
-All hardware-dependent GPIO pins and mechanical parameters are centralized in `firmware/include/config.h`:
+All hardware-dependent GPIO pins and parameters are isolated in `firmware/include/config.h`:
 
 ```cpp
 #define MOTOR_LEFT_PWM_PIN       25    // Left Motor Speed PWM
@@ -295,33 +277,33 @@ pio run --target upload
 
 ### 4. Wi-Fi Provisioning via Captive Portal
 
-1. On first boot (or after holding the BOOT button for 5 seconds), the ESP32 creates a Wi-Fi Access Point named **`RangoliRobot-Setup`**.
+1. On first boot (or after holding the BOOT button for 5 seconds), the ESP32 launches a Wi-Fi Access Point named **`RangoliRobot-Setup`**.
 2. Connect your phone or laptop Wi-Fi to **`RangoliRobot-Setup`**.
-3. Open **`http://192.168.4.1`** in your web browser.
-4. Enter the required configuration fields:
-   - **Wi-Fi SSID** (Select from scanned networks)
+3. Open **`http://192.168.4.1`** in your browser.
+4. Enter the required provisioning parameters:
+   - **Wi-Fi SSID**
    - **Wi-Fi Password**
-   - **Robot ID** (e.g. `BOT-01`)
-   - **Backend WSS URL** (e.g. `wss://rangoli-robot.onrender.com/robot/ws` or `ws://192.168.1.100:5000/robot/ws`)
-   - **Robot Auth Token** (e.g. `SECRET_KEY_BOT_01`)
-5. Click **Save & Connect Robot**. The credentials are stored permanently in ESP32 NVS Flash memory.
+   - **Robot ID** (e.g., `BOT-01`)
+   - **Backend WSS URL** (e.g., `wss://rangoli-robot.onrender.com/robot/ws` or `ws://192.168.1.100:5000/robot/ws`)
+   - **Robot Auth Token** (e.g., `SECRET_KEY_BOT_01`)
+5. Click **Save & Connect Robot**. The configuration is saved permanently to ESP32 NVS Flash.
 
 ---
 
 ## ⚡ Automatic Robot Reconnection
 
 Once Wi-Fi provisioning is completed:
-- Every time the robot is powered on, it automatically connects to Wi-Fi.
+- On every power-on, the robot automatically connects to Wi-Fi.
 - It automatically establishes an outbound WebSocket connection to the Render/Local backend.
 - It automatically authenticates and appears in the browser dashboard under **🔍 Discover Robots**.
-- **VS Code or a USB PC connection is NOT required for normal robot operation.**
+- **VS Code or a USB PC connection is NOT required for normal operation.**
 
 ---
 
 ## 🔐 Robot Authentication & Security
 
-- **Token Storage**: The authentication token resides in ESP32 NVS Flash and server environment variables. It is **never** exposed to browser client-side JavaScript.
-- **Handshake Validation**: Upon WSS connection, the robot sends a `{ "type": "robot_auth", "robot_id": "BOT-01", "token": "..." }` frame. The backend validates this token against the database (`verify_robot_auth_db`). Unauthenticated sockets are closed with code `4001`.
+- **Token Protection**: Authentication tokens reside in ESP32 NVS Flash and server environment variables. Tokens are **never** sent to browser client-side JavaScript.
+- **Handshake Validation**: Upon WSS connection, the robot transmits `{ "type": "robot_auth", "robot_id": "BOT-01", "token": "..." }`. The backend validates credentials via `verify_robot_auth_db`. Unauthenticated connections are closed (`code=4001`).
 
 ---
 
@@ -329,7 +311,7 @@ Once Wi-Fi provisioning is completed:
 
 - Click **🔍 Discover Robots** in the web dashboard header.
 - The browser queries `GET /api/robots`.
-- Online, authenticated ESP32 robots connected via WSS appear with status `READY` and signal metrics.
+- Authenticated ESP32 robots connected via WSS appear with status `READY` and live signal metrics.
 
 ---
 
@@ -352,7 +334,7 @@ The backend supports bidirectional WebSocket communication:
 
 - **15-Second Heartbeat**: The ESP32 transmits a heartbeat every 15 seconds. If no frame is received for 35 seconds, the server marks the robot `DISCONNECTED`.
 - **5-Second Command ACK Timeout**: When the user clicks Start, Pause, or Resume, the server waits up to 5 seconds for a hardware ACK response (`command_id`). If no ACK arrives, the server returns an `ACK_TIMEOUT` error.
-- **Hardware Failsafe Watchdog**: If WSS connection drops during a drawing sequence, the ESP32 immediately turns off the powder valve servo and halts the motors.
+- **Hardware Failsafe Watchdog**: If WSS connection drops during execution, the ESP32 immediately turns off the powder valve servo and halts the motors.
 
 ---
 
@@ -412,24 +394,6 @@ OK
 
 ---
 
-## 🖼️ Image-Processing Pipeline
-
-```text
-Input Image (JPG/PNG/WEBP/SVG)
-      ↓
-Background Removal & Otsu Threshold Binarization (OpenCV)
-      ↓
-Contour Extraction & Boundary Isolation
-      ↓
-Polyline Simplification & Continuous Path Extraction
-      ↓
-Grid Motion Optimization (610 × 610 mm Scale Mapping)
-      ↓
-Toolpath & Differential Drive Kinematic Commands
-```
-
----
-
 ## ☁️ Render Cloud Deployment
 
 1. Push repository to GitHub.
@@ -442,38 +406,6 @@ Toolpath & Differential Drive Kinematic Commands
    - **Health Check Path**: `/health`
 5. Add Environment Variables:
    - `CORS_ORIGINS` = `*`
-   - `DATABASE_URL` = *(Optional: PostgreSQL URL for production persistence)*
-
----
-
-## 🔄 GitHub Development Workflow
-
-When modifying code:
-
-```powershell
-# 1. Check status
-git status
-
-# 2. Add specific modified files
-git add app.py README.md
-
-# 3. Commit with descriptive message
-git commit -m "docs: update comprehensive production README.md"
-
-# 4. Push to remote main branch
-git push origin main
-```
-
----
-
-## 🛠️ Troubleshooting
-
-| Issue | Cause | Solution |
-| :--- | :--- | :--- |
-| `HTTP 400` on URL Import | Entered search page URL (e.g. Shutterstock/Amazon) | Copy direct image address ending in `.jpg`, `.png`, or `.webp` |
-| Robot Disconnected in REAL mode | ESP32 powered off or Wi-Fi lost | Power on ESP32 or hold BOOT button 5s to re-provision Wi-Fi |
-| `ACK_TIMEOUT` Error | ESP32 lost WSS socket connection | Click **🔍 Discover Robots** to verify WSS connection |
-| PowerShell script blocked | Windows Execution Policy restriction | Run `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser` |
 
 ---
 
@@ -488,18 +420,6 @@ git push origin main
   firmware/.pio/
   *.db
   ```
-
----
-
-## 🚧 Current Limitations & Hardware Requirements
-
-| Feature / Hardware | Status | Description |
-| :--- | :---: | :--- |
-| **Simulation / DEMO Mode** | ✅ `Implemented` | 100% complete & functional in web browser |
-| **FastAPI WSS Backend** | ✅ `Implemented` | 100% complete & verified |
-| **ESP32 Firmware Code** | ✅ `Implemented` | 100% compiled & tested via PlatformIO |
-| **Physical ESP32 Board** | ⚠️ `Hardware Required` | Requires purchasing physical ESP32-S3 + Motor Driver + Servos |
-| **Physical Powder Dispenser** | ⚠️ `Hardware Required` | Requires 3D-printed chassis & servo gate valve assembly |
 
 ---
 
