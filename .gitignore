@@ -1,17 +1,32 @@
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
 
 # Cache
 core/__pycache__/
 tests/__pycache__/
+experiments/__pycache__/
 
-# Generated output
-static/uploads/
-experiments/
+# Local Databases & Secrets
+*.db
+*.sqlite
+*.sqlite3
+rangoli_robot.db
+.env
+
+# Generated Upload Output (Keep structure, exclude uploads except logo & demo)
+static/uploads/*
+!static/uploads/pscmr_logo.png
+!static/uploads/demo_rangoli.png
+!static/uploads/.gitkeep
+
+# PlatformIO & IDE
+.vscode/
+.idea/
+firmware/.pio/
+firmware/.vscode/
 
 # OS
 .DS_Store
-Thumbs.db.vscode/
-firmware/.pio/
-firmware/.vscode/
+Thumbs.db

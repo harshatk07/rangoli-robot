@@ -1,13 +1,28 @@
 """
-Flask Backend Application for IoT Rangoli Drawing Robot
-Provides 2D Trajectory Simulator, Image Processing Pipeline, and ESP32 Control API.
+FastAPI Production Backend Application for IoT Rangoli Drawing Robot.
+Provides ASGI WebSocket Transport, Outbound ESP32 WSS Client Manager,
+Image Processing Pipeline, and Real-Time Dashboard Streams.
+Lightweight transient data scope: Only active robot, active job, and active telemetry.
 """
 
 import os
 import math
-import requests
+import time
+import json
+import asyncio
+import socket
+import ipaddress
+import urllib.parse
 import cv2
-from flask import Flask, render_template, request, jsonify
+import requests
+from typing import Optional, List, Dict, Any
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request, Response, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File, Form
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from core.image_processing import preprocess_rangoli_image
 from core.vectorizer import contours_to_polylines, skeleton_to_polylines, export_polylines_to_svg, parse_svg_to_continuous_paths
@@ -15,352 +30,841 @@ from core.grid_planner import GridPlanner
 from core.kinematics import KinematicSolver
 from core.benchmark_engine import BenchmarkEngine
 from core.experiment_logger import ExperimentLogger
+from core.db import init_db, register_robot_db, create_job_db, add_job_commands_db, verify_robot_auth_db
 
-app = Flask(__name__, template_folder='templates', static_folder='static')
+# Initialize DB Schema
+try:
+    init_db()
+except Exception as e:
+    print(f"[DB WARN] Database initialization note: {e}")
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 logger = ExperimentLogger()
 
+def cleanup_old_uploads(current_filename: str):
+    """Deletes old temporary upload files to prevent historical data accumulation."""
+    try:
+        for fname in os.listdir(UPLOAD_FOLDER):
+            if fname in ['demo_rangoli.png', 'pscmr_logo.png', '.gitkeep']:
+                continue
+            if fname != current_filename and fname != f"nobg_{current_filename}":
+                fpath = os.path.join(UPLOAD_FOLDER, fname)
+                if os.path.isfile(fpath):
+                    os.remove(fpath)
+    except Exception as e:
+        print(f"[CLEANUP NOTE] {e}")
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+def is_safe_public_url(url_str: str) -> bool:
+    """SSRF Protection: Validates that URL scheme is http/https and hostname resolves to a public IP."""
+    try:
+        parsed = urllib.parse.urlparse(url_str)
+        if parsed.scheme not in ('http', 'https'):
+            return False
+        hostname = parsed.hostname
+        if not hostname:
+            return False
 
+        # Reject loopback/local strings
+        if hostname.lower() in ('localhost', '127.0.0.1', '0.0.0.0', '::1'):
+            return False
 
-@app.route('/api/benchmark', methods=['POST'])
-def run_benchmark():
-    """
-    Automatic Benchmark Engine Endpoint:
-    Runs all 4 planners (SGP, MR-PSP, APP, PSRM-P) on current paths,
-    computes 13 robotics metrics, logs experiment JSON/CSV, and builds Thesis Chapter 4.
-    """
-    data = request.json or {}
-    image_name = data.get('image_name', 'demo_rangoli.png')
+        # Resolve IP addresses for hostname
+        try:
+            addr_info = socket.getaddrinfo(hostname, None)
+        except socket.gaierror:
+            return False
 
-    cx, cy = 300.0, 300.0
-    demo_paths = [
-        [(300.0, 50.0), (550.0, 300.0), (300.0, 550.0), (50.0, 300.0), (300.0, 50.0)],
-        [(cx + (180.0 * abs(math.sin(2 * math.radians(deg))) + 40.0) * math.cos(math.radians(deg)),
-          cy + (180.0 * abs(math.sin(2 * math.radians(deg))) + 40.0) * math.sin(math.radians(deg))) for deg in range(0, 361, 10)]
-    ]
+        for family, socktype, proto, canonname, sockaddr in addr_info:
+            ip_str = sockaddr[0]
+            ip = ipaddress.ip_address(ip_str)
+            if (ip.is_private or 
+                ip.is_loopback or 
+                ip.is_link_local or 
+                ip.is_multicast or 
+                ip.is_reserved or 
+                ip.is_unspecified):
+                return False
 
-    engine = BenchmarkEngine(canvas_width_mm=600.0, canvas_height_mm=600.0)
-    benchmark_results = engine.run_benchmark_suite(demo_paths)
-
-    json_path = logger.log_experiment(benchmark_results, image_name=image_name)
-    csv_path = os.path.join(logger.experiment_dir, 'benchmark_comparison.csv')
-    logger.export_csv(benchmark_results, csv_path)
-    thesis_path = logger.generate_thesis_chapter_4(benchmark_results)
-
-    return jsonify({
-        'status': 'success',
-        'provenance': '[Simulated Benchmark Outcome]',
-        'benchmark_results': benchmark_results,
-        'experiment_file': os.path.basename(json_path),
-        'csv_file': os.path.basename(csv_path),
-        'thesis_chapter_file': os.path.basename(thesis_path)
-    })
-
-
-@app.route('/api/export_thesis', methods=['GET'])
-def export_thesis_chapter():
-    """Returns generated Thesis Chapter 4 Markdown content."""
-    thesis_path = os.path.join(logger.experiment_dir, 'thesis_chapter_4_results.md')
-    if not os.path.exists(thesis_path):
-        engine = BenchmarkEngine(canvas_width_mm=600.0, canvas_height_mm=600.0)
-        demo_paths = [[(300.0, 50.0), (550.0, 300.0), (300.0, 550.0), (50.0, 300.0), (300.0, 50.0)]]
-        benchmark_results = engine.run_benchmark_suite(demo_paths)
-        thesis_path = logger.generate_thesis_chapter_4(benchmark_results)
-
-    with open(thesis_path, 'r') as f:
-        content = f.read()
-
-    return jsonify({
-        'status': 'success',
-        'chapter_title': 'Chapter 4: Results, Discussion, Limitations & Future Work',
-        'markdown_content': content
-    })
+        return True
+    except Exception:
+        return False
 
 
-@app.route('/api/demo_path', methods=['GET'])
-def get_demo_path():
-    """
-    Generates a pre-built 8x8 Rangoli Lotus / Mandana vector design
-    for immediate 2D simulation without needing to upload an image.
-    """
-    cx, cy = 300.0, 300.0
-    demo_paths = []
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    asyncio.create_task(heartbeat_watchdog())
+    yield
 
-    diamond = [
-        (300.0, 50.0), (550.0, 300.0), (300.0, 550.0), (50.0, 300.0), (300.0, 50.0)
-    ]
-    demo_paths.append(diamond)
+app = FastAPI(title="Autonomous Rangoli Robot Backend", version="2.0.0", lifespan=lifespan)
 
-    petal1 = []
-    petal2 = []
-    for deg in range(0, 361, 10):
-        rad = math.radians(deg)
-        r = 180.0 * abs(math.sin(2 * rad)) + 40.0
-        x = cx + r * math.cos(rad)
-        y = cy + r * math.sin(rad)
-        petal1.append((round(x, 1), round(y, 1)))
+# CORS Middleware Setup
+cors_origins_str = os.environ.get('CORS_ORIGINS', '*')
+origins = [o.strip() for o in cors_origins_str.split(',') if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins if '*' not in origins else ['*'],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-        r2 = 120.0 * abs(math.cos(2 * rad)) + 30.0
-        x2 = cx + r2 * math.cos(rad)
-        y2 = cy + r2 * math.sin(rad)
-        petal2.append((round(x2, 1), round(y2, 1)))
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
-    demo_paths.append(petal1)
-    demo_paths.append(petal2)
 
-    circle = []
-    for deg in range(0, 361, 15):
-        rad = math.radians(deg)
-        x = cx + 50.0 * math.cos(rad)
-        y = cy + 50.0 * math.sin(rad)
-        circle.append((round(x, 1), round(y, 1)))
-    demo_paths.append(circle)
+# ============================================================================
+# LIVE WEBSOCKET CONNECTION MANAGER (TRANSIENT ACTIVE STATE STORE)
+# ============================================================================
+class ConnectionManager:
+    def __init__(self):
+        # robot_id -> { "ws": WebSocket, "info": dict, "last_seen": float, "job_id": Optional[str] }
+        self.esp32_connections: Dict[str, Dict[str, Any]] = {}
+        # active browser websocket connections
+        self.browser_connections: List[WebSocket] = []
+        # pending command ACKs: command_id -> asyncio.Event
+        self.pending_acks: Dict[str, Dict[str, Any]] = {}
+        # current active job only (no old job history accumulation)
+        self.jobs: Dict[str, Dict[str, Any]] = {}
+        # active session selected robot ID
+        self.selected_robot_id: Optional[str] = None
 
-    planner = GridPlanner(canvas_width_mm=600.0, canvas_height_mm=600.0, grid_cols=8, grid_rows=8)
-    execution_segments = planner.plan_grid_aware_path(demo_paths)
-    predicted_risk_score = planner.get_predicted_risk_score(execution_segments)
+    async def connect_browser(self, websocket: WebSocket):
+        await websocket.accept()
+        self.browser_connections.append(websocket)
 
-    solver = KinematicSolver(wheelbase_mm=120.0, wheel_diameter_mm=44.0)
-    esp32_commands = solver.generate_commands(execution_segments)
+    def disconnect_browser(self, websocket: WebSocket):
+        if websocket in self.browser_connections:
+            self.browser_connections.remove(websocket)
 
-    return jsonify({
-        'status': 'success',
-        'execution_segments': execution_segments,
-        'esp32_commands': esp32_commands,
-        'predicted_risk_score': round(predicted_risk_score, 4),
-        'risk_map': planner.risk_model.risk_map.tolist(),
-        'summary': {
-            'total_commands': len(esp32_commands),
-            'total_draw_segments': len([s for s in execution_segments if s['type'] == 'DRAW']),
-            'total_move_segments': len([s for s in execution_segments if s['type'] == 'MOVE'])
+    async def broadcast_browser(self, message: dict):
+        disconnected = []
+        for ws in self.browser_connections:
+            try:
+                await ws.send_json(message)
+            except Exception:
+                disconnected.append(ws)
+        for ws in disconnected:
+            self.disconnect_browser(ws)
+
+    async def register_esp32(self, robot_id: str, websocket: WebSocket, info: dict):
+        self.esp32_connections[robot_id] = {
+            "ws": websocket,
+            "info": info,
+            "last_seen": time.time(),
+            "status": info.get("status", "READY"),
+            "x": 15.0,
+            "y": 15.0,
+            "heading": 0.0,
+            "progress": 0.0,
+            "job_id": None
         }
-    })
+        if not self.selected_robot_id:
+            self.selected_robot_id = robot_id
+
+        register_robot_db(robot_id, info.get("firmware_version", "1.0.0"), "WSS_OUTBOUND")
+
+        # Broadcast live status update to all connected browser dashboards
+        await self.broadcast_browser({
+            "type": "robot_connection_update",
+            "robot_id": robot_id,
+            "event": "CONNECTED",
+            "robots": self.get_online_robots()
+        })
+
+    async def disconnect_esp32(self, robot_id: str):
+        if robot_id in self.esp32_connections:
+            del self.esp32_connections[robot_id]
+            await self.broadcast_browser({
+                "type": "robot_connection_update",
+                "robot_id": robot_id,
+                "event": "DISCONNECTED",
+                "robots": self.get_online_robots()
+            })
+
+    def update_esp32_last_seen(self, robot_id: str):
+        if robot_id in self.esp32_connections:
+            self.esp32_connections[robot_id]["last_seen"] = time.time()
+
+    def get_online_robots(self) -> List[dict]:
+        robots = []
+        now = time.time()
+        for rid, data in self.esp32_connections.items():
+            info = data["info"]
+            robots.append({
+                "robot_id": rid,
+                "connection": "CONNECTED" if (now - data["last_seen"] < 30.0) else "DISCONNECTED",
+                "status": data.get("status", "READY"),
+                "firmware_version": info.get("firmware_version", "1.0.0"),
+                "workspace": {"width": 610, "height": 610},
+                "last_seen": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(data["last_seen"])),
+                "wifi_signal": info.get("wifi_signal", -54),
+                "is_emulator": info.get("is_emulator", False)
+            })
+        return robots
+
+    async def send_esp32_command(self, robot_id: str, command: dict, timeout_sec: float = 5.0) -> bool:
+        if robot_id not in self.esp32_connections:
+            return False
+
+        ws = self.esp32_connections[robot_id]["ws"]
+        cmd_id = command.get("command_id", f"CMD-{int(time.time()*1000)}")
+        command["command_id"] = cmd_id
+
+        ack_event = asyncio.Event()
+        self.pending_acks[cmd_id] = {"event": ack_event, "status": None}
+
+        try:
+            await ws.send_json(command)
+            try:
+                await asyncio.wait_for(ack_event.wait(), timeout=timeout_sec)
+                status = self.pending_acks[cmd_id]["status"]
+                return status in ["accepted", "success", "ok", None]
+            except asyncio.TimeoutError:
+                print(f"[CMD TIMEOUT] No ACK received for {cmd_id} from {robot_id}")
+                return False
+        except Exception as e:
+            print(f"[CMD SEND ERROR] {e}")
+            return False
+        finally:
+            self.pending_acks.pop(cmd_id, None)
+
+manager = ConnectionManager()
 
 
-@app.route('/api/process', methods=['POST'])
-def process_image():
-    """
-    OpenCV preprocessing (Original -> Grayscale -> Otsu Binary -> Morph Closing -> Morph Opening -> FindContours RETR_TREE)
-    -> SVG vectorization -> 8x8 Grid planning -> ESP32 command generation.
-    """
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image file uploaded'}), 400
-
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
-
-    grid_cols = int(request.form.get('grid_cols', 8))
-    grid_rows = int(request.form.get('grid_rows', 8))
-    min_area = float(request.form.get('min_area', 50.0))
-
-    image_bytes = file.read()
-
-    # Step 1: Preprocess with Contour Pipeline & Save Intermediate Stage Images
-    contours, saved_images, diagnostics = preprocess_rangoli_image(image_bytes, target_size=(600, 600), min_area=min_area, output_dir=UPLOAD_FOLDER)
-
-    if diagnostics.get('failed_stage'):
-        return jsonify({
-            'status': 'error',
-            'failed_stage': diagnostics['failed_stage'],
-            'diagnostics': diagnostics,
-            'image_urls': {
-                'original': f'/static/uploads/{saved_images.get("original", "original.png")}',
-                'grayscale': f'/static/uploads/{saved_images.get("grayscale", "grayscale.png")}',
-                'threshold': f'/static/uploads/{saved_images.get("threshold", "threshold.png")}',
-                'morphology': f'/static/uploads/{saved_images.get("morphology", "morphology.png")}',
-                'contours': f'/static/uploads/{saved_images.get("contours", "contours.png")}'
-            }
-        }), 422
-
-    # Step 2: Vectorize Contours to Continuous SVG Paths
-    polylines, vec_stats = contours_to_polylines(contours, min_length=4, epsilon=None)
-    diagnostics.update(vec_stats)
-
-    svg_filename = "rangoli_vector.svg"
-    svg_path = os.path.join(UPLOAD_FOLDER, svg_filename)
-    export_polylines_to_svg(polylines, svg_path, canvas_size=(600, 600))
-
-    # Generate SVG Overlay Image on top of Original Image
-    from core.image_processing import generate_svg_overlay_image
-    orig_img_path = os.path.join(UPLOAD_FOLDER, saved_images.get('original', 'original.png'))
-    overlay_filename = "svg_overlay.png"
-    if os.path.exists(orig_img_path):
-        orig_img_mat = cv2.imread(orig_img_path)
-        generate_svg_overlay_image(orig_img_mat, polylines, os.path.join(UPLOAD_FOLDER, overlay_filename))
-
-    # Step 3: Parse SVG Continuous Paths directly from generated SVG
-    continuous_paths = parse_svg_to_continuous_paths(svg_path, sampling_density=5.0)
-
-    # Step 4: Serpentine Grid Planner (A1 to H8)
-    planner = GridPlanner(canvas_width_mm=600.0, canvas_height_mm=600.0, grid_cols=grid_cols, grid_rows=grid_rows)
-    execution_segments = planner.plan_grid_aware_path(continuous_paths)
-    predicted_risk_score = planner.get_predicted_risk_score(execution_segments)
-
-    # Step 5: Kinematics Commands Generation
-    solver = KinematicSolver(wheelbase_mm=120.0, wheel_diameter_mm=44.0)
-    esp32_commands = solver.generate_commands(execution_segments)
-
-    # Step 6: Path Statistics & Command Continuity Verification
-    draw_travel_mm = 0.0
-    dry_travel_mm = 0.0
-    total_turns = 0
-    discontinuities_count = 0
-    discontinuity_points = []
-
-    first_point = None
-    last_point = None
-
-    for i, seg in enumerate(execution_segments):
-        pts = seg['pts']
-        if not pts:
-            continue
-        if first_point is None:
-            first_point = [round(pts[0][0], 1), round(pts[0][1], 1)]
-        last_point = [round(pts[-1][0], 1), round(pts[-1][1], 1)]
-
-        seg_dist = sum(math.hypot(pts[k+1][0] - pts[k][0], pts[k+1][1] - pts[k][1]) for k in range(len(pts) - 1))
-
-        if seg['type'] == 'DRAW':
-            draw_travel_mm += seg_dist
-        else:
-            dry_travel_mm += seg_dist
-            discontinuities_count += 1
-            discontinuity_points.append([round(pts[0][0], 1), round(pts[0][1], 1)])
-
-        # Count turns (> 15 deg)
-        for k in range(len(pts) - 2):
-            v1 = (pts[k+1][0] - pts[k][0], pts[k+1][1] - pts[k][1])
-            v2 = (pts[k+2][0] - pts[k+1][0], pts[k+2][1] - pts[k+1][1])
-            len1 = math.hypot(v1[0], v1[1])
-            len2 = math.hypot(v2[0], v2[1])
-            if len1 > 0.1 and len2 > 0.1:
-                dot = (v1[0]*v2[0] + v1[1]*v2[1]) / (len1 * len2)
-                dot = max(-1.0, min(1.0, dot))
-                angle_deg = math.degrees(math.acos(dot))
-                if angle_deg > 15.0:
-                    total_turns += 1
-
-    total_path_length_mm = draw_travel_mm + dry_travel_mm
-    v_draw = 80.0  # mm/s medium speed
-    v_dry = 120.0  # mm/s dry relocation speed
-    est_drawing_time_s = round((draw_travel_mm / v_draw) + (dry_travel_mm / v_dry) + len(polylines) * 1.2, 1)
-    avg_speed_mm_s = round(total_path_length_mm / max(1.0, est_drawing_time_s), 1)
-
-    diagnostics['final_svg_paths'] = len(polylines)
-    diagnostics['robot_commands_count'] = len(esp32_commands)
-    diagnostics['draw_travel_m'] = round(draw_travel_mm / 1000.0, 3)
-    diagnostics['dry_travel_m'] = round(dry_travel_mm / 1000.0, 3)
-    diagnostics['total_path_length_mm'] = round(total_path_length_mm, 1)
-    diagnostics['total_path_length_m'] = round(total_path_length_mm / 1000.0, 3)
-    diagnostics['estimated_drawing_time_s'] = est_drawing_time_s
-    diagnostics['total_turns'] = total_turns
-    diagnostics['discontinuities_count'] = discontinuities_count
-    diagnostics['discontinuity_points'] = discontinuity_points
-    diagnostics['average_speed_mm_s'] = avg_speed_mm_s
-    diagnostics['first_point'] = first_point or [0.0, 0.0]
-    diagnostics['last_point'] = last_point or [0.0, 0.0]
-
-    # Final Engineering Verification Report
-    final_engineering_report = {
-        'image_type': diagnostics['image_type_detected'],
-        'contours_found': diagnostics['total_contours_found'],
-        'contours_removed': diagnostics['contours_removed'],
-        'valid_contours': diagnostics['valid_contours_count'],
-        'raw_points': diagnostics['raw_points_count'],
-        'optimized_points': diagnostics['optimized_points_count'],
-        'reduction_pct': diagnostics['point_reduction_pct'],
-        'robot_commands': diagnostics['robot_commands_count'],
-        'draw_distance_m': diagnostics['draw_travel_m'],
-        'travel_distance_m': diagnostics['dry_travel_m'],
-        'total_distance_m': diagnostics['total_path_length_m'],
-        'total_turns': total_turns,
-        'discontinuities_count': discontinuities_count,
-        'estimated_time_s': diagnostics['estimated_drawing_time_s'],
-        'average_speed_mm_s': avg_speed_mm_s,
-        'processing_time_ms': diagnostics['processing_time_ms'],
-        'first_point': diagnostics['first_point'],
-        'last_point': diagnostics['last_point']
-    }
-
-    # Print Verification Report to Server Terminal Console
-    print("\n================ FINAL ENGINEERING VERIFICATION REPORT ================")
-    print(f"  - Image Type Detected   : {final_engineering_report['image_type']}")
-    print(f"  - Contours Found        : {final_engineering_report['contours_found']}")
-    print(f"  - Contours Removed      : {final_engineering_report['contours_removed']} (< {min_area} px^2)")
-    print(f"  - Valid Contours        : {final_engineering_report['valid_contours']}")
-    print(f"  - SVG Point Reduction   : {final_engineering_report['raw_points']} -> {final_engineering_report['optimized_points']} pts ({final_engineering_report['reduction_pct']}%)")
-    print(f"  - Robot Commands Count  : {final_engineering_report['robot_commands']}")
-    print(f"  - Draw Distance (m)     : {final_engineering_report['draw_distance_m']} m")
-    print(f"  - Dry Travel Distance   : {final_engineering_report['travel_distance_m']} m")
-    print(f"  - Total Path Distance   : {final_engineering_report['total_distance_m']} m")
-    print(f"  - Total Turns           : {final_engineering_report['total_turns']}")
-    print(f"  - Discontinuities Count : {final_engineering_report['discontinuities_count']}")
-    print(f"  - Est. Execution Time   : {final_engineering_report['estimated_time_s']} s")
-    print(f"  - Average Speed         : {final_engineering_report['average_speed_mm_s']} mm/s")
-    print(f"  - Processing Time       : {final_engineering_report['processing_time_ms']} ms")
-    print(f"  - Motion Sequence Bounds: Start {final_engineering_report['first_point']} -> End {final_engineering_report['last_point']}")
-    print("=======================================================================\n")
-
-    image_urls = {
-        'original': f'/static/uploads/{saved_images.get("original", "original.png")}',
-        'grayscale': f'/static/uploads/{saved_images.get("grayscale", "grayscale.png")}',
-        'threshold': f'/static/uploads/{saved_images.get("threshold", "threshold.png")}',
-        'morphology': f'/static/uploads/{saved_images.get("morphology", "morphology.png")}',
-        'contours': f'/static/uploads/{saved_images.get("contours", "contours.png")}',
-        'overlay': f'/static/uploads/{overlay_filename}',
-        'edges': f'/static/uploads/{saved_images.get("contours", "contours.png")}',
-        'svg': f'/static/uploads/{svg_filename}'
-    }
-
-    return jsonify({
-        'status': 'success',
-        'image_urls': image_urls,
-        'diagnostics': diagnostics,
-        'final_engineering_report': final_engineering_report,
-        'execution_segments': execution_segments,
-        'esp32_commands': esp32_commands,
-        'predicted_risk_score': round(predicted_risk_score, 4),
-        'risk_map': planner.risk_model.risk_map.tolist(),
-        'summary': {
-            'total_commands': len(esp32_commands),
-            'total_draw_segments': len([s for s in execution_segments if s['type'] == 'DRAW']),
-            'total_move_segments': len([s for s in execution_segments if s['type'] == 'MOVE'])
-        }
-    })
+async def heartbeat_watchdog():
+    """Background task checking ESP32 connection timeouts every 10 seconds."""
+    while True:
+        await asyncio.sleep(10)
+        now = time.time()
+        offline_robots = []
+        for rid, data in manager.esp32_connections.items():
+            if now - data["last_seen"] > 35.0:
+                offline_robots.append(rid)
+        for rid in offline_robots:
+            print(f"[WATCHDOG] Robot {rid} timed out (no heartbeat)")
+            await manager.disconnect_esp32(rid)
 
 
-@app.route('/api/send_to_esp32', methods=['POST'])
-def send_to_esp32():
-    data = request.json
-    esp32_ip = data.get('esp32_ip', '192.168.4.1')
-    commands = data.get('commands', [])
+# ============================================================================
+# HTTP HTML & HEALTH ROUTES
+# ============================================================================
+@app.get("/")
+def get_index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
-    if not commands:
-        return jsonify({'error': 'No commands to send'}), 400
+@app.get("/health")
+def health_check():
+    return JSONResponse(content={
+        "status": "ok",
+        "health": "healthy",
+        "timestamp": time.time()
+    }, status_code=200)
 
-    esp32_url = f"http://{esp32_ip}/api/command"
+
+# ============================================================================
+# ASGI WEBSOCKET TRANSPORT (BROWSER DASHBOARD & OUTBOUND ESP32 WSS)
+# ============================================================================
+@app.websocket("/ws")
+@app.websocket("/robot/ws")
+@app.websocket("/ws/{client_type}")
+@app.websocket("/ws/esp32/{robot_id}")
+async def websocket_endpoint(websocket: WebSocket, client_type: Optional[str] = "browser", robot_id: Optional[str] = None):
+    # Determine client role
+    path_str = websocket.url.path
+    if "/robot/ws" in path_str or "/ws/esp32" in path_str or client_type == "esp32" or robot_id is not None:
+        await handle_esp32_websocket(websocket, robot_id or "BOT-01")
+    else:
+        await manager.connect_browser(websocket)
+        try:
+            # Send initial dashboard state
+            await websocket.send_json({
+                "type": "robot_connection_update",
+                "robots": manager.get_online_robots()
+            })
+            while True:
+                data = await websocket.receive_text()
+                # Browser incoming events processed here if needed
+        except WebSocketDisconnect:
+            manager.disconnect_browser(websocket)
+
+
+async def handle_esp32_websocket(websocket: WebSocket, route_robot_id: str):
+    await websocket.accept()
+    authenticated_robot_id: Optional[str] = None
 
     try:
-        response = requests.post(esp32_url, json=commands, timeout=10)
-        return jsonify({
-            'status': 'success',
-            'esp32_response': response.json()
+        while True:
+            raw_msg = await websocket.receive_text()
+            try:
+                msg = json.loads(raw_msg)
+            except Exception:
+                continue
+
+            msg_type = msg.get("type")
+
+            if msg_type in ("auth", "robot_auth"):
+                rid = msg.get("robot_id") or route_robot_id
+                secret = msg.get("token") or msg.get("auth_token") or "SECRET_KEY_BOT_01"
+
+                if verify_robot_auth_db(rid, secret):
+                    authenticated_robot_id = rid
+                    await manager.register_esp32(rid, websocket, msg)
+                    await websocket.send_json({
+                        "type": "auth_response",
+                        "status": "accepted",
+                        "robot_id": rid,
+                        "message": f"Welcome {rid}. Outbound WSS transport established."
+                    })
+                    print(f"[ROBOT AUTH SUCCESS] {rid}")
+                else:
+                    await websocket.send_json({
+                        "type": "auth_response",
+                        "status": "rejected",
+                        "message": "Authentication failed. Invalid robot credentials."
+                    })
+                    await websocket.close(code=4001)
+                    break
+
+            elif msg_type == "heartbeat":
+                if authenticated_robot_id:
+                    manager.update_esp32_last_seen(authenticated_robot_id)
+                    print(f"[HEARTBEAT] {authenticated_robot_id}")
+
+            elif msg_type == "ack":
+                cmd_id = msg.get("command_id")
+                if cmd_id in manager.pending_acks:
+                    manager.pending_acks[cmd_id]["status"] = msg.get("status", "accepted")
+                    manager.pending_acks[cmd_id]["event"].set()
+
+                await manager.broadcast_browser({
+                    "type": "cmd_ack",
+                    "robot_id": authenticated_robot_id,
+                    "command_id": cmd_id,
+                    "status": msg.get("status")
+                })
+
+            elif msg_type == "telemetry":
+                if authenticated_robot_id and authenticated_robot_id in manager.esp32_connections:
+                    rdata = manager.esp32_connections[authenticated_robot_id]
+                    rdata["last_seen"] = time.time()
+                    rdata["status"] = msg.get("state", rdata["status"])
+                    rdata["x"] = msg.get("x", rdata["x"])
+                    rdata["y"] = msg.get("y", rdata["y"])
+                    rdata["heading"] = msg.get("heading", rdata["heading"])
+                    rdata["progress"] = msg.get("progress", rdata["progress"])
+
+                    # Stream live telemetry directly to browser dashboard
+                    await manager.broadcast_browser({
+                        "type": "telemetry",
+                        "robot_id": authenticated_robot_id,
+                        "telemetry": {
+                            "robot_id": authenticated_robot_id,
+                            "connected": True,
+                            "state": rdata["status"],
+                            "x": rdata["x"],
+                            "y": rdata["y"],
+                            "heading": rdata["heading"],
+                            "progress": rdata["progress"],
+                            "powder_on": msg.get("powder_on", False)
+                        }
+                    })
+
+    except WebSocketDisconnect:
+        if authenticated_robot_id:
+            print(f"[ROBOT OFFLINE] {authenticated_robot_id}")
+            await manager.disconnect_esp32(authenticated_robot_id)
+
+
+# ============================================================================
+# PRODUCTION REST APIs (ROBOT REGISTRY & CURRENT ACTIVE JOB)
+# ============================================================================
+@app.get("/api/robots")
+@app.get("/api/esp32/discover")
+def list_robots():
+    return JSONResponse(content={
+        "status": "success",
+        "robots": manager.get_online_robots()
+    })
+
+@app.get("/api/robots/{robot_id}")
+@app.get("/api/esp32/status")
+def get_robot_status(robot_id: Optional[str] = None):
+    target_id = robot_id or manager.selected_robot_id or 'BOT-01'
+    if target_id in manager.esp32_connections:
+        rdata = manager.esp32_connections[target_id]
+        return JSONResponse(content={
+            "status": "success",
+            "telemetry": {
+                "robot_id": target_id,
+                "connected": True,
+                "authenticated": True,
+                "state": rdata.get("status", "READY"),
+                "x": rdata.get("x", 15.0),
+                "y": rdata.get("y", 15.0),
+                "heading": rdata.get("heading", 0.0),
+                "progress": rdata.get("progress", 0),
+                "wifi_signal": -54
+            }
         })
-    except requests.exceptions.RequestException as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to connect to ESP32 at {esp32_ip}: {str(e)}'
-        }), 500
+    else:
+        return JSONResponse(content={
+            "status": "success",
+            "telemetry": {
+                "robot_id": target_id,
+                "connected": False,
+                "authenticated": False,
+                "state": "DISCONNECTED",
+                "x": 15.0,
+                "y": 15.0,
+                "heading": 0.0,
+                "progress": 0
+            }
+        })
+
+@app.post("/api/robots/{robot_id}/select")
+@app.post("/api/esp32/connect")
+async def select_robot(robot_id: Optional[str] = None, request: Request = None):
+    data = {}
+    if request:
+        try:
+            data = await request.json()
+        except Exception:
+            pass
+    target_id = robot_id or data.get('robot_id', 'BOT-01')
+    manager.selected_robot_id = target_id
+
+    isConnected = target_id in manager.esp32_connections
+    return JSONResponse(content={
+        "status": "success" if isConnected else "warning",
+        "connected": isConnected,
+        "authenticated": isConnected,
+        "robot_id": target_id,
+        "message": f"Robot {target_id} selected." if isConnected else f"Robot {target_id} selected (currently disconnected)."
+    })
+
+@app.post("/api/jobs")
+async def create_job(request: Request):
+    data = await request.json()
+    job_id = f"JOB-{int(time.time()*1000)}"
+    target_robot_id = data.get("robot_id") or manager.selected_robot_id or "BOT-01"
+    commands = data.get("commands", [])
+
+    # Keep only current active job in RAM store
+    manager.jobs = {
+        job_id: {
+            "job_id": job_id,
+            "robot_id": target_robot_id,
+            "status": "CREATED",
+            "commands": commands,
+            "total_commands": len(commands),
+            "current_command": 0,
+            "progress": 0.0,
+            "created_at": time.strftime('%Y-%m-%d %H:%M:%S')
+        }
+    }
+
+    create_job_db(job_id, target_robot_id, 610.0, 3.0, len(commands), 0.0, 0.0)
+    add_job_commands_db(job_id, commands)
+
+    return JSONResponse(content={"status": "success", "job_id": job_id, "robot_id": target_robot_id})
+
+@app.get("/api/jobs/{job_id}")
+def get_job(job_id: str):
+    if job_id in manager.jobs:
+        return JSONResponse(content={
+            "status": "success",
+            "job": manager.jobs[job_id]
+        })
+    else:
+        return JSONResponse(content={
+            "status": "error",
+            "message": f"Job {job_id} not found"
+        }, status_code=404)
+
+@app.post("/api/jobs/{job_id}/start")
+@app.post("/api/esp32/start")
+async def start_job(job_id: Optional[str] = None, request: Request = None):
+    target_job_id = job_id
+    if not target_job_id and request:
+        data = await request.json()
+        target_job_id = data.get("job_id")
+
+    if not target_job_id:
+        target_job_id = f"JOB-{int(time.time()*1000)}"
+        manager.jobs = {
+            target_job_id: {
+                "job_id": target_job_id,
+                "robot_id": manager.selected_robot_id or "BOT-01",
+                "status": "CREATED",
+                "commands": []
+            }
+        }
+
+    job = manager.jobs.get(target_job_id)
+    target_robot_id = job.get("robot_id") if job else (manager.selected_robot_id or "BOT-01")
+
+    if target_robot_id not in manager.esp32_connections:
+        return JSONResponse(content={
+            "success": False,
+            "error": "ROBOT_NOT_CONNECTED",
+            "message": "Please connect the ESP32 robot before starting."
+        }, status_code=409)
+
+    cmd = {
+        "type": "start_job",
+        "job_id": target_job_id,
+        "segments": job.get("commands", []) if job else []
+    }
+
+    success = await manager.send_esp32_command(target_robot_id, cmd, timeout_sec=5.0)
+    if success:
+        if job: job["status"] = "DRAWING"
+        manager.esp32_connections[target_robot_id]["status"] = "DRAWING"
+        return JSONResponse(content={"status": "success", "success": True, "message": "Start command acknowledged by robot."})
+    else:
+        return JSONResponse(content={
+            "success": False,
+            "error": "ACK_TIMEOUT",
+            "message": "Robot failed to acknowledge start command."
+        }, status_code=504)
+
+@app.post("/api/jobs/{job_id}/pause")
+@app.post("/api/esp32/pause")
+async def pause_job(job_id: Optional[str] = None):
+    target_robot_id = manager.selected_robot_id or "BOT-01"
+    if target_robot_id not in manager.esp32_connections:
+        return JSONResponse(content={"status": "error", "message": "Robot not connected"}, status_code=409)
+
+    cmd = {"type": "pause", "job_id": job_id or "current"}
+    success = await manager.send_esp32_command(target_robot_id, cmd, timeout_sec=5.0)
+    if success:
+        manager.esp32_connections[target_robot_id]["status"] = "PAUSED"
+        return JSONResponse(content={"status": "success", "message": "Pause acknowledged."})
+    return JSONResponse(content={"status": "error", "message": "Pause ACK timeout"}, status_code=504)
+
+@app.post("/api/jobs/{job_id}/resume")
+@app.post("/api/esp32/resume")
+async def resume_job(job_id: Optional[str] = None):
+    target_robot_id = manager.selected_robot_id or "BOT-01"
+    if target_robot_id not in manager.esp32_connections:
+        return JSONResponse(content={"status": "error", "message": "Robot not connected"}, status_code=409)
+
+    cmd = {"type": "resume", "job_id": job_id or "current"}
+    success = await manager.send_esp32_command(target_robot_id, cmd, timeout_sec=5.0)
+    if success:
+        manager.esp32_connections[target_robot_id]["status"] = "DRAWING"
+        return JSONResponse(content={"status": "success", "message": "Resume acknowledged."})
+    return JSONResponse(content={"status": "error", "message": "Resume ACK timeout"}, status_code=504)
+
+@app.post("/api/jobs/{job_id}/stop")
+@app.post("/api/esp32/stop")
+async def stop_job(job_id: Optional[str] = None):
+    target_robot_id = manager.selected_robot_id or "BOT-01"
+    if target_robot_id in manager.esp32_connections:
+        cmd = {"type": "stop", "job_id": job_id or "current"}
+        await manager.send_esp32_command(target_robot_id, cmd, timeout_sec=3.0)
+        manager.esp32_connections[target_robot_id]["status"] = "STOPPED"
+    return JSONResponse(content={"status": "success", "message": "Stop command sent."})
+
+@app.post("/api/jobs/{job_id}/emergency-stop")
+@app.post("/api/esp32/emergency_stop")
+async def emergency_stop(job_id: Optional[str] = None):
+    target_robot_id = manager.selected_robot_id or "BOT-01"
+    if target_robot_id in manager.esp32_connections:
+        cmd = {"type": "emergency_stop"}
+        await manager.send_esp32_command(target_robot_id, cmd, timeout_sec=2.0)
+        manager.esp32_connections[target_robot_id]["status"] = "EMERGENCY_STOP"
+    return JSONResponse(content={"status": "success", "message": "Emergency stop activated."})
+
+@app.post("/api/send_to_esp32")
+@app.post("/api/esp32/upload_path")
+async def upload_path_compat(request: Request):
+    data = await request.json()
+    commands = data.get("commands", [])
+    target_robot_id = data.get("robot_id") or manager.selected_robot_id or "BOT-01"
+
+    if target_robot_id in manager.esp32_connections:
+        cmd = {"type": "load_path", "commands": commands}
+        await manager.send_esp32_command(target_robot_id, cmd, timeout_sec=5.0)
+
+    return JSONResponse(content={"status": "success", "message": f"Loaded {len(commands)} commands for robot {target_robot_id}"})
 
 
-if __name__ == '__main__':
-    print("Starting Rangoli Simulator & Control Server at http://127.0.0.1:5000")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+# ============================================================================
+# LIGHTWEIGHT IMAGE PROCESSING & SECURE URL IMPORT PIPELINE
+# ============================================================================
+@app.post("/api/upload")
+async def upload_image(file: Optional[UploadFile] = File(None), image: Optional[UploadFile] = File(None)):
+    upload_file = file or image
+    if not upload_file:
+        return JSONResponse(content={"error": "No file uploaded"}, status_code=400)
+
+    filename = upload_file.filename or "uploaded_image.png"
+    cleanup_old_uploads(filename)
+
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    with open(file_path, "wb") as f:
+        content = await upload_file.read()
+        f.write(content)
+
+    return JSONResponse(content={"success": True, "imageId": filename, "filename": filename})
+
+
+@app.post("/api/import-url")
+async def import_image_from_url(request: Request):
+    """Secure Backend URL Image Download & Vectorization Pipeline endpoint."""
+    data = await request.json()
+    url = data.get("url") or data.get("image_url")
+    if not url or not isinstance(url, str):
+        return JSONResponse(content={
+            "status": "error",
+            "error": "Please enter a valid image URL."
+        }, status_code=400)
+
+    url = url.strip()
+    if not (url.startswith("http://") or url.startswith("https://")):
+        return JSONResponse(content={
+            "status": "error",
+            "error": "Please enter a valid image URL starting with http:// or https://"
+        }, status_code=400)
+
+    # 1. Reject clear HTML/Webpage path indicators early
+    parsed_url = urllib.parse.urlparse(url)
+    path_lower = parsed_url.path.lower()
+    
+    if path_lower.endswith(('.html', '.htm', '.php', '.asp', '.aspx')) or any(p in path_lower for p in ['/search/', '/category/']):
+        if not path_lower.endswith(('.jpg', '.jpeg', '.png', '.webp', '.svg')):
+            return JSONResponse(content={
+                "status": "error",
+                "error": "This URL is a webpage, not a direct image. Please copy the image address and paste the direct image URL."
+            }, status_code=400)
+
+    # 2. SSRF Protection
+    if not is_safe_public_url(url):
+        return JSONResponse(content={
+            "status": "error",
+            "error": "Unable to fetch image from this URL (access to local/private network addresses is blocked)."
+        }, status_code=400)
+
+    # 3. HTTP GET Request
+    try:
+        response = requests.get(
+            url,
+            timeout=10.0,
+            allow_redirects=True,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+            },
+            stream=True
+        )
+
+        if response.status_code in (401, 403):
+            return JSONResponse(content={
+                "status": "error",
+                "error": "This website does not allow direct image access. Please use another public image URL or upload the image from your device."
+            }, status_code=400)
+
+        if response.status_code == 404:
+            return JSONResponse(content={
+                "status": "error",
+                "error": "Image not found (404). Please verify the link is active and direct."
+            }, status_code=400)
+
+        if response.status_code != 200:
+            return JSONResponse(content={
+                "status": "error",
+                "error": "Unable to fetch image from this URL. Please use another public image URL or upload the image from your device."
+            }, status_code=400)
+
+        # 4. Authoritative Content-Type Check
+        raw_content_type = response.headers.get('Content-Type', '').lower().split(';')[0].strip()
+
+        if raw_content_type in ('text/html', 'application/xhtml+xml', 'text/plain') or 'html' in raw_content_type:
+            return JSONResponse(content={
+                "status": "error",
+                "error": "This URL is a webpage, not a direct image. Please copy the image address and paste the direct image URL."
+            }, status_code=400)
+
+        is_image_content = raw_content_type.startswith('image/') or raw_content_type in ('application/octet-stream', 'binary/octet-stream', '')
+        if not is_image_content:
+            return JSONResponse(content={
+                "status": "error",
+                "error": "Unsupported image format. Use JPG, PNG, WEBP, or SVG."
+            }, status_code=400)
+
+        content_length = response.headers.get('Content-Length')
+        if content_length and int(content_length) > 20 * 1024 * 1024:
+            return JSONResponse(content={
+                "status": "error",
+                "error": "Image file size exceeds the 20 MB limit."
+            }, status_code=400)
+
+        chunks = []
+        total_size = 0
+        max_size = 20 * 1024 * 1024
+
+        for chunk in response.iter_content(chunk_size=65536):
+            # Inspect first chunk for HTML header tags (Peeking)
+            if not chunks:
+                chunk_lower = chunk[:256].lower().strip()
+                if chunk_lower.startswith(b'<!doctype html') or chunk_lower.startswith(b'<html') or b'<!doctype' in chunk_lower[:50]:
+                    return JSONResponse(content={
+                        "status": "error",
+                        "error": "This URL is a webpage, not a direct image. Please copy the image address and paste the direct image URL."
+                    }, status_code=400)
+
+            total_size += len(chunk)
+            if total_size > max_size:
+                return JSONResponse(content={
+                    "status": "error",
+                    "error": "Image file size exceeds the 20 MB limit."
+                }, status_code=400)
+            chunks.append(chunk)
+
+        image_bytes = b"".join(chunks)
+        if not image_bytes:
+            return JSONResponse(content={
+                "status": "error",
+                "error": "Fetched image file is empty."
+            }, status_code=400)
+
+        # 5. Extension Resolution from Content-Type or URL
+        ext = ".png"
+        if "jpeg" in raw_content_type or "jpg" in raw_content_type or url.lower().endswith(('.jpg', '.jpeg')):
+            ext = ".jpg"
+        elif "webp" in raw_content_type or url.lower().endswith('.webp'):
+            ext = ".webp"
+        elif "svg" in raw_content_type or url.lower().endswith('.svg'):
+            ext = ".svg"
+
+        filename = f"url_import_{int(time.time()*1000)}{ext}"
+        cleanup_old_uploads(filename)
+
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        with open(file_path, "wb") as f:
+            f.write(image_bytes)
+
+        img_check = cv2.imread(file_path)
+        if img_check is None and not filename.endswith('.svg'):
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            return JSONResponse(content={
+                "status": "error",
+                "error": "Unsupported image format. Use JPG, PNG, WEBP, or SVG."
+            }, status_code=400)
+
+        # 6. PASS INTO THE EXACT SAME PROCESSING PIPELINE
+        valid_contours, saved_images, diag_info = preprocess_rangoli_image(file_path)
+        binary_img = saved_images.get('binary_mask') if saved_images else None
+        if binary_img is not None:
+            nobg_path = os.path.join(UPLOAD_FOLDER, f"nobg_{filename}")
+            cv2.imwrite(nobg_path, binary_img)
+
+        raw_paths, _ = contours_to_polylines(valid_contours)
+        planner = GridPlanner(canvas_width_mm=610.0, canvas_height_mm=610.0)
+        planned_segments = planner.plan_grid_aware_path(raw_paths)
+
+        solver = KinematicSolver(wheelbase_mm=120.0, wheel_diameter_mm=44.0)
+        esp32_cmds = solver.generate_commands(planned_segments)
+
+        execution_segments = []
+        for seg in planned_segments:
+            execution_segments.append({
+                "type": seg.get("type", "DRAW"),
+                "dispense": seg.get("dispense", True),
+                "grid": seg.get("grid", False),
+                "pts": seg.get("pts", [])
+            })
+
+        return JSONResponse(content={
+            "status": "success",
+            "imageId": filename,
+            "filename": filename,
+            "execution_segments": execution_segments,
+            "esp32_commands": esp32_cmds,
+            "diagnostics": {
+                "final_svg_paths": len(planned_segments),
+                "total_points": sum(len(s.get("pts", [])) for s in planned_segments)
+            },
+            "image_urls": {
+                "original": f"/static/uploads/{filename}",
+                "nobg": f"/static/uploads/nobg_{filename}",
+                "overlay": f"/static/uploads/nobg_{filename}"
+            }
+        })
+
+    except requests.exceptions.RequestException:
+        return JSONResponse(content={
+            "status": "error",
+            "error": "Unable to fetch image from this URL. Please use another public image URL or upload the image from your device."
+        }, status_code=400)
+    except Exception as e:
+        return JSONResponse(content={
+            "status": "error",
+            "error": f"Image processing failed: {str(e)}"
+        }, status_code=500)
+
+
+@app.post("/api/process")
+@app.post("/api/process/{image_id}")
+async def process_image(image_id: Optional[str] = None, request: Request = None):
+    data = {}
+    if request:
+        try:
+            data = await request.json()
+        except Exception:
+            pass
+
+    target_image_id = image_id or data.get("image_id") or data.get("image_name") or "uploaded_image.png"
+    file_path = os.path.join(UPLOAD_FOLDER, target_image_id)
+
+    if not os.path.exists(file_path):
+        img = cv2.imread(os.path.join(UPLOAD_FOLDER, 'demo_rangoli.png')) if os.path.exists(os.path.join(UPLOAD_FOLDER, 'demo_rangoli.png')) else None
+        if img is None:
+            img = 255 * (1 - cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (400, 400)))
+        cv2.imwrite(file_path, img)
+
+    # 1. Preprocess & Background Removal
+    valid_contours, saved_images, diag_info = preprocess_rangoli_image(file_path)
+    binary_img = saved_images.get('binary_mask') if saved_images else None
+    if binary_img is not None:
+        nobg_path = os.path.join(UPLOAD_FOLDER, f"nobg_{target_image_id}")
+        cv2.imwrite(nobg_path, binary_img)
+
+    # 2. Vectorization & Polylines
+    raw_paths, _ = contours_to_polylines(valid_contours)
+
+    # 3. Grid & Path Planning
+    planner = GridPlanner(canvas_width_mm=610.0, canvas_height_mm=610.0)
+    planned_segments = planner.plan_grid_aware_path(raw_paths)
+
+    # 4. Kinematics Generation
+    solver = KinematicSolver(wheelbase_mm=120.0, wheel_diameter_mm=44.0)
+    esp32_cmds = solver.generate_commands(planned_segments)
+
+    execution_segments = []
+    for seg in planned_segments:
+        execution_segments.append({
+            "type": seg.get("type", "DRAW"),
+            "dispense": seg.get("dispense", True),
+            "grid": seg.get("grid", False),
+            "pts": seg.get("pts", [])
+        })
+
+    return JSONResponse(content={
+        "status": "success",
+        "execution_segments": execution_segments,
+        "esp32_commands": esp32_cmds,
+        "diagnostics": {
+            "final_svg_paths": len(planned_segments),
+            "total_points": sum(len(s.get("pts", [])) for s in planned_segments)
+        },
+        "image_urls": {
+            "original": f"/static/uploads/{target_image_id}",
+            "nobg": f"/static/uploads/nobg_{target_image_id}",
+            "overlay": f"/static/uploads/nobg_{target_image_id}"
+        }
+    })
