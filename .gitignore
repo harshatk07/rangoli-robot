@@ -1,31 +1,28 @@
-# Python
+.env
+.env.*
+!.env.example
+
 __pycache__/
+*.pyc
 *.py[cod]
-*$py.class
 
-# Cache
-core/__pycache__/
-tests/__pycache__/
-experiments/__pycache__/
+.venv/
+venv/
 
-# Local Databases & Secrets
+.vscode/
+firmware/.vscode/
+firmware/.pio/
+
 *.db
 *.sqlite
 *.sqlite3
-rangoli_robot.db
-.env
 
-# Generated Upload Output (Keep structure, exclude uploads except logo & demo)
+uploads/
+outputs/
 static/uploads/*
 !static/uploads/pscmr_logo.png
 !static/uploads/demo_rangoli.png
 !static/uploads/.gitkeep
-
-# PlatformIO & IDE
-.vscode/
-.idea/
-firmware/.pio/
-firmware/.vscode/
 
 # OS
 .DS_Store
