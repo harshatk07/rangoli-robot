@@ -339,8 +339,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update Progress Bar
         const pct = Math.min(100, Math.round(((segIdx + 1) / executionSegments.length) * 100));
-        txtProgress.textContent = `${pct}%`;
-        barProgress.style.width = `${pct}%`;
+        if (txtProgress) txtProgress.textContent = `${pct}%`;
+        const valProgressPct = document.getElementById('valProgressPct');
+        if (valProgressPct) valProgressPct.textContent = `${pct}%`;
+        const valStatProgress = document.getElementById('valStatProgress');
+        if (valStatProgress) valStatProgress.textContent = `${pct}%`;
+        if (barProgress) barProgress.style.width = `${pct}%`;
 
         if (ptIdx < pts.length - 1) {
             const p1 = pts[ptIdx];
