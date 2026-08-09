@@ -868,3 +868,73 @@ async def process_image(image_id: Optional[str] = None, request: Request = None)
             "overlay": f"/static/uploads/nobg_{target_image_id}"
         }
     })
+
+
+@app.get("/api/demo_path")
+@app.get("/api/demo")
+def get_demo_path():
+    """Generates a demo Rangoli vector path for simulation & testing."""
+    import math
+    segments = []
+
+    # Travel to start position (305, 100)
+    segments.append({
+        "type": "TRAVEL",
+        "dispense": False,
+        "grid": False,
+        "pts": [[0.0, 0.0], [305.0, 100.0]]
+    })
+
+    # Outer 8-Petal Flower Rangoli Pattern
+    center_x, center_y = 305.0, 305.0
+    radius = 180.0
+    num_pts = 64
+    circle_pts = []
+    for i in range(num_pts + 1):
+        angle = (2.0 * math.pi * i) / num_pts
+        r = radius + 35.0 * math.sin(8.0 * angle)
+        px = center_x + r * math.cos(angle)
+        py = center_y + r * math.sin(angle)
+        circle_pts.append([round(px, 1), round(py, 1)])
+
+    segments.append({
+        "type": "DRAW",
+        "dispense": True,
+        "grid": False,
+        "pts": circle_pts
+    })
+
+    # Inner Star Pattern
+    inner_pts = []
+    inner_num = 16
+    for i in range(inner_num + 1):
+        angle = (2.0 * math.pi * i) / inner_num
+        r = 75.0 if i % 2 == 0 else 35.0
+        px = center_x + r * math.cos(angle)
+        py = center_y + r * math.sin(angle)
+        inner_pts.append([round(px, 1), round(py, 1)])
+
+    segments.append({
+        "type": "TRAVEL",
+        "dispense": False,
+        "grid": False,
+        "pts": [circle_pts[-1], inner_pts[0]]
+    })
+
+    segments.append({
+        "type": "DRAW",
+        "dispense": True,
+        "grid": False,
+        "pts": inner_pts
+    })
+
+    solver = KinematicSolver(wheelbase_mm=120.0, wheel_diameter_mm=44.0)
+    esp32_cmds = solver.generate_commands(segments)
+
+    return JSONResponse(content={
+        "status": "success",
+        "execution_segments": segments,
+        "esp32_commands": esp32_cmds,
+        "message": "Demo Rangoli path loaded successfully"
+    })
+
