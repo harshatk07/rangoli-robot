@@ -12,4 +12,6 @@ experiments/
 
 # OS
 .DS_Store
-Thumbs.db
+Thumbs.db.vscode/
+firmware/.pio/
+firmware/.vscode/
