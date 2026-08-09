@@ -91,14 +91,56 @@ class SmudgeRiskModel:
 
 
 class GridPlanner:
-    def __init__(self, canvas_width_mm: float = 600.0, canvas_height_mm: float = 600.0, grid_cols: int = 8, grid_rows: int = 8, nozzle_offset_mm: float = 60.0):
+    def __init__(self, canvas_width_mm: float = 610.0, canvas_height_mm: float = 610.0, grid_cols: int = 8, grid_rows: int = 8, nozzle_offset_mm: float = 60.0, margin_mm: float = 15.0):
         self.canvas_width = canvas_width_mm
         self.canvas_height = canvas_height_mm
         self.grid_cols = grid_cols
         self.grid_rows = grid_rows
-        self.swath_size = canvas_height_mm / grid_rows
+        self.swath_size = canvas_height_mm / float(grid_rows)
+        self.margin = margin_mm
+        self.min_x = margin_mm
+        self.max_x = canvas_width_mm - margin_mm
+        self.min_y = margin_mm
+        self.max_y = canvas_height_mm - margin_mm
         self.nozzle_offset = nozzle_offset_mm
         self.risk_model = SmudgeRiskModel(canvas_mm=canvas_width_mm, grid_res_mm=5.0, nozzle_offset_mm=nozzle_offset_mm)
+
+    def clamp_and_scale_paths(self, continuous_paths: list) -> list:
+        """Scales and clamps vector paths to fit within [15, 595] mm workspace safety bounds."""
+        if not continuous_paths:
+            return []
+
+        all_pts = [pt for path in continuous_paths for pt in path]
+        if not all_pts:
+            return []
+
+        min_px = min(p[0] for p in all_pts)
+        max_px = max(p[0] for p in all_pts)
+        min_py = min(p[1] for p in all_pts)
+        max_py = max(p[1] for p in all_pts)
+
+        w_px = max(1.0, max_px - min_px)
+        h_px = max(1.0, max_py - min_py)
+
+        target_w = self.max_x - self.min_x
+        target_h = self.max_y - self.min_y
+
+        scale = min(target_w / w_px, target_h / h_px)
+        offset_x = self.min_x + (target_w - w_px * scale) / 2.0
+        offset_y = self.min_y + (target_h - h_px * scale) / 2.0
+
+        scaled_paths = []
+        for path in continuous_paths:
+            scaled_path = []
+            for pt in path:
+                sx = offset_x + (pt[0] - min_px) * scale
+                sy = offset_y + (pt[1] - min_py) * scale
+                cx = min(self.max_x, max(self.min_x, round(sx, 1)))
+                cy = min(self.max_y, max(self.min_y, round(sy, 1)))
+                scaled_path.append((cx, cy))
+            scaled_paths.append(scaled_path)
+
+        return scaled_paths
 
     def analyze_svg_geometry(self, continuous_paths: list) -> dict:
         """Computes topological geometric features of the Rangoli design."""
@@ -126,7 +168,6 @@ class GridPlanner:
         radii = [math.hypot(pt[0] - cx, pt[1] - cy) for pt in all_pts]
         radial_std = float(np.std(radii) / (np.mean(radii) + 1e-5)) if radii else 1.0
 
-        # Prototype Heuristic Strategy Selection Guidelines
         if radial_std < 0.28:
             recommended_strategy = 'RADIAL_REGION'
         elif direction_ratio < 0.85 or aspect_ratio < 0.85:
@@ -142,16 +183,17 @@ class GridPlanner:
         }
 
     def plan_grid_aware_path(self, continuous_paths: list) -> list:
-        """Main entry point: Evaluates strategies and builds continuous risk map."""
-        analysis = self.analyze_svg_geometry(continuous_paths)
+        """Main entry point: Scales to 610x610 mm canvas with 15mm safety margins."""
+        scaled_paths = self.clamp_and_scale_paths(continuous_paths)
+        analysis = self.analyze_svg_geometry(scaled_paths)
         strategy = analysis['strategy']
 
         if strategy == 'VERTICAL_SWATH':
-            segments = self._plan_vertical_swaths(continuous_paths)
+            segments = self._plan_vertical_swaths(scaled_paths)
         elif strategy == 'RADIAL_REGION':
-            segments = self._plan_radial_regions(continuous_paths)
+            segments = self._plan_radial_regions(scaled_paths)
         else:
-            segments = self._plan_horizontal_swaths(continuous_paths)
+            segments = self._plan_horizontal_swaths(scaled_paths)
 
         # Update Risk Map dynamically as paths are drawn
         for seg in segments:

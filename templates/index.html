@@ -59,7 +59,7 @@
                 <section class="card workspace-card" id="sectionWorkspace">
                     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                         <h2>Workspace Preview (610 × 610 mm)</h2>
-                        <span class="grid-badge">8×8 Grid Workspace</span>
+                        <span class="grid-badge" style="background: #EFF6FF; color: #1D4ED8; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem;">610 × 610 mm Canvas</span>
                     </div>
 
                     <div class="canvas-workspace-wrapper">
@@ -231,7 +231,7 @@
                 <!-- 3. Drawing Statistics Card -->
                 <section class="card statistics-card" style="margin-top: 16px;">
                     <div class="card-header">
-                        <h2>Drawing Statistics</h2>
+                        <h2>Drawing Statistics & Telemetry</h2>
                     </div>
 
                     <div class="info-metrics-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
@@ -252,6 +252,10 @@
                             <span class="metric-value" id="valTravelDist" style="font-size: 1.1rem; font-weight: 800; color: #0F172A;">0.0 m</span>
                         </div>
                         <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px;">
+                            <span class="metric-label" style="font-size: 0.7rem; font-weight: 700; color: #64748B; display: block;">TOTAL DISTANCE</span>
+                            <span class="metric-value" id="valTotalDist" style="font-size: 1.1rem; font-weight: 800; color: #0F172A;">0.0 m</span>
+                        </div>
+                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px;">
                             <span class="metric-label" style="font-size: 0.7rem; font-weight: 700; color: #64748B; display: block;">ESTIMATED POWDER USAGE</span>
                             <span class="metric-value" id="valPowderUsage" style="font-size: 1.1rem; font-weight: 800; color: #0F172A;">0 g</span>
                         </div>
@@ -267,11 +271,29 @@
                             <span class="metric-label" style="font-size: 0.7rem; font-weight: 700; color: #64748B; display: block;">NUMBER OF TURNS</span>
                             <span class="metric-value" id="valTurnCount" style="font-size: 1.1rem; font-weight: 800; color: #0F172A;">0</span>
                         </div>
+                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px;">
+                            <span class="metric-label" style="font-size: 0.7rem; font-weight: 700; color: #64748B; display: block;">BATTERY LEVEL</span>
+                            <span class="metric-value" id="valBatteryPct" style="font-size: 1.1rem; font-weight: 800; color: #10B981;">95% (12.2V)</span>
+                        </div>
                     </div>
 
-                    <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 0.85rem; font-weight: 600; color: #475569;">Robot Status:</span>
-                        <span class="status-badge badge-idle" id="valState" style="padding: 4px 10px; background: #EFF6FF; color: #1D4ED8; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">IDLE</span>
+                    <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 6px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.82rem; font-weight: 600; color: #475569;">Robot Position (X, Y):</span>
+                            <span id="valPose" style="font-size: 0.85rem; font-weight: 700; color: #0F172A;">0.0, 0.0 mm</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.82rem; font-weight: 600; color: #475569;">Heading (IMU Orientation):</span>
+                            <span id="valHeading" style="font-size: 0.85rem; font-weight: 700; color: #0F172A;">0.0°</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.82rem; font-weight: 600; color: #475569;">Powder Dispenser:</span>
+                            <span class="status-badge badge-off" id="valPowder" style="padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;">OFF</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <span style="font-size: 0.85rem; font-weight: 600; color: #475569;">Robot State:</span>
+                            <span class="status-badge badge-idle" id="valState" style="padding: 4px 10px; background: #EFF6FF; color: #1D4ED8; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">IDLE</span>
+                        </div>
                     </div>
                 </section>
 

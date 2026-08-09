@@ -35,13 +35,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // UI Elements
     const valState = document.getElementById('valState');
-    const valGrid = document.getElementById('valGrid');
     const valPose = document.getElementById('valPose');
+    const valHeading = document.getElementById('valHeading');
     const valPowder = document.getElementById('valPowder');
     const txtProgress = document.getElementById('txtProgress');
     const barProgress = document.getElementById('barProgress');
     const valEstTime = document.getElementById('valEstTime');
-    const valTimeDetail = document.getElementById('valTimeDetail');
+    const valRemTime = document.getElementById('valRemTime');
     const espStatusText = document.getElementById('espStatusText');
     const espStatusDot = document.getElementById('espStatusDot');
 
@@ -73,10 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let isPowderOn = false;
     let robotState = 'IDLE';
 
-    let currentSpeedMmPerSec = 80.0; // Default Medium
+    let currentSpeedMmPerSec = 80.0; // Default Medium Speed
     let totalPathLengthMm = 0.0;
-    let totalTurns = 0;
-    let totalActuations = 0;
 
     // Off-screen canvas for persistent powder trail
     const powderCanvas = document.createElement('canvas');
@@ -84,46 +82,52 @@ document.addEventListener('DOMContentLoaded', () => {
     powderCanvas.height = 600;
     const powderCtx = powderCanvas.getContext('2d');
 
-    function getGridCellName(x, y) {
-        const r = Math.min(7, Math.max(0, Math.floor(y / 75.0)));
-        const c = Math.min(7, Math.max(0, Math.floor(x / 75.0)));
-        return `${String.fromCharCode(65 + r)}${c + 1}`;
-    }
-
     // Calculate Estimated Completion Time dynamically
     function calculateEstimatedTime() {
-        if (totalPathLengthMm === 0) {
+        if (totalPathLengthMm === 0 || executionSegments.length === 0) {
             if (valEstTime) valEstTime.textContent = "00:00";
-            if (valTimeDetail) valTimeDetail.textContent = "Path: 0.0 m | Delays: 0.0s";
+            if (valRemTime) valRemTime.textContent = "00:00";
             return;
         }
 
-        const travelTimeSec = totalPathLengthMm / currentSpeedMmPerSec;
-        const turnDelaySec = totalTurns * 0.8;
-        const dispenserDelaySec = totalActuations * 0.06;
-        const totalSec = Math.round(travelTimeSec + turnDelaySec + dispenserDelaySec);
+        let drawDistMm = 0.0;
+        let travelDistMm = 0.0;
+
+        executionSegments.forEach(seg => {
+            const pts = seg.pts;
+            for (let i = 0; i < pts.length - 1; i++) {
+                const d = Math.hypot(pts[i+1][0] - pts[i][0], pts[i+1][1] - pts[i][1]);
+                if (seg.type === 'DRAW' && seg.dispense) {
+                    drawDistMm += d;
+                } else {
+                    travelDistMm += d;
+                }
+            }
+        });
+
+        const totalDistMm = drawDistMm + travelDistMm;
+        const totalSec = Math.round(totalDistMm / currentSpeedMmPerSec);
 
         const mins = Math.floor(totalSec / 60);
         const secs = totalSec % 60;
         const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
         if (valEstTime) valEstTime.textContent = formatted;
+        if (valRemTime) valRemTime.textContent = formatted;
 
         const valDrawDist = document.getElementById('valDrawDist');
         const valTravelDist = document.getElementById('valTravelDist');
+        const valTotalDist = document.getElementById('valTotalDist');
         const valPowderUsage = document.getElementById('valPowderUsage');
         const valPathCount = document.getElementById('valPathCount');
         const valTurnCount = document.getElementById('valTurnCount');
 
-        const drawDistM = (totalPathLengthMm / 1000.0).toFixed(1);
-        const travelDistM = (totalPathLengthMm * 0.15 / 1000.0).toFixed(1);
-        const powderG = Math.round((totalPathLengthMm / 1000.0) * 12.5);
-
-        if (valDrawDist) valDrawDist.textContent = `${drawDistM} m`;
-        if (valTravelDist) valTravelDist.textContent = `${travelDistM} m`;
-        if (valPowderUsage) valPowderUsage.textContent = `${powderG} g`;
+        if (valDrawDist) valDrawDist.textContent = `${(drawDistMm / 1000.0).toFixed(2)} m`;
+        if (valTravelDist) valTravelDist.textContent = `${(travelDistMm / 1000.0).toFixed(2)} m`;
+        if (valTotalDist) valTotalDist.textContent = `${(totalDistMm / 1000.0).toFixed(2)} m`;
+        if (valPowderUsage) valPowderUsage.textContent = `${Math.round((drawDistMm / 1000.0) * 12.5)} g`;
         if (valPathCount) valPathCount.textContent = executionSegments.length;
-        if (valTurnCount) valTurnCount.textContent = Math.round(executionSegments.length * 1.5);
+        if (valTurnCount) valTurnCount.textContent = Math.max(0, executionSegments.length * 2);
     }
 
     // Dropzone Click & Drag & Drop Handling
@@ -214,30 +218,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Speed Selector Radio Listener
     document.querySelectorAll('input[name="sizeOpt"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
+        radio.addEventListener('change', () => {
             calculateEstimatedTime();
         });
     });
-
-    // Draw 8x8 Grid Canvas Layer
-    function drawGridLayer() {
-        if (!ctx) return;
-        ctx.strokeStyle = '#E2E8F0';
-        ctx.lineWidth = 1;
-
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
-                const x = c * 75;
-                const y = r * 75;
-                ctx.strokeRect(x, y, 75, 75);
-
-                const label = `${String.fromCharCode(65 + r)}${c + 1}`;
-                ctx.fillStyle = (r === 0 && c === 0) ? '#2563EB' : '#94A3B8';
-                ctx.font = '10px sans-serif';
-                ctx.fillText(label, x + 6, y + 16);
-            }
-        }
-    }
 
     // Draw Planned Vector Path Layer
     function drawPlannedPathLayer() {
@@ -248,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pts.length < 2) return;
 
             ctx.beginPath();
-            if (seg.type === 'DRAW') {
+            if (seg.type === 'DRAW' && seg.dispense) {
                 ctx.strokeStyle = '#2563EB'; // Solid Blue = Drawing path
                 ctx.lineWidth = 2.0;
                 ctx.setLineDash([]);
@@ -273,7 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!ctx) return;
 
         ctx.clearRect(0, 0, 600, 600);
-        drawGridLayer();
         drawPlannedPathLayer();
 
         // Draw powder trail
@@ -287,8 +270,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update Telemetry readouts
         if (valState) valState.textContent = robotState;
-        if (valGrid) valGrid.textContent = getGridCellName(robotX, robotY);
         if (valPose) valPose.textContent = `${robotX.toFixed(1)}, ${robotY.toFixed(1)} mm`;
+        const valHeading = document.getElementById('valHeading');
+        if (valHeading) valHeading.textContent = `${robotTheta.toFixed(1)}°`;
         if (valPowder) {
             valPowder.textContent = isPowderOn ? 'ON' : 'OFF';
             valPowder.className = isPowderOn ? 'status-badge badge-on' : 'status-badge badge-off';
@@ -323,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btnStart.textContent = '🚀 Start Drawing';
         }
         if (btnPause) {
-            btnPause.disabled = true;
+            btnPause.disabled = false;
             btnPause.textContent = '⏸️ Pause';
         }
 
@@ -386,6 +370,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (executionSegments.length === 0) {
                 alert('Please upload a Rangoli design or click "Load Demo Path" first.');
                 return;
+            }
+
+            if (currentRobotMode === 'REAL') {
+                const confirmReal = confirm("⚠️ REAL ROBOT SAFETY CONFIRMATION:\n\nAre you sure you want to start drawing on the physical mobile robot via ESP32 Wi-Fi WSS?\n\nPlease verify workspace floor is clear and emergency stop is accessible.");
+                if (!confirmReal) return;
             }
 
             if (segIdx >= executionSegments.length || robotState === 'COMPLETE') {
@@ -660,6 +649,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (espStatusDot) espStatusDot.style.backgroundColor = '#10B981';
                     }
                 }
+                if (data.telemetry) {
+                    const tel = data.telemetry;
+                    if (valPose) valPose.textContent = `${tel.x || 0.0}, ${tel.y || 0.0} mm`;
+                    const valHeading = document.getElementById('valHeading');
+                    if (valHeading) valHeading.textContent = `${tel.heading || 0.0}°`;
+                    const valBatteryPct = document.getElementById('valBatteryPct');
+                    if (valBatteryPct) valBatteryPct.textContent = `${tel.battery_pct || 95}% (${tel.battery_voltage || 12.2}V)`;
+                }
             } catch (err) {
                 console.error('[WS] Message parse error:', err);
             }
@@ -679,5 +676,5 @@ document.addEventListener('DOMContentLoaded', () => {
     connectDashboardWebSocket();
 
     // Initial Viewport Draw
-    drawGridLayer();
+    renderViewport();
 });
