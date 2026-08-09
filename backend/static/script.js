@@ -385,18 +385,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (isRunning && !isPaused) return;
+            if (segIdx >= executionSegments.length || robotState === 'COMPLETE') {
+                segIdx = 0;
+                ptIdx = 0;
+                lerpProgress = 0.0;
+                powderCtx.clearRect(0, 0, 600, 600);
+            }
 
             isRunning = true;
             isPaused = false;
             robotState = 'RUNNING';
 
             btnStart.disabled = true;
-            if (btnPause) btnPause.disabled = false;
-
-            segIdx = 0;
-            ptIdx = 0;
-            lerpProgress = 0.0;
+            if (btnPause) { btnPause.disabled = false; btnPause.textContent = '⏸️ Pause'; }
+            if (btnResume) btnResume.disabled = false;
+            if (btnStop) btnStop.disabled = false;
 
             animate();
         });
