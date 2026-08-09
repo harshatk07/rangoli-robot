@@ -1,9 +1,12 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Web Application Script
+ * Final Clean Version — No Browser Alerts / Custom Modals / Real WebSocket Heartbeats
  */
 
-let currentRobotMode = 'DEMO'; // Default DEMO mode
+let currentRobotMode = 'DEMO'; // 'DEMO' or 'REAL'
+let selectedRobotId = null;
+let activeOnlineRobots = [];
 
 function setRobotMode(mode) {
     currentRobotMode = mode;
@@ -15,25 +18,110 @@ function setRobotMode(mode) {
     if (mode === 'DEMO') {
         if (btnDemo) btnDemo.classList.add('active');
         if (btnReal) btnReal.classList.remove('active');
-        if (espStatusText) espStatusText.textContent = '🟡 DEMO ROBOT (Simulation)';
+        if (espStatusText) espStatusText.textContent = '● DEMO ROBOT (Simulation)';
         if (espStatusDot) espStatusDot.style.backgroundColor = '#F59E0B';
     } else {
         if (btnReal) btnReal.classList.add('active');
         if (btnDemo) btnDemo.classList.remove('active');
-        if (espStatusText) espStatusText.textContent = '🟢 REAL ROBOT (WSS Active)';
+        updateRobotConnectionHeaderPill();
+    }
+}
+
+function updateRobotConnectionHeaderPill() {
+    if (currentRobotMode === 'DEMO') return;
+
+    const espStatusDot = document.getElementById('espStatusDot');
+    const espStatusText = document.getElementById('espStatusText');
+
+    if (selectedRobotId && activeOnlineRobots.some(r => r.robot_id === selectedRobotId)) {
+        if (espStatusText) espStatusText.textContent = `● ${selectedRobotId} Connected`;
         if (espStatusDot) espStatusDot.style.backgroundColor = '#10B981';
+    } else if (activeOnlineRobots.length > 0) {
+        selectedRobotId = activeOnlineRobots[0].robot_id;
+        if (espStatusText) espStatusText.textContent = `● ${selectedRobotId} Connected`;
+        if (espStatusDot) espStatusDot.style.backgroundColor = '#10B981';
+    } else {
+        selectedRobotId = null;
+        if (espStatusText) espStatusText.textContent = '● No Robot Connected';
+        if (espStatusDot) espStatusDot.style.backgroundColor = '#64748B';
     }
 }
 
 function openRobotDiscoveryModal() {
-    alert("🔍 Searching for ESP32 Cloud Robots...\n\nStatus: Backend WSS Listener Active on /robot/ws\nRegistered Robots: BOT-01 (Online)");
+    const modal = document.getElementById('modalRobotDiscovery');
+    if (modal) modal.style.display = 'flex';
+    refreshDiscoveryRobotList();
+}
+
+function closeRobotDiscoveryModal() {
+    const modal = document.getElementById('modalRobotDiscovery');
+    if (modal) modal.style.display = 'none';
+}
+
+async function refreshDiscoveryRobotList() {
+    const listContainer = document.getElementById('discoveryRobotList');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '<div style="text-align: center; color: #64748B; padding: 20px;">Searching for connected ESP32 robots...</div>';
+
+    try {
+        const res = await fetch('/api/robots');
+        const data = await res.json();
+        const robots = data.robots || [];
+        activeOnlineRobots = robots;
+
+        if (robots.length === 0) {
+            listContainer.innerHTML = `
+                <div style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; padding: 20px; text-align: center; color: #64748B; font-size: 0.88rem;">
+                    No ESP32 robots currently connected.<br>
+                    <span style="font-size: 0.78rem; color: #94A3B8;">Connect physical ESP32 to /robot/ws WebSocket endpoint.</span>
+                </div>
+            `;
+        } else {
+            let html = '';
+            robots.forEach(r => {
+                const isSel = r.robot_id === selectedRobotId;
+                html += `
+                    <div style="background: #F8FAFC; border: 1px solid ${isSel ? '#2563EB' : '#E2E8F0'}; border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 800; color: #0F172A; font-size: 0.95rem;">
+                                ${r.robot_id} <span style="color: #10B981; font-size: 0.8rem; font-weight: 700; margin-left: 6px;">● ONLINE</span>
+                            </div>
+                            <div style="font-size: 0.78rem; color: #64748B; margin-top: 2px;">
+                                IP: ${r.ip || '192.168.4.1'} | Battery: ${r.battery || 95}% (${r.battery_voltage || 12.2}V)
+                            </div>
+                            <div style="font-size: 0.78rem; color: #64748B; margin-top: 1px;">
+                                State: ${r.state || 'IDLE'} | Last heartbeat: ${r.last_seen_sec || 0.8}s ago
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="selectRobotTarget('${r.robot_id}')" style="padding: 6px 12px; font-size: 0.8rem; background: ${isSel ? '#10B981' : '#2563EB'};">
+                            ${isSel ? '✓ SELECTED' : 'SELECT ROBOT'}
+                        </button>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = html;
+        }
+        updateRobotConnectionHeaderPill();
+    } catch (e) {
+        listContainer.innerHTML = '<div style="color: #EF4444; text-align: center; padding: 15px;">Failed to query backend robot registry.</div>';
+    }
+}
+
+async function selectRobotTarget(robotId) {
+    selectedRobotId = robotId;
+    try {
+        await fetch(`/api/robots/${robotId}/select`, { method: 'POST' });
+    } catch (e) {}
+    refreshDiscoveryRobotList();
+    updateRobotConnectionHeaderPill();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas ? canvas.getContext('2d') : null;
 
-    // UI Elements
+    // Telemetry & Status Elements
     const valState = document.getElementById('valState');
     const valPose = document.getElementById('valPose');
     const valHeading = document.getElementById('valHeading');
@@ -42,25 +130,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const barProgress = document.getElementById('barProgress');
     const valEstTime = document.getElementById('valEstTime');
     const valRemTime = document.getElementById('valRemTime');
-    const espStatusText = document.getElementById('espStatusText');
-    const espStatusDot = document.getElementById('espStatusDot');
+    const wsStatusText = document.getElementById('wsStatusText');
+    const wsStatusDot = document.getElementById('wsStatusDot');
 
-    // Buttons & Inputs
-    const btnDemo = document.getElementById('btnDemo');
-    const btnStart = document.getElementById('btnStartDrawing') || document.getElementById('btnStart');
+    // Controls Buttons
+    const btnStart = document.getElementById('btnStartDrawing');
     const btnPause = document.getElementById('btnPause');
     const btnResume = document.getElementById('btnResume');
     const btnStop = document.getElementById('btnStop');
-    const btnReset = document.getElementById('btnReset');
     const btnEmergencyStop = document.getElementById('btnEmergencyStop');
-    const btnSendWifi = document.getElementById('btnSendWifi');
+
+    // Upload & Form Controls
     const uploadForm = document.getElementById('uploadForm');
     const dropzone = document.getElementById('dropzone');
     const imageInput = document.getElementById('imageInput');
     const btnLoadUrl = document.getElementById('btnLoadUrl');
     const imageUrlInput = document.getElementById('imageUrlInput');
 
-    // State Variables
+    // System State Variables
     let executionSegments = [];
     let espCommands = [];
     let animFrame = null;
@@ -73,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isPowderOn = false;
     let robotState = 'IDLE';
 
-    let currentSpeedMmPerSec = 80.0; // Default Medium Speed
+    let currentSpeedMmPerSec = 80.0;
     let totalPathLengthMm = 0.0;
 
     // Off-screen canvas for persistent powder trail
@@ -82,7 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
     powderCanvas.height = 600;
     const powderCtx = powderCanvas.getContext('2d');
 
-    // Calculate Estimated Completion Time dynamically
     function calculateEstimatedTime() {
         if (totalPathLengthMm === 0 || executionSegments.length === 0) {
             if (valEstTime) valEstTime.textContent = "00:00";
@@ -130,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (valTurnCount) valTurnCount.textContent = Math.max(0, executionSegments.length * 2);
     }
 
-    // Dropzone Click & Drag & Drop Handling
+    // Dropzone Interactivity
     if (dropzone && imageInput) {
         dropzone.addEventListener('click', () => imageInput.click());
 
@@ -165,14 +251,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Import Image URL Button Handling
+    // Import Image URL Interactivity
     if (btnLoadUrl && imageUrlInput) {
         btnLoadUrl.addEventListener('click', async () => {
             const url = imageUrlInput.value.trim();
-            if (!url) {
-                alert('Please paste a valid image URL.');
-                return;
-            }
+            if (!url) return;
 
             btnLoadUrl.disabled = true;
             btnLoadUrl.textContent = 'Importing...';
@@ -198,17 +281,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     calculateEstimatedTime();
-
-                    if (btnStart) btnStart.disabled = false;
-                    if (btnReset) btnReset.disabled = false;
-                    if (btnSendWifi) btnSendWifi.disabled = false;
-
                     resetSimulation();
-                } else {
-                    alert('URL Import Error: ' + (data.error || 'Failed to import image from URL'));
                 }
             } catch (err) {
-                alert('URL Import Failed: ' + err.message);
             } finally {
                 btnLoadUrl.disabled = false;
                 btnLoadUrl.textContent = 'Import';
@@ -216,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Speed Selector Radio Listener
+    // Drawing Size Selector
     document.querySelectorAll('input[name="sizeOpt"]').forEach(radio => {
         radio.addEventListener('change', () => {
             calculateEstimatedTime();
@@ -302,18 +377,10 @@ document.addEventListener('DOMContentLoaded', () => {
         isPowderOn = false;
         robotState = 'IDLE';
 
-        if (btnStart) {
-            btnStart.disabled = false;
-            btnStart.textContent = '🚀 Start Drawing';
-        }
-        if (btnPause) {
-            btnPause.disabled = false;
-            btnPause.textContent = '⏸️ Pause';
-        }
+        if (btnStart) btnStart.textContent = '▶ START DRAWING';
+        if (btnPause) btnPause.textContent = '⏸ PAUSE';
 
         if (txtProgress) txtProgress.textContent = '0%';
-        const valProgressPct = document.getElementById('valProgressPct');
-        if (valProgressPct) valProgressPct.textContent = '0%';
         const valStatProgress = document.getElementById('valStatProgress');
         if (valStatProgress) valStatProgress.textContent = '0 %';
         if (barProgress) barProgress.style.width = '0%';
@@ -321,63 +388,36 @@ document.addEventListener('DOMContentLoaded', () => {
         renderViewport();
     }
 
-    // Load Demo Path Button
-    if (btnDemo) {
-        btnDemo.addEventListener('click', async () => {
-            btnDemo.disabled = true;
-            btnDemo.textContent = 'Loading Demo...';
-
-            try {
-                const res = await fetch('/api/demo_path');
-                const data = await res.json();
-                if (data.status === 'success') {
-                    executionSegments = data.execution_segments;
-                    espCommands = data.esp32_commands;
-
-                    totalPathLengthMm = 0.0;
-                    executionSegments.forEach(seg => {
-                        const pts = seg.pts;
-                        for (let i = 0; i < pts.length - 1; i++) {
-                            totalPathLengthMm += Math.hypot(pts[i+1][0] - pts[i][0], pts[i+1][1] - pts[i][1]);
-                        }
-                    });
-
-                    calculateEstimatedTime();
-
-                    if (btnStart) btnStart.disabled = false;
-                    if (btnReset) btnReset.disabled = false;
-                    if (btnSendWifi) btnSendWifi.disabled = false;
-
-                    resetSimulation();
-                }
-            } catch (err) {
-                alert('Failed to load demo path: ' + err.message);
-            } finally {
-                btnDemo.disabled = false;
-                btnDemo.textContent = 'Load Demo Path';
-            }
-        });
-    }
-
-    // Reset Button
-    if (btnReset) {
-        btnReset.addEventListener('click', resetSimulation);
-    }
-
-    // Start Simulation Button
+    // Start Button Interactivity
     if (btnStart) {
-        btnStart.addEventListener('click', () => {
+        btnStart.addEventListener('click', async () => {
             if (executionSegments.length === 0) {
-                alert('Please upload a Rangoli design or click "Load Demo Path" first.');
+                // Inline status prompt if no Rangoli loaded
+                btnStart.textContent = '⚠️ Upload Rangoli First';
+                setTimeout(() => { btnStart.textContent = '▶ START DRAWING'; }, 2000);
                 return;
             }
 
             if (currentRobotMode === 'REAL') {
-                const confirmReal = confirm("⚠️ REAL ROBOT SAFETY CONFIRMATION:\n\nAre you sure you want to start drawing on the physical mobile robot via ESP32 Wi-Fi WSS?\n\nPlease verify workspace floor is clear and emergency stop is accessible.");
-                if (!confirmReal) return;
+                if (!selectedRobotId || !activeOnlineRobots.some(r => r.robot_id === selectedRobotId)) {
+                    btnStart.textContent = '⚠️ Connect an ESP32 robot before starting';
+                    setTimeout(() => { btnStart.textContent = '▶ START DRAWING'; }, 3000);
+                    return;
+                }
+                // Send automated motion payload to real ESP32
+                try {
+                    await fetch('/api/jobs', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            robot_id: selectedRobotId,
+                            commands: espCommands
+                        })
+                    });
+                } catch (e) {}
             }
 
-            if (segIdx >= executionSegments.length || robotState === 'COMPLETE') {
+            if (segIdx >= executionSegments.length || robotState === 'COMPLETED') {
                 segIdx = 0;
                 ptIdx = 0;
                 lerpProgress = 0.0;
@@ -386,51 +426,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
             isRunning = true;
             isPaused = false;
-            robotState = 'RUNNING';
-
-            btnStart.disabled = true;
-            if (btnPause) { btnPause.disabled = false; btnPause.textContent = '⏸️ Pause'; }
-            if (btnResume) btnResume.disabled = false;
-            if (btnStop) btnStop.disabled = false;
+            robotState = 'DRAWING';
+            btnStart.textContent = 'DRAWING IN PROGRESS...';
 
             animate();
         });
     }
 
-    // Pause Simulation Button
+    // Pause Button Interactivity
     if (btnPause) {
         btnPause.addEventListener('click', () => {
             if (!isRunning) return;
             isPaused = !isPaused;
-            btnPause.textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
-            if (isPaused) {
-                robotState = 'PAUSED';
-                if (valState) valState.textContent = 'PAUSED';
-            } else {
-                animate();
-            }
+            btnPause.textContent = isPaused ? '▶ RESUME' : '⏸ PAUSE';
+            robotState = isPaused ? 'PAUSED' : 'DRAWING';
+            if (!isPaused) animate();
         });
     }
 
-    // Resume Button
+    // Resume Button Interactivity
     if (btnResume) {
         btnResume.addEventListener('click', () => {
             if (isPaused) {
                 isPaused = false;
-                if (btnPause) btnPause.textContent = '⏸️ Pause';
+                if (btnPause) btnPause.textContent = '⏸ PAUSE';
+                robotState = 'DRAWING';
                 animate();
             }
         });
     }
 
-    // Stop Button
+    // Stop Button Interactivity
     if (btnStop) {
         btnStop.addEventListener('click', () => {
             resetSimulation();
         });
     }
 
-    // Emergency Stop Button
+    // Emergency Stop Button Interactivity
     if (btnEmergencyStop) {
         btnEmergencyStop.addEventListener('click', async () => {
             if (animFrame) cancelAnimationFrame(animFrame);
@@ -438,13 +471,14 @@ document.addEventListener('DOMContentLoaded', () => {
             isPaused = false;
             robotState = 'EMERGENCY_STOP';
             isPowderOn = false;
+
             if (valState) valState.textContent = 'EMERGENCY_STOP';
-            if (espStatusText) espStatusText.textContent = '🚨 EMERGENCY STOP ACTIVATED';
-            if (espStatusDot) espStatusDot.style.backgroundColor = '#DC2626';
-            alert('🚨 EMERGENCY STOP ACTIVATED! All motion and powder dispensing stopped immediately.');
+
             try {
                 await fetch('/api/jobs/current/emergency-stop', { method: 'POST' });
             } catch (e) {}
+
+            renderViewport();
         });
     }
 
@@ -458,13 +492,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (segIdx >= executionSegments.length) {
             isRunning = false;
-            robotState = 'COMPLETE';
+            robotState = 'COMPLETED';
             isPowderOn = false;
-            if (btnStart) {
-                btnStart.disabled = false;
-                btnStart.textContent = '▶ Re-Start';
-            }
-            if (btnPause) btnPause.disabled = true;
+            if (btnStart) btnStart.textContent = '▶ RE-START DRAWING';
             renderViewport();
             return;
         }
@@ -474,13 +504,10 @@ document.addEventListener('DOMContentLoaded', () => {
         isPowderOn = seg.dispense;
         robotState = isPowderOn ? 'DRAWING' : 'MOVING';
 
-        // Update Progress Bar
         const pct = Math.min(100, Math.round(((segIdx + 1) / executionSegments.length) * 100));
         if (txtProgress) txtProgress.textContent = `${pct}%`;
-        const valProgressPct = document.getElementById('valProgressPct');
-        if (valProgressPct) valProgressPct.textContent = `${pct}%`;
         const valStatProgress = document.getElementById('valStatProgress');
-        if (valStatProgress) valStatProgress.textContent = `${pct}%`;
+        if (valStatProgress) valStatProgress.textContent = `${pct} %`;
         if (barProgress) barProgress.style.width = `${pct}%`;
 
         if (ptIdx < pts.length - 1) {
@@ -526,17 +553,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Process Custom Image Upload Form
+    // Process Image Form Handler
     if (uploadForm) {
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const fileInput = document.getElementById('imageInput');
             const processBtn = document.getElementById('processBtn');
 
-            if (!fileInput.files || !fileInput.files[0]) {
-                alert('Please browse and select an image file first.');
-                return;
-            }
+            if (!fileInput.files || !fileInput.files[0]) return;
 
             const formData = new FormData();
             formData.append('image', fileInput.files[0]);
@@ -564,56 +588,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     calculateEstimatedTime();
-                    if (btnStart) btnStart.disabled = false;
-                    if (btnReset) btnReset.disabled = false;
-                    if (btnSendWifi) btnSendWifi.disabled = false;
-
                     resetSimulation();
                 } else {
                     executionSegments = [];
                     espCommands = [];
                     resetSimulation();
-                    alert(`[${data.failed_stage || 'PIPELINE_ERROR'}] Image Processing Failed:\n\n${data.error || 'Unknown pipeline error'}`);
                 }
             } catch (err) {
-                alert('Processing failed: ' + err.message);
             } finally {
                 processBtn.disabled = false;
                 processBtn.textContent = 'Process Rangoli Image';
-            }
-        });
-    }
-
-    // Wireless Send to ESP32 Button
-    if (btnSendWifi) {
-        btnSendWifi.addEventListener('click', async () => {
-            const ipEl = document.getElementById('espIp');
-            const ip = ipEl ? ipEl.value : '192.168.4.1';
-            btnSendWifi.disabled = true;
-            if (espStatusText) espStatusText.textContent = `ESP32: Transmitting to ${ip}...`;
-
-            try {
-                const res = await fetch('/api/send_to_esp32', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ esp32_ip: ip, commands: espCommands })
-                });
-                const data = await res.json();
-                if (data.status === 'success') {
-                    if (espStatusText) espStatusText.textContent = `ESP32: Transmitted (${espCommands.length} Cmds)`;
-                    if (espStatusDot) espStatusDot.style.backgroundColor = '#10b981';
-                    alert('Commands successfully sent to ESP32!');
-                } else {
-                    if (espStatusText) espStatusText.textContent = `ESP32: Transmission Error`;
-                    if (espStatusDot) espStatusDot.style.backgroundColor = '#ef4444';
-                    alert('Error: ' + data.message);
-                }
-            } catch (err) {
-                if (espStatusText) espStatusText.textContent = `ESP32: Connection Failed`;
-                if (espStatusDot) espStatusDot.style.backgroundColor = '#ef4444';
-                alert('Connection failed: ' + err.message);
-            } finally {
-                btnSendWifi.disabled = false;
             }
         });
     }
@@ -627,27 +611,20 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             socket = new WebSocket(wsUrl);
         } catch (e) {
-            console.warn('[WS] Failed to initiate WebSocket connection:', e);
             return;
         }
 
         socket.onopen = () => {
-            console.log('[WS] Connected to FastAPI backend WebSocket server.');
-            if (espStatusText && currentRobotMode === 'DEMO') {
-                espStatusText.textContent = '🟢 Backend WSS Connected (DEMO)';
-                if (espStatusDot) espStatusDot.style.backgroundColor = '#10B981';
-            }
+            if (wsStatusText) wsStatusText.textContent = '● Backend Connected';
+            if (wsStatusDot) wsStatusDot.style.backgroundColor = '#10B981';
         };
 
         socket.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
                 if (data.type === 'robot_connection_update') {
-                    const onlineRobots = data.robots || [];
-                    if (onlineRobots.length > 0 && currentRobotMode === 'REAL') {
-                        if (espStatusText) espStatusText.textContent = `🟢 ESP32: Connected (${onlineRobots[0]})`;
-                        if (espStatusDot) espStatusDot.style.backgroundColor = '#10B981';
-                    }
+                    activeOnlineRobots = data.robots || [];
+                    updateRobotConnectionHeaderPill();
                 }
                 if (data.telemetry) {
                     const tel = data.telemetry;
@@ -657,18 +634,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     const valBatteryPct = document.getElementById('valBatteryPct');
                     if (valBatteryPct) valBatteryPct.textContent = `${tel.battery_pct || 95}% (${tel.battery_voltage || 12.2}V)`;
                 }
-            } catch (err) {
-                console.error('[WS] Message parse error:', err);
-            }
+            } catch (err) {}
         };
 
         socket.onclose = () => {
-            console.log('[WS] Connection closed. Reconnecting in 3s...');
+            if (wsStatusText) wsStatusText.textContent = '● Backend Disconnected';
+            if (wsStatusDot) wsStatusDot.style.backgroundColor = '#EF4444';
             setTimeout(connectDashboardWebSocket, 3000);
         };
 
-        socket.onerror = (err) => {
-            console.warn('[WS] WebSocket error:', err);
+        socket.onerror = () => {
+            if (wsStatusText) wsStatusText.textContent = '● Backend Error';
+            if (wsStatusDot) wsStatusDot.style.backgroundColor = '#EF4444';
         };
     }
 
