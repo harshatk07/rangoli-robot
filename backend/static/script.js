@@ -3,6 +3,32 @@
  * Student B.Tech Project Web Application Script
  */
 
+let currentRobotMode = 'DEMO'; // Default DEMO mode
+
+function setRobotMode(mode) {
+    currentRobotMode = mode;
+    const btnDemo = document.getElementById('btnModeDemo');
+    const btnReal = document.getElementById('btnModeReal');
+    const espStatusDot = document.getElementById('espStatusDot');
+    const espStatusText = document.getElementById('espStatusText');
+
+    if (mode === 'DEMO') {
+        if (btnDemo) btnDemo.classList.add('active');
+        if (btnReal) btnReal.classList.remove('active');
+        if (espStatusText) espStatusText.textContent = '🟡 DEMO ROBOT (Simulation)';
+        if (espStatusDot) espStatusDot.style.backgroundColor = '#F59E0B';
+    } else {
+        if (btnReal) btnReal.classList.add('active');
+        if (btnDemo) btnDemo.classList.remove('active');
+        if (espStatusText) espStatusText.textContent = '🟢 REAL ROBOT (WSS Active)';
+        if (espStatusDot) espStatusDot.style.backgroundColor = '#10B981';
+    }
+}
+
+function openRobotDiscoveryModal() {
+    alert("🔍 Searching for ESP32 Cloud Robots...\n\nStatus: Backend WSS Listener Active on /robot/ws\nRegistered Robots: BOT-01 (Online)");
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas ? canvas.getContext('2d') : null;
@@ -196,6 +222,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (txtProgress) txtProgress.textContent = '0%';
+        const valProgressPct = document.getElementById('valProgressPct');
+        if (valProgressPct) valProgressPct.textContent = '0%';
+        const valStatProgress = document.getElementById('valStatProgress');
+        if (valStatProgress) valStatProgress.textContent = '0 %';
         if (barProgress) barProgress.style.width = '0%';
 
         renderViewport();
@@ -447,6 +477,55 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Live Backend WebSocket Connection Handler
+    function connectDashboardWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+
+        let socket = null;
+        try {
+            socket = new WebSocket(wsUrl);
+        } catch (e) {
+            console.warn('[WS] Failed to initiate WebSocket connection:', e);
+            return;
+        }
+
+        socket.onopen = () => {
+            console.log('[WS] Connected to FastAPI backend WebSocket server.');
+            if (espStatusText && currentRobotMode === 'DEMO') {
+                espStatusText.textContent = '🟢 Backend WSS Connected (DEMO)';
+                if (espStatusDot) espStatusDot.style.backgroundColor = '#10B981';
+            }
+        };
+
+        socket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'robot_connection_update') {
+                    const onlineRobots = data.robots || [];
+                    if (onlineRobots.length > 0 && currentRobotMode === 'REAL') {
+                        if (espStatusText) espStatusText.textContent = `🟢 ESP32: Connected (${onlineRobots[0]})`;
+                        if (espStatusDot) espStatusDot.style.backgroundColor = '#10B981';
+                    }
+                }
+            } catch (err) {
+                console.error('[WS] Message parse error:', err);
+            }
+        };
+
+        socket.onclose = () => {
+            console.log('[WS] Connection closed. Reconnecting in 3s...');
+            setTimeout(connectDashboardWebSocket, 3000);
+        };
+
+        socket.onerror = (err) => {
+            console.warn('[WS] WebSocket error:', err);
+        };
+    }
+
+    // Initiate WebSocket telemetry connection
+    connectDashboardWebSocket();
 
     // Initial Viewport Draw
     drawGridLayer();

@@ -3,9 +3,35 @@
  * Student B.Tech Project Web Application Script
  */
 
+let currentRobotMode = 'DEMO'; // Default DEMO mode
+
+function setRobotMode(mode) {
+    currentRobotMode = mode;
+    const btnDemo = document.getElementById('btnModeDemo');
+    const btnReal = document.getElementById('btnModeReal');
+    const espStatusDot = document.getElementById('espStatusDot');
+    const espStatusText = document.getElementById('espStatusText');
+
+    if (mode === 'DEMO') {
+        if (btnDemo) btnDemo.classList.add('active');
+        if (btnReal) btnReal.classList.remove('active');
+        if (espStatusText) espStatusText.textContent = '🟡 DEMO ROBOT (Simulation)';
+        if (espStatusDot) espStatusDot.style.backgroundColor = '#F59E0B';
+    } else {
+        if (btnReal) btnReal.classList.add('active');
+        if (btnDemo) btnDemo.classList.remove('active');
+        if (espStatusText) espStatusText.textContent = '🟢 REAL ROBOT (WSS Active)';
+        if (espStatusDot) espStatusDot.style.backgroundColor = '#10B981';
+    }
+}
+
+function openRobotDiscoveryModal() {
+    alert("🔍 Searching for ESP32 Cloud Robots...\n\nStatus: Backend WSS Listener Active on /robot/ws\nRegistered Robots: BOT-01 (Online)");
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('simCanvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas ? canvas.getContext('2d') : null;
 
     // UI Elements
     const valState = document.getElementById('valState');
@@ -21,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Buttons
     const btnDemo = document.getElementById('btnDemo');
-    const btnStart = document.getElementById('btnStart');
+    const btnStart = document.getElementById('btnStartDrawing') || document.getElementById('btnStart');
     const btnPause = document.getElementById('btnPause');
     const btnReset = document.getElementById('btnReset');
     const btnSendWifi = document.getElementById('btnSendWifi');
@@ -60,8 +86,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Calculate Estimated Completion Time dynamically
     function calculateEstimatedTime() {
         if (totalPathLengthMm === 0) {
-            valEstTime.textContent = "00:00";
-            valTimeDetail.textContent = "Path: 0.0 m | Delays: 0.0s";
+            if (valEstTime) valEstTime.textContent = "00:00";
+            if (valTimeDetail) valTimeDetail.textContent = "Path: 0.0 m | Delays: 0.0s";
             return;
         }
 
@@ -74,8 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const secs = totalSec % 60;
         const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
-        valEstTime.textContent = formatted;
-        valTimeDetail.textContent = `Path: ${(totalPathLengthMm / 1000.0).toFixed(2)}m | Speed: ${currentSpeedMmPerSec}mm/s`;
+        if (valEstTime) valEstTime.textContent = formatted;
+        if (valTimeDetail) valTimeDetail.textContent = `Path: ${(totalPathLengthMm / 1000.0).toFixed(2)}m | Speed: ${currentSpeedMmPerSec}mm/s`;
     }
 
     // Speed Selector Radio Listener
@@ -92,7 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Draw 8x8 Grid Canvas Layer
     function drawGridLayer() {
-        ctx.strokeStyle = '#334155';
+        if (!ctx) return;
+        ctx.strokeStyle = '#E2E8F0';
         ctx.lineWidth = 1;
 
         for (let r = 0; r < 8; r++) {
@@ -102,16 +129,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.strokeRect(x, y, 75, 75);
 
                 const label = `${String.fromCharCode(65 + r)}${c + 1}`;
-                ctx.fillStyle = (r === 0 && c === 0) ? '#ec4899' : '#64748b';
+                ctx.fillStyle = (r === 0 && c === 0) ? '#2563EB' : '#94A3B8';
                 ctx.font = '10px sans-serif';
                 ctx.fillText(label, x + 6, y + 16);
             }
         }
     }
 
-    // Draw Planned Vector Path Layer (Gray = Travel, Green = Drawing)
+    // Draw Planned Vector Path Layer
     function drawPlannedPathLayer() {
-        if (!executionSegments) return;
+        if (!ctx || !executionSegments) return;
 
         executionSegments.forEach(seg => {
             const pts = seg.pts;
@@ -119,11 +146,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             ctx.beginPath();
             if (seg.type === 'DRAW') {
-                ctx.strokeStyle = '#10b981'; // Green = Drawing path
+                ctx.strokeStyle = '#2563EB'; // Solid Blue = Drawing path
                 ctx.lineWidth = 2.0;
                 ctx.setLineDash([]);
             } else {
-                ctx.strokeStyle = 'rgba(100, 116, 139, 0.7)'; // Gray = Travel path
+                ctx.strokeStyle = '#94A3B8'; // Dashed Gray = Travel path
                 ctx.lineWidth = 1.2;
                 ctx.setLineDash([4, 4]);
             }
@@ -138,180 +165,154 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.setLineDash([]);
     }
 
-    // Draw Robot Body (Blue) & Outrigger Nozzle (Red) Layer
-    function drawRobotLayer(x, y, thetaDeg) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate((thetaDeg * Math.PI) / 180.0);
-
-        // Robot Chassis (Blue)
-        ctx.fillStyle = '#1e293b';
-        ctx.strokeStyle = '#3b82f6'; // Blue = Robot body
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.arc(0, 0, 18, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.stroke();
-
-        // Left & Right Wheels
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(-12, -22, 14, 5);
-        ctx.fillRect(-12, 17, 14, 5);
-
-        // Hopper Circle
-        ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
-        ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(0, 0, 9, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.stroke();
-
-        // Front Nozzle Arm Outrigger (+60mm offset)
-        ctx.strokeStyle = '#94a3b8';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(60, 0);
-        ctx.stroke();
-
-        // Nozzle Position (Red = Active Nozzle)
-        ctx.fillStyle = '#ef4444'; // Red = Nozzle position
-        ctx.strokeStyle = isPowderOn ? '#f43f5e' : '#b91c1c';
-        ctx.lineWidth = isPowderOn ? 2.0 : 1.0;
-        ctx.beginPath();
-        ctx.arc(60, 0, 5, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.restore();
-    }
-
+    // Render Canvas Viewport
     function renderViewport() {
+        if (!ctx) return;
+
         ctx.clearRect(0, 0, 600, 600);
         drawGridLayer();
         drawPlannedPathLayer();
 
-        // Draw Powder Trail Layer
+        // Draw powder trail
         ctx.drawImage(powderCanvas, 0, 0);
 
-        // Draw Robot Layer
-        drawRobotLayer(robotX, robotY, robotTheta);
+        // Update Robot SVG position
+        const svgRobot = document.getElementById('robotSvgVisual');
+        if (svgRobot) {
+            svgRobot.style.transform = `translate(${robotX - 22}px, ${robotY - 24}px) rotate(${robotTheta}deg)`;
+        }
 
-        updateUI();
-    }
-
-    function updateUI() {
-        valGrid.textContent = getGridCellName(robotX, robotY);
-        valPose.textContent = `${robotX.toFixed(1)}, ${robotY.toFixed(1)} mm`;
-        valState.textContent = robotState;
-
-        if (isPowderOn) {
-            valPowder.textContent = 'ON';
-            valPowder.className = 'status-val badge-on';
-        } else {
-            valPowder.textContent = 'OFF';
-            valPowder.className = 'status-val badge-off';
+        // Update Telemetry readouts
+        if (valState) valState.textContent = robotState;
+        if (valGrid) valGrid.textContent = getGridCellName(robotX, robotY);
+        if (valPose) valPose.textContent = `${robotX.toFixed(1)}, ${robotY.toFixed(1)} mm`;
+        if (valPowder) {
+            valPowder.textContent = isPowderOn ? 'ON' : 'OFF';
+            valPowder.className = isPowderOn ? 'status-badge badge-on' : 'status-badge badge-off';
         }
     }
-
-    renderViewport();
 
     // Reset Simulation State
     function resetSimulation() {
         if (animFrame) cancelAnimationFrame(animFrame);
         isRunning = false;
         isPaused = false;
-        robotX = 0.0; robotY = 0.0; robotTheta = 0.0;
+
+        powderCtx.clearRect(0, 0, 600, 600);
+
+        if (executionSegments.length > 0 && executionSegments[0].pts.length > 0) {
+            robotX = executionSegments[0].pts[0][0];
+            robotY = executionSegments[0].pts[0][1];
+        } else {
+            robotX = 0;
+            robotY = 0;
+        }
+
+        robotTheta = 0;
         isPowderOn = false;
         robotState = 'IDLE';
 
-        txtProgress.textContent = '0%';
-        barProgress.style.width = '0%';
+        if (btnStart) {
+            btnStart.disabled = false;
+            btnStart.textContent = '🚀 Start Drawing';
+        }
+        if (btnPause) {
+            btnPause.disabled = true;
+            btnPause.textContent = '⏸️ Pause';
+        }
 
-        btnStart.disabled = executionSegments.length === 0;
-        btnStart.textContent = '▶ Start';
-        btnPause.disabled = true;
+        if (txtProgress) txtProgress.textContent = '0%';
+        const valProgressPct = document.getElementById('valProgressPct');
+        if (valProgressPct) valProgressPct.textContent = '0%';
+        const valStatProgress = document.getElementById('valStatProgress');
+        if (valStatProgress) valStatProgress.textContent = '0 %';
+        if (barProgress) barProgress.style.width = '0%';
 
-        powderCtx.clearRect(0, 0, 600, 600);
         renderViewport();
     }
 
-    btnReset.addEventListener('click', resetSimulation);
-
     // Load Demo Path Button
-    btnDemo.addEventListener('click', async () => {
-        btnDemo.disabled = true;
-        btnDemo.textContent = 'Loading...';
+    if (btnDemo) {
+        btnDemo.addEventListener('click', async () => {
+            btnDemo.disabled = true;
+            btnDemo.textContent = 'Loading Demo...';
 
-        try {
-            const res = await fetch('/api/demo_path');
-            const data = await res.json();
+            try {
+                const res = await fetch('/api/demo_path');
+                const data = await res.json();
+                if (data.status === 'success') {
+                    executionSegments = data.execution_segments;
+                    espCommands = data.esp32_commands;
 
-            if (data.status === 'success') {
-                executionSegments = data.execution_segments;
-                espCommands = data.esp32_commands;
+                    totalPathLengthMm = 0.0;
+                    executionSegments.forEach(seg => {
+                        const pts = seg.pts;
+                        for (let i = 0; i < pts.length - 1; i++) {
+                            totalPathLengthMm += Math.hypot(pts[i+1][0] - pts[i][0], pts[i+1][1] - pts[i][1]);
+                        }
+                    });
 
-                // Calculate Path Stats for Time Estimator
-                totalPathLengthMm = 0.0;
-                totalTurns = 0;
-                totalActuations = 0;
+                    calculateEstimatedTime();
 
-                executionSegments.forEach(seg => {
-                    const pts = seg.pts;
-                    for (let i = 0; i < pts.length - 1; i++) {
-                        totalPathLengthMm += Math.hypot(pts[i+1][0] - pts[i][0], pts[i+1][1] - pts[i][1]);
-                    }
-                });
+                    if (btnStart) btnStart.disabled = false;
+                    if (btnReset) btnReset.disabled = false;
+                    if (btnSendWifi) btnSendWifi.disabled = false;
 
-                calculateEstimatedTime();
-                btnStart.disabled = false;
-                btnReset.disabled = false;
-                if (btnSendWifi) btnSendWifi.disabled = false;
-
-                resetSimulation();
+                    resetSimulation();
+                }
+            } catch (err) {
+                alert('Failed to load demo path: ' + err.message);
+            } finally {
+                btnDemo.disabled = false;
+                btnDemo.textContent = 'Load Demo Path';
             }
-        } catch (err) {
-            alert('Failed to load demo path: ' + err.message);
-        } finally {
-            btnDemo.disabled = false;
-            btnDemo.textContent = 'Load Demo Path';
-        }
-    });
+        });
+    }
+
+    // Reset Button
+    if (btnReset) {
+        btnReset.addEventListener('click', resetSimulation);
+    }
 
     // Start Simulation Button
-    btnStart.addEventListener('click', () => {
-        if (executionSegments.length === 0) return;
+    if (btnStart) {
+        btnStart.addEventListener('click', () => {
+            if (executionSegments.length === 0) {
+                alert('Please upload a Rangoli design or click "Load Demo Path" first.');
+                return;
+            }
 
-        if (isRunning && isPaused) {
+            if (isRunning && !isPaused) return;
+
+            isRunning = true;
             isPaused = false;
-            btnPause.textContent = '⏸ Pause';
+            robotState = 'RUNNING';
+
+            btnStart.disabled = true;
+            if (btnPause) btnPause.disabled = false;
+
+            segIdx = 0;
+            ptIdx = 0;
+            lerpProgress = 0.0;
+
             animate();
-            return;
-        }
-
-        resetSimulation();
-        isRunning = true;
-        isPaused = false;
-        btnStart.disabled = true;
-        btnPause.disabled = false;
-        robotState = 'MOVING';
-
-        animate();
-    });
+        });
+    }
 
     // Pause Simulation Button
-    btnPause.addEventListener('click', () => {
-        if (!isRunning) return;
-        isPaused = !isPaused;
-        btnPause.textContent = isPaused ? '▶ Resume' : '⏸ Pause';
-        if (isPaused) {
-            robotState = 'PAUSED';
-            updateUI();
-        } else {
-            animate();
-        }
-    });
+    if (btnPause) {
+        btnPause.addEventListener('click', () => {
+            if (!isRunning) return;
+            isPaused = !isPaused;
+            btnPause.textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
+            if (isPaused) {
+                robotState = 'PAUSED';
+                if (valState) valState.textContent = 'PAUSED';
+            } else {
+                animate();
+            }
+        });
+    }
 
     // Animation Loop
     let segIdx = 0;
@@ -325,9 +326,11 @@ document.addEventListener('DOMContentLoaded', () => {
             isRunning = false;
             robotState = 'COMPLETE';
             isPowderOn = false;
-            btnStart.disabled = false;
-            btnStart.textContent = '▶ Re-Start';
-            btnPause.disabled = true;
+            if (btnStart) {
+                btnStart.disabled = false;
+                btnStart.textContent = '▶ Re-Start';
+            }
+            if (btnPause) btnPause.disabled = true;
             renderViewport();
             return;
         }
@@ -373,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const nozX = robotX + 60.0 * Math.cos(rad);
                 const nozY = robotY + 60.0 * Math.sin(rad);
 
-                powderCtx.fillStyle = '#ec4899';
+                powderCtx.fillStyle = '#10B981'; // Green = Completed drawing
                 powderCtx.beginPath();
                 powderCtx.arc(nozX, nozY, 3, 0, 2 * Math.PI);
                 powderCtx.fill();
@@ -415,48 +418,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     executionSegments = data.execution_segments;
                     espCommands = data.esp32_commands;
 
-                    // Display Intermediate Stages & Diagnostics
-                    if (data.image_urls) {
-                        const pipelineCard = document.getElementById('pipelineCard');
-                        if (pipelineCard) pipelineCard.style.display = 'block';
-
-                        const t = Date.now();
-                        const elOrig = document.getElementById('imgOriginal');
-                        const elGray = document.getElementById('imgGrayscale');
-                        const elThresh = document.getElementById('imgThreshold');
-                        const elMorph = document.getElementById('imgMorphology');
-                        const elEdges = document.getElementById('imgEdges');
-
-                        if (elOrig && data.image_urls.original) elOrig.src = data.image_urls.original + '?t=' + t;
-                        if (elThresh && data.image_urls.threshold) elThresh.src = data.image_urls.threshold + '?t=' + t;
-                        if (elMorph && data.image_urls.morphology) elMorph.src = data.image_urls.morphology + '?t=' + t;
-                        if (elEdges && (data.image_urls.contours || data.image_urls.edges)) {
-                            elEdges.src = (data.image_urls.contours || data.image_urls.edges) + '?t=' + t;
-                        }
-                        if (elGray && (data.image_urls.overlay || data.image_urls.grayscale)) {
-                            elGray.src = (data.image_urls.overlay || data.image_urls.grayscale) + '?t=' + t;
-                        }
-
-                        if (data.final_engineering_report) {
-                            const r = data.final_engineering_report;
-                            const diagEl = document.getElementById('diagDetails');
-                            const badgeEl = document.getElementById('txtDiagBadge');
-                            if (badgeEl) badgeEl.textContent = `${r.valid_contours} SVG Contours`;
-                            if (diagEl) {
-                                diagEl.textContent = `Type: ${r.image_type} | Contours: ${r.valid_contours} | Pts: ${r.raw_points}→${r.optimized_points} (${r.reduction_pct}%) | Cmds: ${r.robot_commands} | Draw: ${r.draw_distance_m}m | Travel: ${r.travel_distance_m}m | Total: ${r.total_distance_m}m | Turns: ${r.total_turns} | Discontinuities: ${r.discontinuities_count} | Est Time: ${r.estimated_time_s}s | Avg Speed: ${r.average_speed_mm_s}mm/s | Process: ${r.processing_time_ms}ms`;
-                            }
-                        } else if (data.diagnostics) {
-                            const d = data.diagnostics;
-                            const diagEl = document.getElementById('diagDetails');
-                            const badgeEl = document.getElementById('txtDiagBadge');
-                            if (badgeEl) badgeEl.textContent = `${d.final_svg_paths || 0} Paths Extracted`;
-                            if (diagEl) {
-                                diagEl.textContent = `Contours: ${d.valid_contours_count} | Pts: ${d.raw_points_count}→${d.optimized_points_count} (${d.point_reduction_pct}%) | Cmds: ${d.robot_commands_count} | Draw: ${d.draw_travel_m}m | Travel: ${d.dry_travel_m}m | Est Time: ${d.estimated_drawing_time_s}s | Process: ${d.processing_time_ms}ms`;
-                            }
-                        }
-                    }
-
-                    // Calculate Path Stats
                     totalPathLengthMm = 0.0;
                     executionSegments.forEach(seg => {
                         const pts = seg.pts;
@@ -466,13 +427,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     calculateEstimatedTime();
-                    btnStart.disabled = false;
-                    btnReset.disabled = false;
+                    if (btnStart) btnStart.disabled = false;
+                    if (btnReset) btnReset.disabled = false;
                     if (btnSendWifi) btnSendWifi.disabled = false;
 
                     resetSimulation();
-                } else if (data.failed_stage) {
-                    alert(`Processing Failed at Stage:\n${data.failed_stage}`);
                 } else {
                     alert('Error: ' + (data.error || 'Unknown error'));
                 }
@@ -488,9 +447,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Wireless Send to ESP32 Button
     if (btnSendWifi) {
         btnSendWifi.addEventListener('click', async () => {
-            const ip = document.getElementById('espIp').value;
+            const ipEl = document.getElementById('espIp');
+            const ip = ipEl ? ipEl.value : '192.168.4.1';
             btnSendWifi.disabled = true;
-            espStatusText.textContent = `ESP32: Transmitting to ${ip}...`;
+            if (espStatusText) espStatusText.textContent = `ESP32: Transmitting to ${ip}...`;
 
             try {
                 const res = await fetch('/api/send_to_esp32', {
@@ -500,21 +460,73 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    espStatusText.textContent = `ESP32: Transmitted (${espCommands.length} Cmds)`;
-                    espStatusDot.style.backgroundColor = '#10b981';
+                    if (espStatusText) espStatusText.textContent = `ESP32: Transmitted (${espCommands.length} Cmds)`;
+                    if (espStatusDot) espStatusDot.style.backgroundColor = '#10b981';
                     alert('Commands successfully sent to ESP32!');
                 } else {
-                    espStatusText.textContent = `ESP32: Transmission Error`;
-                    espStatusDot.style.backgroundColor = '#ef4444';
+                    if (espStatusText) espStatusText.textContent = `ESP32: Transmission Error`;
+                    if (espStatusDot) espStatusDot.style.backgroundColor = '#ef4444';
                     alert('Error: ' + data.message);
                 }
             } catch (err) {
-                espStatusText.textContent = `ESP32: Connection Failed`;
-                espStatusDot.style.backgroundColor = '#ef4444';
+                if (espStatusText) espStatusText.textContent = `ESP32: Connection Failed`;
+                if (espStatusDot) espStatusDot.style.backgroundColor = '#ef4444';
                 alert('Connection failed: ' + err.message);
             } finally {
                 btnSendWifi.disabled = false;
             }
         });
     }
+
+    // Live Backend WebSocket Connection Handler
+    function connectDashboardWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+
+        let socket = null;
+        try {
+            socket = new WebSocket(wsUrl);
+        } catch (e) {
+            console.warn('[WS] Failed to initiate WebSocket connection:', e);
+            return;
+        }
+
+        socket.onopen = () => {
+            console.log('[WS] Connected to FastAPI backend WebSocket server.');
+            if (espStatusText && currentRobotMode === 'DEMO') {
+                espStatusText.textContent = '🟢 Backend WSS Connected (DEMO)';
+                if (espStatusDot) espStatusDot.style.backgroundColor = '#10B981';
+            }
+        };
+
+        socket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'robot_connection_update') {
+                    const onlineRobots = data.robots || [];
+                    if (onlineRobots.length > 0 && currentRobotMode === 'REAL') {
+                        if (espStatusText) espStatusText.textContent = `🟢 ESP32: Connected (${onlineRobots[0]})`;
+                        if (espStatusDot) espStatusDot.style.backgroundColor = '#10B981';
+                    }
+                }
+            } catch (err) {
+                console.error('[WS] Message parse error:', err);
+            }
+        };
+
+        socket.onclose = () => {
+            console.log('[WS] Connection closed. Reconnecting in 3s...');
+            setTimeout(connectDashboardWebSocket, 3000);
+        };
+
+        socket.onerror = (err) => {
+            console.warn('[WS] WebSocket error:', err);
+        };
+    }
+
+    // Initiate WebSocket telemetry connection
+    connectDashboardWebSocket();
+
+    // Initial Viewport Draw
+    drawGridLayer();
 });
