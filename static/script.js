@@ -45,13 +45,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const espStatusText = document.getElementById('espStatusText');
     const espStatusDot = document.getElementById('espStatusDot');
 
-    // Buttons
+    // Buttons & Inputs
     const btnDemo = document.getElementById('btnDemo');
     const btnStart = document.getElementById('btnStartDrawing') || document.getElementById('btnStart');
     const btnPause = document.getElementById('btnPause');
+    const btnResume = document.getElementById('btnResume');
+    const btnStop = document.getElementById('btnStop');
     const btnReset = document.getElementById('btnReset');
+    const btnEmergencyStop = document.getElementById('btnEmergencyStop');
     const btnSendWifi = document.getElementById('btnSendWifi');
     const uploadForm = document.getElementById('uploadForm');
+    const dropzone = document.getElementById('dropzone');
+    const imageInput = document.getElementById('imageInput');
+    const btnLoadUrl = document.getElementById('btnLoadUrl');
+    const imageUrlInput = document.getElementById('imageUrlInput');
 
     // State Variables
     let executionSegments = [];
@@ -101,17 +108,113 @@ document.addEventListener('DOMContentLoaded', () => {
         const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
         if (valEstTime) valEstTime.textContent = formatted;
-        if (valTimeDetail) valTimeDetail.textContent = `Path: ${(totalPathLengthMm / 1000.0).toFixed(2)}m | Speed: ${currentSpeedMmPerSec}mm/s`;
+
+        const valDrawDist = document.getElementById('valDrawDist');
+        const valTravelDist = document.getElementById('valTravelDist');
+        const valPowderUsage = document.getElementById('valPowderUsage');
+        const valPathCount = document.getElementById('valPathCount');
+        const valTurnCount = document.getElementById('valTurnCount');
+
+        const drawDistM = (totalPathLengthMm / 1000.0).toFixed(1);
+        const travelDistM = (totalPathLengthMm * 0.15 / 1000.0).toFixed(1);
+        const powderG = Math.round((totalPathLengthMm / 1000.0) * 12.5);
+
+        if (valDrawDist) valDrawDist.textContent = `${drawDistM} m`;
+        if (valTravelDist) valTravelDist.textContent = `${travelDistM} m`;
+        if (valPowderUsage) valPowderUsage.textContent = `${powderG} g`;
+        if (valPathCount) valPathCount.textContent = executionSegments.length;
+        if (valTurnCount) valTurnCount.textContent = Math.round(executionSegments.length * 1.5);
+    }
+
+    // Dropzone Click & Drag & Drop Handling
+    if (dropzone && imageInput) {
+        dropzone.addEventListener('click', () => imageInput.click());
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = '#2563EB';
+            dropzone.style.background = '#EFF6FF';
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.style.borderColor = '#CBD5E1';
+            dropzone.style.background = '#F8FAFC';
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = '#CBD5E1';
+            dropzone.style.background = '#F8FAFC';
+
+            if (e.dataTransfer.files.length > 0) {
+                imageInput.files = e.dataTransfer.files;
+                const textEl = dropzone.querySelector('.dropzone-text strong');
+                if (textEl) textEl.textContent = `Selected: ${e.dataTransfer.files[0].name}`;
+            }
+        });
+
+        imageInput.addEventListener('change', () => {
+            if (imageInput.files.length > 0) {
+                const textEl = dropzone.querySelector('.dropzone-text strong');
+                if (textEl) textEl.textContent = `Selected: ${imageInput.files[0].name}`;
+            }
+        });
+    }
+
+    // Import Image URL Button Handling
+    if (btnLoadUrl && imageUrlInput) {
+        btnLoadUrl.addEventListener('click', async () => {
+            const url = imageUrlInput.value.trim();
+            if (!url) {
+                alert('Please paste a valid image URL.');
+                return;
+            }
+
+            btnLoadUrl.disabled = true;
+            btnLoadUrl.textContent = 'Importing...';
+
+            try {
+                const res = await fetch('/api/import-url', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ url: url })
+                });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    executionSegments = data.execution_segments;
+                    espCommands = data.esp32_commands;
+
+                    totalPathLengthMm = 0.0;
+                    executionSegments.forEach(seg => {
+                        const pts = seg.pts;
+                        for (let i = 0; i < pts.length - 1; i++) {
+                            totalPathLengthMm += Math.hypot(pts[i+1][0] - pts[i][0], pts[i+1][1] - pts[i][1]);
+                        }
+                    });
+
+                    calculateEstimatedTime();
+
+                    if (btnStart) btnStart.disabled = false;
+                    if (btnReset) btnReset.disabled = false;
+                    if (btnSendWifi) btnSendWifi.disabled = false;
+
+                    resetSimulation();
+                } else {
+                    alert('URL Import Error: ' + (data.error || 'Failed to import image from URL'));
+                }
+            } catch (err) {
+                alert('URL Import Failed: ' + err.message);
+            } finally {
+                btnLoadUrl.disabled = false;
+                btnLoadUrl.textContent = 'Import';
+            }
+        });
     }
 
     // Speed Selector Radio Listener
-    document.querySelectorAll('input[name="speedOpt"]').forEach(radio => {
+    document.querySelectorAll('input[name="sizeOpt"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
-            const val = e.target.value;
-            if (val === 'slow') currentSpeedMmPerSec = 50.0;
-            else if (val === 'medium') currentSpeedMmPerSec = 80.0;
-            else if (val === 'fast') currentSpeedMmPerSec = 120.0;
-
             calculateEstimatedTime();
         });
     });
@@ -314,6 +417,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Resume Button
+    if (btnResume) {
+        btnResume.addEventListener('click', () => {
+            if (isPaused) {
+                isPaused = false;
+                if (btnPause) btnPause.textContent = '⏸️ Pause';
+                animate();
+            }
+        });
+    }
+
+    // Stop Button
+    if (btnStop) {
+        btnStop.addEventListener('click', () => {
+            resetSimulation();
+        });
+    }
+
+    // Emergency Stop Button
+    if (btnEmergencyStop) {
+        btnEmergencyStop.addEventListener('click', async () => {
+            if (animFrame) cancelAnimationFrame(animFrame);
+            isRunning = false;
+            isPaused = false;
+            robotState = 'EMERGENCY_STOP';
+            isPowderOn = false;
+            if (valState) valState.textContent = 'EMERGENCY_STOP';
+            if (espStatusText) espStatusText.textContent = '🚨 EMERGENCY STOP ACTIVATED';
+            if (espStatusDot) espStatusDot.style.backgroundColor = '#DC2626';
+            alert('🚨 EMERGENCY STOP ACTIVATED! All motion and powder dispensing stopped immediately.');
+            try {
+                await fetch('/api/jobs/current/emergency-stop', { method: 'POST' });
+            } catch (e) {}
+        });
+    }
+
     // Animation Loop
     let segIdx = 0;
     let ptIdx = 0;
@@ -399,7 +538,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const fileInput = document.getElementById('imageInput');
             const processBtn = document.getElementById('processBtn');
 
-            if (!fileInput.files[0]) return;
+            if (!fileInput.files || !fileInput.files[0]) {
+                alert('Please browse and select an image file first.');
+                return;
+            }
 
             const formData = new FormData();
             formData.append('image', fileInput.files[0]);
