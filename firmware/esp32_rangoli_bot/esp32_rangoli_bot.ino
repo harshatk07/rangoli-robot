@@ -123,8 +123,15 @@ void setupMotors() {
   pinMode(MOTOR_R_IN1, OUTPUT);
   pinMode(MOTOR_R_IN2, OUTPUT);
 
-  ledcAttachChannel(MOTOR_L_PWM, 5000, 8, 0);
-  ledcAttachChannel(MOTOR_R_PWM, 5000, 8, 1);
+#if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
+  ledcAttach(MOTOR_L_PWM, 5000, 8);
+  ledcAttach(MOTOR_R_PWM, 5000, 8);
+#else
+  ledcSetup(0, 5000, 8);
+  ledcAttachPin(MOTOR_L_PWM, 0);
+  ledcSetup(1, 5000, 8);
+  ledcAttachPin(MOTOR_R_PWM, 1);
+#endif
 }
 
 void setLeftMotor(int speed) {
@@ -132,15 +139,27 @@ void setLeftMotor(int speed) {
   if (speed > 0) {
     digitalWrite(MOTOR_L_IN1, HIGH);
     digitalWrite(MOTOR_L_IN2, LOW);
+#if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
     ledcWrite(MOTOR_L_PWM, speed);
+#else
+    ledcWrite(0, speed);
+#endif
   } else if (speed < 0) {
     digitalWrite(MOTOR_L_IN1, LOW);
     digitalWrite(MOTOR_L_IN2, HIGH);
+#if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
     ledcWrite(MOTOR_L_PWM, abs(speed));
+#else
+    ledcWrite(0, abs(speed));
+#endif
   } else {
     digitalWrite(MOTOR_L_IN1, LOW);
     digitalWrite(MOTOR_L_IN2, LOW);
+#if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
     ledcWrite(MOTOR_L_PWM, 0);
+#else
+    ledcWrite(0, 0);
+#endif
   }
 }
 
@@ -149,15 +168,27 @@ void setRightMotor(int speed) {
   if (speed > 0) {
     digitalWrite(MOTOR_R_IN1, HIGH);
     digitalWrite(MOTOR_R_IN2, LOW);
+#if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
     ledcWrite(MOTOR_R_PWM, speed);
+#else
+    ledcWrite(1, speed);
+#endif
   } else if (speed < 0) {
     digitalWrite(MOTOR_R_IN1, LOW);
     digitalWrite(MOTOR_R_IN2, HIGH);
+#if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
     ledcWrite(MOTOR_R_PWM, abs(speed));
+#else
+    ledcWrite(1, abs(speed));
+#endif
   } else {
     digitalWrite(MOTOR_R_IN1, LOW);
     digitalWrite(MOTOR_R_IN2, LOW);
+#if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
     ledcWrite(MOTOR_R_PWM, 0);
+#else
+    ledcWrite(1, 0);
+#endif
   }
 }
 
