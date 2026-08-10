@@ -1,12 +1,13 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Web Application Script
- * Final Production Version — Central drawingConfig State, Real Interactive Buttons & Safe HOME Position (22.4, 24.4) mm
+ * Final Production Version — Real WebSocket & Real ESP32 Connection Status System
  */
 
 let currentRobotMode = 'DEMO'; // 'DEMO' or 'REAL'
 let selectedRobotId = null;
 let activeOnlineRobots = [];
+let isBackendConnected = false;
 
 // Central Application State
 window.drawingConfig = {
@@ -27,49 +28,52 @@ function physicalToCanvas(x_mm, y_mm) {
     return { x: cx, y: cy };
 }
 
+function updateStatusDisplay() {
+    const backendStatusText = document.getElementById('backendStatusText') || document.getElementById('wsStatusText');
+    const backendStatusDot = document.getElementById('backendStatusDot') || document.getElementById('wsStatusDot');
+    const robotStatusText = document.getElementById('robotStatusText') || document.getElementById('espStatusText');
+    const robotStatusDot = document.getElementById('robotStatusDot') || document.getElementById('espStatusDot');
+
+    // 1. Backend Status: ONLY Connected when WebSocket / Backend is reachable
+    if (isBackendConnected) {
+        if (backendStatusText) backendStatusText.textContent = 'Backend: Connected';
+        if (backendStatusDot) backendStatusDot.style.backgroundColor = '#10B981';
+    } else {
+        if (backendStatusText) backendStatusText.textContent = 'Backend: Disconnected';
+        if (backendStatusDot) backendStatusDot.style.backgroundColor = '#EF4444';
+    }
+
+    // 2. Robot Status: ONLY Connected when an actual ESP32 is registered and alive
+    const hasOnlineRobot = activeOnlineRobots && activeOnlineRobots.length > 0;
+    if (!isBackendConnected) {
+        if (robotStatusText) robotStatusText.textContent = 'Robot: Disconnected';
+        if (robotStatusDot) robotStatusDot.style.backgroundColor = '#EF4444';
+    } else if (hasOnlineRobot) {
+        const connectedId = selectedRobotId || activeOnlineRobots[0].robot_id;
+        if (robotStatusText) robotStatusText.textContent = `Robot: ${connectedId} Connected`;
+        if (robotStatusDot) robotStatusDot.style.backgroundColor = '#10B981';
+    } else {
+        if (robotStatusText) robotStatusText.textContent = 'Robot: Disconnected';
+        if (robotStatusDot) robotStatusDot.style.backgroundColor = '#64748B';
+    }
+}
+
 function setRobotMode(mode) {
     currentRobotMode = mode;
     const btnDemo = document.getElementById('btnModeDemo');
     const btnReal = document.getElementById('btnModeReal');
     const btnDiscover = document.getElementById('btnDiscoverRobots');
-    const pillBackend = document.getElementById('pillWsBackend');
-    const espStatusDot = document.getElementById('espStatusDot');
-    const espStatusText = document.getElementById('espStatusText');
 
     if (mode === 'DEMO') {
         if (btnDemo) btnDemo.classList.add('active');
         if (btnReal) btnReal.classList.remove('active');
         if (btnDiscover) btnDiscover.style.display = 'none';
-        if (pillBackend) pillBackend.style.display = 'none';
-        if (espStatusText) espStatusText.textContent = '● DEMO ROBOT (Simulation)';
-        if (espStatusDot) espStatusDot.style.backgroundColor = '#F59E0B';
     } else {
         if (btnReal) btnReal.classList.add('active');
         if (btnDemo) btnDemo.classList.remove('active');
         if (btnDiscover) btnDiscover.style.display = 'inline-block';
-        if (pillBackend) pillBackend.style.display = 'inline-flex';
-        updateRobotConnectionHeaderPill();
     }
-}
-
-function updateRobotConnectionHeaderPill() {
-    if (currentRobotMode === 'DEMO') return;
-
-    const espStatusDot = document.getElementById('espStatusDot');
-    const espStatusText = document.getElementById('espStatusText');
-
-    if (selectedRobotId && activeOnlineRobots.some(r => r.robot_id === selectedRobotId)) {
-        if (espStatusText) espStatusText.textContent = `● ${selectedRobotId} Connected`;
-        if (espStatusDot) espStatusDot.style.backgroundColor = '#10B981';
-    } else if (activeOnlineRobots.length > 0) {
-        selectedRobotId = activeOnlineRobots[0].robot_id;
-        if (espStatusText) espStatusText.textContent = `● ${selectedRobotId} Connected`;
-        if (espStatusDot) espStatusDot.style.backgroundColor = '#10B981';
-    } else {
-        selectedRobotId = null;
-        if (espStatusText) espStatusText.textContent = '● No Robot Connected';
-        if (espStatusDot) espStatusDot.style.backgroundColor = '#64748B';
-    }
+    updateStatusDisplay();
 }
 
 function openRobotDiscoveryModal() {
@@ -86,8 +90,6 @@ function closeRobotDiscoveryModal() {
 async function refreshDiscoveryRobotList() {
     const listContainer = document.getElementById('discoveryRobotList');
     if (!listContainer) return;
-
-    listContainer.innerHTML = '<div style="text-align: center; color: #64748B; padding: 20px;">Searching for connected ESP32 robots...</div>';
 
     try {
         const res = await fetch('/api/robots');
@@ -127,9 +129,10 @@ async function refreshDiscoveryRobotList() {
             });
             listContainer.innerHTML = html;
         }
-        updateRobotConnectionHeaderPill();
+        updateStatusDisplay();
     } catch (e) {
-        listContainer.innerHTML = '<div style="color: #EF4444; text-align: center; padding: 15px;">Failed to query backend robot registry.</div>';
+        if (listContainer) listContainer.innerHTML = '<div style="color: #EF4444; text-align: center; padding: 15px;">Failed to query backend robot registry.</div>';
+        updateStatusDisplay();
     }
 }
 
@@ -139,7 +142,7 @@ async function selectRobotTarget(robotId) {
         await fetch(`/api/robots/${robotId}/select`, { method: 'POST' });
     } catch (e) {}
     refreshDiscoveryRobotList();
-    updateRobotConnectionHeaderPill();
+    updateStatusDisplay();
 }
 
 // Global Control Functions for Drawing Size and Line Width
@@ -221,8 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const barProgress = document.getElementById('barProgress');
     const valEstTime = document.getElementById('valEstTime');
     const valRemTime = document.getElementById('valRemTime');
-    const wsStatusText = document.getElementById('wsStatusText');
-    const wsStatusDot = document.getElementById('wsStatusDot');
 
     // Controls Buttons
     const btnStart = document.getElementById('btnStartDrawing');
@@ -300,7 +301,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         totalPathLengthMm = totalDrawDistMm + totalTravelDistMm;
 
-        // Estimated time = (Drawing distance / draw speed) + (Travel distance / travel speed)
         const drawSec = totalDrawDistMm / currentSpeedMmPerSec;
         const travelSec = totalTravelDistMm / currentTravelSpeedMmPerSec;
         totalEstimatedSec = Math.round(drawSec + travelSec);
@@ -837,7 +837,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Live Backend WebSocket Connection Handler
+    // Live Backend & Robot WebSocket Connection Handler
     function connectDashboardWebSocket() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -846,12 +846,15 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             socket = new WebSocket(wsUrl);
         } catch (e) {
+            isBackendConnected = false;
+            updateStatusDisplay();
             return;
         }
 
         socket.onopen = () => {
-            if (wsStatusText) wsStatusText.textContent = '● Backend Connected';
-            if (wsStatusDot) wsStatusDot.style.backgroundColor = '#10B981';
+            isBackendConnected = true;
+            updateStatusDisplay();
+            refreshDiscoveryRobotList();
         };
 
         socket.onmessage = (event) => {
@@ -859,7 +862,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = JSON.parse(event.data);
                 if (data.type === 'robot_connection_update') {
                     activeOnlineRobots = data.robots || [];
-                    updateRobotConnectionHeaderPill();
+                    updateStatusDisplay();
                     renderViewport();
                 }
                 if (data.telemetry && currentRobotMode === 'REAL') {
@@ -879,18 +882,18 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         socket.onclose = () => {
-            if (wsStatusText) wsStatusText.textContent = '● Backend Disconnected';
-            if (wsStatusDot) wsStatusDot.style.backgroundColor = '#EF4444';
+            isBackendConnected = false;
+            updateStatusDisplay();
             setTimeout(connectDashboardWebSocket, 3000);
         };
 
         socket.onerror = () => {
-            if (wsStatusText) wsStatusText.textContent = '● Backend Error';
-            if (wsStatusDot) wsStatusDot.style.backgroundColor = '#EF4444';
+            isBackendConnected = false;
+            updateStatusDisplay();
         };
     }
 
-    // Initiate WebSocket telemetry connection & initial mode state
+    // Initiate WebSocket connection & status display
     setRobotMode('DEMO');
     connectDashboardWebSocket();
     window.updateActiveConfigBadge();

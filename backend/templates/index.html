@@ -38,13 +38,13 @@
                     <button id="btnModeReal" class="btn-mode" onclick="setRobotMode('REAL')">🟢 REAL ROBOT</button>
                 </div>
                 <button id="btnDiscoverRobots" class="btn-scan-header" onclick="openRobotDiscoveryModal()" style="display: none;">🔵 DISCOVER ROBOTS</button>
-                <div class="header-status-pill" id="pillWsBackend" style="display: none;">
-                    <span class="status-dot-pulse" id="wsStatusDot" style="background-color: #10B981;"></span>
-                    <span id="wsStatusText">● Backend Connected</span>
+                <div class="header-status-pill" id="pillWsBackend">
+                    <span class="status-dot-pulse" id="backendStatusDot" style="background-color: #64748B;"></span>
+                    <span id="backendStatusText">Backend: Disconnected</span>
                 </div>
-                <div class="header-status-pill" style="margin-left: 6px;">
-                    <span class="status-dot-pulse" id="espStatusDot" style="background-color: #64748B;"></span>
-                    <span id="espStatusText">● No Robot Connected</span>
+                <div class="header-status-pill" id="pillRobotStatus" style="margin-left: 6px;">
+                    <span class="status-dot-pulse" id="robotStatusDot" style="background-color: #64748B;"></span>
+                    <span id="robotStatusText">Robot: Disconnected</span>
                 </div>
             </div>
         </div>
