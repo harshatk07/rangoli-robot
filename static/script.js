@@ -1,7 +1,7 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Web Application Script
- * Final Clean Version — No Browser Alerts / Custom Modals / Real WebSocket Heartbeats
+ * Final Production Version — Strict Telemetry Isolation & Calibrated Path Model
  */
 
 let currentRobotMode = 'DEMO'; // 'DEMO' or 'REAL'
@@ -94,7 +94,7 @@ async function refreshDiscoveryRobotList() {
                                 ${r.robot_id} <span style="color: #10B981; font-size: 0.8rem; font-weight: 700; margin-left: 6px;">● ONLINE</span>
                             </div>
                             <div style="font-size: 0.78rem; color: #64748B; margin-top: 2px;">
-                                IP: ${r.ip || '192.168.4.1'} | Battery: ${r.battery || 95}% (${r.battery_voltage || 12.2}V)
+                                IP: ${r.ip || '192.168.4.1'} | Battery: ${r.battery !== undefined ? r.battery + '%' : '—'} (${r.battery_voltage !== undefined ? r.battery_voltage + 'V' : '—'})
                             </div>
                             <div style="font-size: 0.78rem; color: #64748B; margin-top: 1px;">
                                 State: ${r.state || 'IDLE'} | Last heartbeat: ${r.last_seen_sec || 0.8}s ago
@@ -132,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const valPose = document.getElementById('valPose');
     const valHeading = document.getElementById('valHeading');
     const valPowder = document.getElementById('valPowder');
+    const valBatteryPct = document.getElementById('valBatteryPct');
     const txtProgress = document.getElementById('txtProgress');
     const barProgress = document.getElementById('barProgress');
     const valEstTime = document.getElementById('valEstTime');
@@ -177,8 +178,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function calculateEstimatedTime() {
         if (totalPathLengthMm === 0 || executionSegments.length === 0) {
-            if (valEstTime) valEstTime.textContent = "00:00";
-            if (valRemTime) valRemTime.textContent = "00:00";
+            if (valEstTime) valEstTime.textContent = "—";
+            if (valRemTime) valRemTime.textContent = "—";
+            const valDrawDist = document.getElementById('valDrawDist');
+            const valTravelDist = document.getElementById('valTravelDist');
+            const valTotalDist = document.getElementById('valTotalDist');
+            const valPowderUsage = document.getElementById('valPowderUsage');
+            const valPathCount = document.getElementById('valPathCount');
+            const valTurnCount = document.getElementById('valTurnCount');
+            if (valDrawDist) valDrawDist.textContent = "—";
+            if (valTravelDist) valTravelDist.textContent = "—";
+            if (valTotalDist) valTotalDist.textContent = "—";
+            if (valPowderUsage) valPowderUsage.textContent = "—";
+            if (valPathCount) valPathCount.textContent = "—";
+            if (valTurnCount) valTurnCount.textContent = "—";
             return;
         }
 
@@ -214,10 +227,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const valPathCount = document.getElementById('valPathCount');
         const valTurnCount = document.getElementById('valTurnCount');
 
+        const widthOpt = document.querySelector('input[name="widthOpt"]:checked');
+        const lineW = widthOpt ? parseFloat(widthOpt.value) : 3.0;
+        const powderGrams = Math.round((drawDistMm / 1000.0) * lineW * 4.17); // 4.17g per (m * mm_width)
+
         if (valDrawDist) valDrawDist.textContent = `${(drawDistMm / 1000.0).toFixed(2)} m`;
         if (valTravelDist) valTravelDist.textContent = `${(travelDistMm / 1000.0).toFixed(2)} m`;
         if (valTotalDist) valTotalDist.textContent = `${(totalDistMm / 1000.0).toFixed(2)} m`;
-        if (valPowderUsage) valPowderUsage.textContent = `${Math.round((drawDistMm / 1000.0) * 12.5)} g`;
+        if (valPowderUsage) valPowderUsage.textContent = `${powderGrams} g`;
         if (valPathCount) valPathCount.textContent = executionSegments.length;
         if (valTurnCount) valTurnCount.textContent = Math.max(0, executionSegments.length * 2);
     }
@@ -297,8 +314,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Drawing Size Selector
-    document.querySelectorAll('input[name="sizeOpt"]').forEach(radio => {
+    // Drawing Size & Line Width Selectors
+    document.querySelectorAll('input[name="sizeOpt"], input[name="widthOpt"]').forEach(radio => {
         radio.addEventListener('change', () => {
             calculateEstimatedTime();
         });
@@ -333,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.setLineDash([]);
     }
 
-    // Render Canvas Viewport
+    // Render Canvas Viewport & Strict Telemetry Isolation
     function renderViewport() {
         if (!ctx) return;
 
@@ -349,14 +366,29 @@ document.addEventListener('DOMContentLoaded', () => {
             svgRobot.style.transform = `translate(${robotX - 22}px, ${robotY - 24}px) rotate(${robotTheta}deg)`;
         }
 
-        // Update Telemetry readouts
-        if (valState) valState.textContent = robotState;
-        if (valPose) valPose.textContent = `${robotX.toFixed(1)}, ${robotY.toFixed(1)} mm`;
-        const valHeading = document.getElementById('valHeading');
-        if (valHeading) valHeading.textContent = `${robotTheta.toFixed(1)}°`;
-        if (valPowder) {
-            valPowder.textContent = isPowderOn ? 'ON' : 'OFF';
-            valPowder.className = isPowderOn ? 'status-badge badge-on' : 'status-badge badge-off';
+        // Strict Telemetry Isolation for REAL vs DEMO mode
+        if (currentRobotMode === 'REAL') {
+            const isRobotConnected = selectedRobotId && activeOnlineRobots.some(r => r.robot_id === selectedRobotId);
+            if (!isRobotConnected) {
+                if (valState) valState.textContent = 'OFFLINE';
+                if (valPose) valPose.textContent = '—';
+                if (valHeading) valHeading.textContent = '—';
+                if (valPowder) {
+                    valPowder.textContent = '—';
+                    valPowder.className = 'status-badge badge-off';
+                }
+                if (valBatteryPct) valBatteryPct.textContent = '—';
+            }
+        } else {
+            // DEMO mode simulated telemetry
+            if (valState) valState.textContent = robotState;
+            if (valPose) valPose.textContent = `${robotX.toFixed(1)}, ${robotY.toFixed(1)} mm (SIM)`;
+            if (valHeading) valHeading.textContent = `${robotTheta.toFixed(1)}°`;
+            if (valPowder) {
+                valPowder.textContent = isPowderOn ? 'ON' : 'OFF';
+                valPowder.className = isPowderOn ? 'status-badge badge-on' : 'status-badge badge-off';
+            }
+            if (valBatteryPct) valBatteryPct.textContent = '95% (SIM)';
         }
     }
 
@@ -398,7 +430,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnStart) {
         btnStart.addEventListener('click', async () => {
             if (executionSegments.length === 0) {
-                // Inline status prompt if no Rangoli loaded
                 btnStart.textContent = '⚠️ Upload Rangoli First';
                 setTimeout(() => { btnStart.textContent = '▶ START DRAWING'; }, 2000);
                 return;
@@ -410,7 +441,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     setTimeout(() => { btnStart.textContent = '▶ START DRAWING'; }, 3000);
                     return;
                 }
-                // Send automated motion payload to real ESP32
                 try {
                     await fetch('/api/jobs', {
                         method: 'POST',
@@ -631,14 +661,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.type === 'robot_connection_update') {
                     activeOnlineRobots = data.robots || [];
                     updateRobotConnectionHeaderPill();
+                    renderViewport();
                 }
-                if (data.telemetry) {
+                if (data.telemetry && currentRobotMode === 'REAL') {
                     const tel = data.telemetry;
-                    if (valPose) valPose.textContent = `${tel.x || 0.0}, ${tel.y || 0.0} mm`;
+                    if (valPose) valPose.textContent = (tel.x !== undefined && tel.x !== null) ? `${tel.x}, ${tel.y} mm` : '—';
                     const valHeading = document.getElementById('valHeading');
-                    if (valHeading) valHeading.textContent = `${tel.heading || 0.0}°`;
+                    if (valHeading) valHeading.textContent = (tel.heading !== undefined && tel.heading !== null) ? `${tel.heading}°` : '—';
                     const valBatteryPct = document.getElementById('valBatteryPct');
-                    if (valBatteryPct) valBatteryPct.textContent = `${tel.battery_pct || 95}% (${tel.battery_voltage || 12.2}V)`;
+                    if (valBatteryPct) valBatteryPct.textContent = (tel.battery_pct !== undefined && tel.battery_pct !== null) ? `${tel.battery_pct}% (${tel.battery_voltage || ''}V)` : '—';
+                    if (valPowder) {
+                        valPowder.textContent = tel.powder_active ? 'ON' : 'OFF';
+                        valPowder.className = tel.powder_active ? 'status-badge badge-on' : 'status-badge badge-off';
+                    }
+                    if (valState) valState.textContent = tel.state || 'OFFLINE';
                 }
             } catch (err) {}
         };
@@ -659,6 +695,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setRobotMode('DEMO');
     connectDashboardWebSocket();
 
-    // Initial Viewport Draw
+    // Initial Viewport Draw & Calculations
+    calculateEstimatedTime();
     renderViewport();
 });

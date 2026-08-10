@@ -191,17 +191,21 @@ class ConnectionManager:
         robots = []
         now = time.time()
         for rid, data in self.esp32_connections.items():
-            info = data["info"]
-            robots.append({
-                "robot_id": rid,
-                "connection": "CONNECTED" if (now - data["last_seen"] < 30.0) else "DISCONNECTED",
-                "status": data.get("status", "READY"),
-                "firmware_version": info.get("firmware_version", "1.0.0"),
-                "workspace": {"width": 610, "height": 610},
-                "last_seen": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(data["last_seen"])),
-                "wifi_signal": info.get("wifi_signal", -54),
-                "is_emulator": info.get("is_emulator", False)
-            })
+            last_seen_dt = now - data.get("last_seen", now)
+            if last_seen_dt < 5.0:
+                info = data.get("info", {})
+                robots.append({
+                    "robot_id": rid,
+                    "connection": "CONNECTED",
+                    "ip": info.get("ip", "192.168.4.1"),
+                    "battery": data.get("battery_pct"),
+                    "battery_voltage": data.get("battery_voltage"),
+                    "state": data.get("status", "IDLE"),
+                    "x": data.get("x"),
+                    "y": data.get("y"),
+                    "heading": data.get("heading"),
+                    "last_seen_sec": round(last_seen_dt, 1)
+                })
         return robots
 
     async def send_esp32_command(self, robot_id: str, command: dict, timeout_sec: float = 5.0) -> bool:
@@ -234,16 +238,16 @@ manager = ConnectionManager()
 
 
 async def heartbeat_watchdog():
-    """Background task checking ESP32 connection timeouts every 10 seconds."""
+    """Background task checking ESP32 connection timeouts every 2 seconds."""
     while True:
-        await asyncio.sleep(10)
+        await asyncio.sleep(2)
         now = time.time()
         offline_robots = []
         for rid, data in manager.esp32_connections.items():
-            if now - data["last_seen"] > 35.0:
+            if now - data.get("last_seen", now) > 5.0:
                 offline_robots.append(rid)
         for rid in offline_robots:
-            print(f"[WATCHDOG] Robot {rid} timed out (no heartbeat)")
+            print(f"[WATCHDOG] Robot {rid} timed out (no heartbeat for >5s)")
             await manager.disconnect_esp32(rid)
 
 
