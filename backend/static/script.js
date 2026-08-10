@@ -1,7 +1,7 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Web Application Script
- * Final Production Version — Central Application State, Working Drawing Size & Line Width Controls
+ * Final Production Version — Central drawingConfig State, Real Interactive Buttons & Safe HOME Position (22.4, 24.4) mm
  */
 
 let currentRobotMode = 'DEMO'; // 'DEMO' or 'REAL'
@@ -9,8 +9,10 @@ let selectedRobotId = null;
 let activeOnlineRobots = [];
 
 // Central Application State
-let currentDrawingSizeMm = 610.0; // 300.0, 450.0, 525.0, or 610.0
-let currentLineWidthMm = 3.0; // 2.0, 3.0, or 4.0
+window.drawingConfig = {
+    size: 610,      // 300, 450, 525, 610 mm
+    lineWidth: 3    // 2, 3, 4 mm
+};
 
 // Single Authoritative Physical (mm) to Canvas (px) Coordinate Transformation
 function physicalToCanvas(x_mm, y_mm) {
@@ -140,6 +142,71 @@ async function selectRobotTarget(robotId) {
     updateRobotConnectionHeaderPill();
 }
 
+// Global Control Functions for Drawing Size and Line Width
+window.updateActiveConfigBadge = function() {
+    const badge = document.getElementById('txtActiveConfigBadge');
+    if (badge) {
+        badge.textContent = `Active Config: Size ${window.drawingConfig.size} × ${window.drawingConfig.size} mm | Width ${window.drawingConfig.lineWidth} mm`;
+    }
+};
+
+window.setDrawingSize = function(size) {
+    let s = parseInt(size) || 610;
+    if (![300, 450, 525, 610].includes(s)) s = 610;
+    window.drawingConfig.size = s;
+
+    [300, 450, 525, 610].forEach(val => {
+        const btn = document.getElementById(`btnSize${val}`);
+        if (btn) {
+            if (val === s) {
+                btn.classList.add('active');
+                btn.style.border = '1px solid #2563EB';
+                btn.style.background = '#EFF6FF';
+                btn.style.color = '#1D4ED8';
+            } else {
+                btn.classList.remove('active');
+                btn.style.border = '1px solid #CBD5E1';
+                btn.style.background = '#F8FAFC';
+                btn.style.color = '#0F172A';
+            }
+        }
+    });
+
+    const gridBadge = document.querySelector('.grid-badge');
+    if (gridBadge) {
+        gridBadge.textContent = `Workspace: 610 × 610 mm (Drawing Area: ${s} × ${s} mm)`;
+    }
+
+    window.updateActiveConfigBadge();
+    window.recalculateDrawing();
+};
+
+window.setLineWidth = function(width) {
+    let w = parseInt(width) || 3;
+    if (![2, 3, 4].includes(w)) w = 3;
+    window.drawingConfig.lineWidth = w;
+
+    [2, 3, 4].forEach(val => {
+        const btn = document.getElementById(`btnWidth${val}`);
+        if (btn) {
+            if (val === w) {
+                btn.classList.add('active');
+                btn.style.border = '1px solid #2563EB';
+                btn.style.background = '#EFF6FF';
+                btn.style.color = '#1D4ED8';
+            } else {
+                btn.classList.remove('active');
+                btn.style.border = '1px solid #CBD5E1';
+                btn.style.background = '#F8FAFC';
+                btn.style.color = '#0F172A';
+            }
+        }
+    });
+
+    window.updateActiveConfigBadge();
+    window.recalculateDrawing();
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas ? canvas.getContext('2d') : null;
@@ -178,8 +245,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let isRunning = false;
     let isPaused = false;
 
-    let robotX = 0.0; // mm (HOME = 0.0 mm Top-Left)
-    let robotY = 0.0; // mm (HOME = 0.0 mm Top-Left)
+    // Robot HOME coordinate = (22.4, 24.4) mm Top-Left inside 610x610 mm workspace
+    let robotX = 22.4; 
+    let robotY = 24.4; 
     let robotTheta = 0.0; // deg
     let isPowderOn = false;
     let robotState = 'IDLE';
@@ -251,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const valPathCount = document.getElementById('valPathCount');
         const valTurnCount = document.getElementById('valTurnCount');
 
-        const powderGrams = Math.round((totalDrawDistMm / 1000.0) * currentLineWidthMm * 4.17); // 4.17g per (m * mm_width)
+        const powderGrams = Math.round((totalDrawDistMm / 1000.0) * window.drawingConfig.lineWidth * 4.17); // 4.17g per (m * mm_width)
 
         if (valDrawDist) valDrawDist.textContent = `${(totalDrawDistMm / 1000.0).toFixed(2)} m`;
         if (valTravelDist) valTravelDist.textContent = `${(totalTravelDistMm / 1000.0).toFixed(2)} m`;
@@ -261,66 +329,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (valTurnCount) valTurnCount.textContent = Math.max(0, executionSegments.length * 2);
     }
 
-    // State Management Functions for Drawing Size and Line Width
-    function setDrawingSize(sizeVal) {
-        let sizeValNum = 610.0;
-        let strVal = String(sizeVal).toLowerCase();
-        if (strVal.includes('300') || strVal === 'small') sizeValNum = 300.0;
-        else if (strVal.includes('450') || strVal === 'medium') sizeValNum = 450.0;
-        else if (strVal.includes('525') || strVal === 'large') sizeValNum = 525.0;
-        else sizeValNum = 610.0;
-
-        currentDrawingSizeMm = sizeValNum;
-
-        // Update active CSS highlight classes on size buttons
-        document.querySelectorAll('input[name="sizeOpt"]').forEach(input => {
-            const parentLabel = input.closest('.option-btn');
-            if (parentLabel) {
-                if (input.value === strVal || (strVal === 'small' && input.value === 'small') || (strVal === 'full' && input.value === 'full')) {
-                    input.checked = true;
-                    parentLabel.classList.add('active');
-                } else {
-                    parentLabel.classList.remove('active');
-                }
-            }
-        });
-
-        // Update workspace badge label
-        const gridBadge = document.querySelector('.grid-badge');
-        if (gridBadge) {
-            gridBadge.textContent = `Workspace: 610 × 610 mm (Drawing Area: ${sizeValNum} × ${sizeValNum} mm)`;
-        }
-
-        recalculateDrawing();
-    }
-
-    function setLineWidth(widthVal) {
-        const lineW = parseFloat(widthVal) || 3.0;
-        currentLineWidthMm = lineW;
-
-        // Update active CSS highlight classes on line width buttons
-        document.querySelectorAll('input[name="widthOpt"]').forEach(input => {
-            const parentLabel = input.closest('.option-btn');
-            if (parentLabel) {
-                if (parseFloat(input.value) === lineW) {
-                    input.checked = true;
-                    parentLabel.classList.add('active');
-                } else {
-                    parentLabel.classList.remove('active');
-                }
-            }
-        });
-
-        recalculateDrawing();
-    }
-
-    async function recalculateDrawing() {
+    window.recalculateDrawing = async function() {
         const fileInput = document.getElementById('imageInput');
+
         if (uploadForm && fileInput && fileInput.files && fileInput.files[0]) {
-            const sizeValStr = currentDrawingSizeMm === 300.0 ? 'small' : (currentDrawingSizeMm === 450.0 ? 'medium' : (currentDrawingSizeMm === 525.0 ? 'large' : 'full'));
+            const sizeStr = window.drawingConfig.size === 300 ? 'small' : (window.drawingConfig.size === 450 ? 'medium' : (window.drawingConfig.size === 525 ? 'large' : 'full'));
             const formData = new FormData();
             formData.append('image', fileInput.files[0]);
-            formData.append('drawing_size', sizeValStr);
+            formData.append('drawing_size', sizeStr);
 
             try {
                 const res = await fetch('/api/process', {
@@ -337,20 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         calculateEstimatedTime();
         resetSimulation();
-    }
-
-    // Attach Event Listeners to all Size & Width Radio Buttons
-    document.querySelectorAll('input[name="sizeOpt"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            setDrawingSize(e.target.value);
-        });
-    });
-
-    document.querySelectorAll('input[name="widthOpt"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            setLineWidth(e.target.value);
-        });
-    });
+    };
 
     // Dropzone Interactivity
     if (dropzone && imageInput) {
@@ -453,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Render Executed Completed Drawing Layer (Solid Emerald Green #10B981) Behind Robot
         if (segIdx > 0 || ptIdx > 0 || lerpProgress > 0 || robotState === 'COMPLETED') {
             ctx.strokeStyle = '#10B981'; // Emerald Green = Completed Rangoli drawing
-            ctx.lineWidth = Math.max(2.5, currentLineWidthMm);
+            ctx.lineWidth = Math.max(2.5, window.drawingConfig.lineWidth);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
 
@@ -556,13 +559,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const isRobotConnected = selectedRobotId && activeOnlineRobots.some(r => r.robot_id === selectedRobotId);
             if (!isRobotConnected) {
                 if (valState) valState.textContent = 'OFFLINE';
-                if (valPose) valPose.textContent = '—';
-                if (valHeading) valHeading.textContent = '—';
+                if (valPose) valPose.textContent = 'N/A';
+                if (valHeading) valHeading.textContent = 'N/A';
                 if (valPowder) {
                     valPowder.textContent = 'OFF';
                     valPowder.className = 'status-badge badge-off';
                 }
-                if (valBatteryPct) valBatteryPct.textContent = '—';
+                if (valBatteryPct) valBatteryPct.textContent = 'N/A';
             }
         } else {
             // DEMO mode simulated telemetry
@@ -577,7 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Reset Simulation State (Robot marker stays permanently at HOME (0,0) Top-Left before execution)
+    // Reset Simulation State (Robot marker stays permanently at HOME (22.4, 24.4) mm Top-Left before execution)
     function resetSimulation() {
         if (animFrame) cancelAnimationFrame(animFrame);
         isRunning = false;
@@ -587,9 +590,9 @@ document.addEventListener('DOMContentLoaded', () => {
         lerpProgress = 0.0;
         executedDistMm = 0.0;
 
-        // Robot marker is permanently at HOME (0,0) Top-Left before execution starts
-        robotX = 0.0;
-        robotY = 0.0;
+        // Robot marker is permanently at HOME (22.4, 24.4) mm Top-Left before execution starts
+        robotX = 22.4;
+        robotY = 24.4;
         robotTheta = 0.0;
         isPowderOn = false;
         robotState = 'IDLE';
@@ -641,8 +644,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ptIdx = 0;
                 lerpProgress = 0.0;
                 executedDistMm = 0.0;
-                robotX = 0.0;
-                robotY = 0.0;
+                robotX = 22.4;
+                robotY = 24.4;
             }
 
             isRunning = true;
@@ -799,11 +802,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!fileInput.files || !fileInput.files[0]) return;
 
-            const sizeValStr = currentDrawingSizeMm === 300.0 ? 'small' : (currentDrawingSizeMm === 450.0 ? 'medium' : (currentDrawingSizeMm === 525.0 ? 'large' : 'full'));
+            const sizeStr = window.drawingConfig.size === 300 ? 'small' : (window.drawingConfig.size === 450 ? 'medium' : (window.drawingConfig.size === 525 ? 'large' : 'full'));
 
             const formData = new FormData();
             formData.append('image', fileInput.files[0]);
-            formData.append('drawing_size', sizeValStr);
+            formData.append('drawing_size', sizeStr);
 
             processBtn.disabled = true;
             processBtn.textContent = 'Processing Image...';
@@ -861,11 +864,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (data.telemetry && currentRobotMode === 'REAL') {
                     const tel = data.telemetry;
-                    if (valPose) valPose.textContent = (tel.x !== undefined && tel.x !== null) ? `${tel.x}, ${tel.y} mm` : '—';
+                    if (valPose) valPose.textContent = (tel.x !== undefined && tel.x !== null) ? `${tel.x}, ${tel.y} mm` : 'N/A';
                     const valHeading = document.getElementById('valHeading');
-                    if (valHeading) valHeading.textContent = (tel.heading !== undefined && tel.heading !== null) ? `${tel.heading}°` : '—';
+                    if (valHeading) valHeading.textContent = (tel.heading !== undefined && tel.heading !== null) ? `${tel.heading}°` : 'N/A';
                     const valBatteryPct = document.getElementById('valBatteryPct');
-                    if (valBatteryPct) valBatteryPct.textContent = (tel.battery_pct !== undefined && tel.battery_pct !== null) ? `${tel.battery_pct}% (${tel.battery_voltage || ''}V)` : '—';
+                    if (valBatteryPct) valBatteryPct.textContent = (tel.battery_pct !== undefined && tel.battery_pct !== null) ? `${tel.battery_pct}% (${tel.battery_voltage || ''}V)` : 'N/A';
                     if (valPowder) {
                         valPowder.textContent = tel.powder_active ? 'ON' : 'OFF';
                         valPowder.className = tel.powder_active ? 'status-badge badge-on' : 'status-badge badge-off';
@@ -890,6 +893,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initiate WebSocket telemetry connection & initial mode state
     setRobotMode('DEMO');
     connectDashboardWebSocket();
+    window.updateActiveConfigBadge();
 
     // Initial Viewport Draw & Calculations
     calculateEstimatedTime();

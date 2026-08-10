@@ -199,10 +199,10 @@
                     </div>
                     <div class="setting-group" style="margin-top: 10px;">
                         <div class="setting-options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                            <label class="option-btn" id="lblSizeSmall"><input type="radio" name="sizeOpt" value="small"><span>Small (300 × 300 mm)</span></label>
-                            <label class="option-btn" id="lblSizeMedium"><input type="radio" name="sizeOpt" value="medium"><span>Medium (450 × 450 mm)</span></label>
-                            <label class="option-btn" id="lblSizeLarge"><input type="radio" name="sizeOpt" value="large"><span>Large (525 × 525 mm)</span></label>
-                            <label class="option-btn active" id="lblSizeFull"><input type="radio" name="sizeOpt" value="full" checked><span>Full (610 × 610 mm)</span></label>
+                            <button type="button" class="btn-option" id="btnSize300" onclick="setDrawingSize(300)" style="padding: 10px; border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer; user-select: none;">Small (300 × 300 mm)</button>
+                            <button type="button" class="btn-option" id="btnSize450" onclick="setDrawingSize(450)" style="padding: 10px; border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer; user-select: none;">Medium (450 × 450 mm)</button>
+                            <button type="button" class="btn-option" id="btnSize525" onclick="setDrawingSize(525)" style="padding: 10px; border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer; user-select: none;">Large (525 × 525 mm)</button>
+                            <button type="button" class="btn-option active" id="btnSize610" onclick="setDrawingSize(610)" style="padding: 10px; border: 1px solid #2563EB; background: #EFF6FF; color: #1D4ED8; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer; user-select: none;">Full (610 × 610 mm)</button>
                         </div>
                     </div>
 
@@ -211,10 +211,14 @@
                     </div>
                     <div class="setting-group" style="margin-top: 10px;">
                         <div class="setting-options-grid grid-3" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-                            <label class="option-btn" id="lblWidth2"><input type="radio" name="widthOpt" value="2"><span>2 mm</span></label>
-                            <label class="option-btn active" id="lblWidth3"><input type="radio" name="widthOpt" value="3" checked><span>3 mm (Default)</span></label>
-                            <label class="option-btn" id="lblWidth4"><input type="radio" name="widthOpt" value="4"><span>4 mm</span></label>
+                            <button type="button" class="btn-option" id="btnWidth2" onclick="setLineWidth(2)" style="padding: 10px; border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: pointer; user-select: none;">2 mm</button>
+                            <button type="button" class="btn-option active" id="btnWidth3" onclick="setLineWidth(3)" style="padding: 10px; border: 1px solid #2563EB; background: #EFF6FF; color: #1D4ED8; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: pointer; user-select: none;">3 mm (Default)</button>
+                            <button type="button" class="btn-option" id="btnWidth4" onclick="setLineWidth(4)" style="padding: 10px; border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: pointer; user-select: none;">4 mm</button>
                         </div>
+                    </div>
+
+                    <div id="txtActiveConfigBadge" style="margin-top: 12px; font-size: 0.78rem; font-weight: 700; color: #2563EB; background: #EFF6FF; padding: 6px 12px; border-radius: 6px; border: 1px solid #BFDBFE; text-align: center;">
+                        Active Config: Size 610 × 610 mm | Width 3 mm
                     </div>
                 </section>
 
