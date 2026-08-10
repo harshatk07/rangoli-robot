@@ -1,7 +1,7 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Web Application Script
- * Final Production Version — Real WebSocket & Real ESP32 Connection Status System
+ * Final Production Version — Strict Status System (Demo Backend / Real Backend & Real Robot)
  */
 
 let currentRobotMode = 'DEMO'; // 'DEMO' or 'REAL'
@@ -34,26 +34,32 @@ function updateStatusDisplay() {
     const robotStatusText = document.getElementById('robotStatusText') || document.getElementById('espStatusText');
     const robotStatusDot = document.getElementById('robotStatusDot') || document.getElementById('espStatusDot');
 
-    // 1. Backend Status: ONLY Connected when WebSocket / Backend is reachable
+    const isDemo = (currentRobotMode === 'DEMO');
+
+    // 1. Backend Status: Clearly distinguishes Demo Backend vs Real Backend
     if (isBackendConnected) {
-        if (backendStatusText) backendStatusText.textContent = 'Backend: Connected';
+        if (backendStatusText) {
+            backendStatusText.textContent = isDemo ? 'Demo Backend: Connected' : 'Real Backend: Connected';
+        }
         if (backendStatusDot) backendStatusDot.style.backgroundColor = '#10B981';
     } else {
-        if (backendStatusText) backendStatusText.textContent = 'Backend: Disconnected';
+        if (backendStatusText) {
+            backendStatusText.textContent = isDemo ? 'Demo Backend: Disconnected' : 'Real Backend: Disconnected';
+        }
         if (backendStatusDot) backendStatusDot.style.backgroundColor = '#EF4444';
     }
 
-    // 2. Robot Status: ONLY Connected when an actual ESP32 is registered and alive
+    // 2. Robot Status: Real Robot is ONLY connected when physical ESP32 is registered & alive
     const hasOnlineRobot = activeOnlineRobots && activeOnlineRobots.length > 0;
     if (!isBackendConnected) {
-        if (robotStatusText) robotStatusText.textContent = 'Robot: Disconnected';
+        if (robotStatusText) robotStatusText.textContent = 'Real Robot: Disconnected';
         if (robotStatusDot) robotStatusDot.style.backgroundColor = '#EF4444';
     } else if (hasOnlineRobot) {
         const connectedId = selectedRobotId || activeOnlineRobots[0].robot_id;
-        if (robotStatusText) robotStatusText.textContent = `Robot: ${connectedId} Connected`;
+        if (robotStatusText) robotStatusText.textContent = `Real Robot: ${connectedId} Connected`;
         if (robotStatusDot) robotStatusDot.style.backgroundColor = '#10B981';
     } else {
-        if (robotStatusText) robotStatusText.textContent = 'Robot: Disconnected';
+        if (robotStatusText) robotStatusText.textContent = 'Real Robot: Disconnected';
         if (robotStatusDot) robotStatusDot.style.backgroundColor = '#64748B';
     }
 }
