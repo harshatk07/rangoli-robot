@@ -12,17 +12,20 @@ function setRobotMode(mode) {
     currentRobotMode = mode;
     const btnDemo = document.getElementById('btnModeDemo');
     const btnReal = document.getElementById('btnModeReal');
+    const btnDiscover = document.getElementById('btnDiscoverRobots');
     const espStatusDot = document.getElementById('espStatusDot');
     const espStatusText = document.getElementById('espStatusText');
 
     if (mode === 'DEMO') {
         if (btnDemo) btnDemo.classList.add('active');
         if (btnReal) btnReal.classList.remove('active');
+        if (btnDiscover) btnDiscover.style.display = 'none';
         if (espStatusText) espStatusText.textContent = '● DEMO ROBOT (Simulation)';
         if (espStatusDot) espStatusDot.style.backgroundColor = '#F59E0B';
     } else {
         if (btnReal) btnReal.classList.add('active');
         if (btnDemo) btnDemo.classList.remove('active');
+        if (btnDiscover) btnDiscover.style.display = 'inline-block';
         updateRobotConnectionHeaderPill();
     }
 }
@@ -649,7 +652,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Initiate WebSocket telemetry connection
+    // Initiate WebSocket telemetry connection & initial mode state
+    setRobotMode('DEMO');
     connectDashboardWebSocket();
 
     // Initial Viewport Draw

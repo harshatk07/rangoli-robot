@@ -37,7 +37,7 @@
                     <button id="btnModeDemo" class="btn-mode active" onclick="setRobotMode('DEMO')">🟡 DEMO ROBOT</button>
                     <button id="btnModeReal" class="btn-mode" onclick="setRobotMode('REAL')">🟢 REAL ROBOT</button>
                 </div>
-                <button class="btn-scan-header" onclick="openRobotDiscoveryModal()">🔵 DISCOVER ROBOTS</button>
+                <button id="btnDiscoverRobots" class="btn-scan-header" onclick="openRobotDiscoveryModal()" style="display: none;">🔵 DISCOVER ROBOTS</button>
                 <div class="header-status-pill">
                     <span class="status-dot-pulse" id="wsStatusDot" style="background-color: #10B981;"></span>
                     <span id="wsStatusText">● Backend Connected</span>

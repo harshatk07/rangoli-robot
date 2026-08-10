@@ -1,7 +1,7 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Web Application Script
- * Final Clean Version — No Browser Alerts / Custom Modals / Real WebSocket Heartbeats
+ * Final Clean Version — Dynamic Header Mode Toggle & Discover Button Visibility
  */
 
 let currentRobotMode = 'DEMO'; // 'DEMO' or 'REAL'
@@ -12,17 +12,20 @@ function setRobotMode(mode) {
     currentRobotMode = mode;
     const btnDemo = document.getElementById('btnModeDemo');
     const btnReal = document.getElementById('btnModeReal');
+    const btnDiscover = document.getElementById('btnDiscoverRobots');
     const espStatusDot = document.getElementById('espStatusDot');
     const espStatusText = document.getElementById('espStatusText');
 
     if (mode === 'DEMO') {
         if (btnDemo) btnDemo.classList.add('active');
         if (btnReal) btnReal.classList.remove('active');
+        if (btnDiscover) btnDiscover.style.display = 'none';
         if (espStatusText) espStatusText.textContent = '● DEMO ROBOT (Simulation)';
         if (espStatusDot) espStatusDot.style.backgroundColor = '#F59E0B';
     } else {
         if (btnReal) btnReal.classList.add('active');
         if (btnDemo) btnDemo.classList.remove('active');
+        if (btnDiscover) btnDiscover.style.display = 'inline-block';
         updateRobotConnectionHeaderPill();
     }
 }
@@ -392,7 +395,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnStart) {
         btnStart.addEventListener('click', async () => {
             if (executionSegments.length === 0) {
-                // Inline status prompt if no Rangoli loaded
                 btnStart.textContent = '⚠️ Upload Rangoli First';
                 setTimeout(() => { btnStart.textContent = '▶ START DRAWING'; }, 2000);
                 return;
@@ -404,7 +406,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     setTimeout(() => { btnStart.textContent = '▶ START DRAWING'; }, 3000);
                     return;
                 }
-                // Send automated motion payload to real ESP32
                 try {
                     await fetch('/api/jobs', {
                         method: 'POST',
@@ -649,7 +650,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Initiate WebSocket telemetry connection
+    // Initiate WebSocket telemetry connection & initial mode state
+    setRobotMode('DEMO');
     connectDashboardWebSocket();
 
     // Initial Viewport Draw
