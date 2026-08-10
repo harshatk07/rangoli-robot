@@ -1,12 +1,16 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Web Application Script
- * Final Production Version — Authoritative Coordinate Transformation, Clean Powder Tracing & Precise State Model
+ * Final Production Version — Central Application State, Working Drawing Size & Line Width Controls
  */
 
 let currentRobotMode = 'DEMO'; // 'DEMO' or 'REAL'
 let selectedRobotId = null;
 let activeOnlineRobots = [];
+
+// Central Application State
+let currentDrawingSizeMm = 610.0; // 300.0, 450.0, 525.0, or 610.0
+let currentLineWidthMm = 3.0; // 2.0, 3.0, or 4.0
 
 // Single Authoritative Physical (mm) to Canvas (px) Coordinate Transformation
 function physicalToCanvas(x_mm, y_mm) {
@@ -247,9 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const valPathCount = document.getElementById('valPathCount');
         const valTurnCount = document.getElementById('valTurnCount');
 
-        const widthOpt = document.querySelector('input[name="widthOpt"]:checked');
-        const lineW = widthOpt ? parseFloat(widthOpt.value) : 3.0;
-        const powderGrams = Math.round((totalDrawDistMm / 1000.0) * lineW * 4.17); // 4.17g per (m * mm_width)
+        const powderGrams = Math.round((totalDrawDistMm / 1000.0) * currentLineWidthMm * 4.17); // 4.17g per (m * mm_width)
 
         if (valDrawDist) valDrawDist.textContent = `${(totalDrawDistMm / 1000.0).toFixed(2)} m`;
         if (valTravelDist) valTravelDist.textContent = `${(totalTravelDistMm / 1000.0).toFixed(2)} m`;
@@ -258,6 +260,97 @@ document.addEventListener('DOMContentLoaded', () => {
         if (valPathCount) valPathCount.textContent = executionSegments.filter(s => s.type === 'DRAW').length;
         if (valTurnCount) valTurnCount.textContent = Math.max(0, executionSegments.length * 2);
     }
+
+    // State Management Functions for Drawing Size and Line Width
+    function setDrawingSize(sizeVal) {
+        let sizeValNum = 610.0;
+        let strVal = String(sizeVal).toLowerCase();
+        if (strVal.includes('300') || strVal === 'small') sizeValNum = 300.0;
+        else if (strVal.includes('450') || strVal === 'medium') sizeValNum = 450.0;
+        else if (strVal.includes('525') || strVal === 'large') sizeValNum = 525.0;
+        else sizeValNum = 610.0;
+
+        currentDrawingSizeMm = sizeValNum;
+
+        // Update active CSS highlight classes on size buttons
+        document.querySelectorAll('input[name="sizeOpt"]').forEach(input => {
+            const parentLabel = input.closest('.option-btn');
+            if (parentLabel) {
+                if (input.value === strVal || (strVal === 'small' && input.value === 'small') || (strVal === 'full' && input.value === 'full')) {
+                    input.checked = true;
+                    parentLabel.classList.add('active');
+                } else {
+                    parentLabel.classList.remove('active');
+                }
+            }
+        });
+
+        // Update workspace badge label
+        const gridBadge = document.querySelector('.grid-badge');
+        if (gridBadge) {
+            gridBadge.textContent = `Workspace: 610 × 610 mm (Drawing Area: ${sizeValNum} × ${sizeValNum} mm)`;
+        }
+
+        recalculateDrawing();
+    }
+
+    function setLineWidth(widthVal) {
+        const lineW = parseFloat(widthVal) || 3.0;
+        currentLineWidthMm = lineW;
+
+        // Update active CSS highlight classes on line width buttons
+        document.querySelectorAll('input[name="widthOpt"]').forEach(input => {
+            const parentLabel = input.closest('.option-btn');
+            if (parentLabel) {
+                if (parseFloat(input.value) === lineW) {
+                    input.checked = true;
+                    parentLabel.classList.add('active');
+                } else {
+                    parentLabel.classList.remove('active');
+                }
+            }
+        });
+
+        recalculateDrawing();
+    }
+
+    async function recalculateDrawing() {
+        const fileInput = document.getElementById('imageInput');
+        if (uploadForm && fileInput && fileInput.files && fileInput.files[0]) {
+            const sizeValStr = currentDrawingSizeMm === 300.0 ? 'small' : (currentDrawingSizeMm === 450.0 ? 'medium' : (currentDrawingSizeMm === 525.0 ? 'large' : 'full'));
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            formData.append('drawing_size', sizeValStr);
+
+            try {
+                const res = await fetch('/api/process', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    executionSegments = data.execution_segments;
+                    espCommands = data.esp32_commands;
+                }
+            } catch (err) {}
+        }
+
+        calculateEstimatedTime();
+        resetSimulation();
+    }
+
+    // Attach Event Listeners to all Size & Width Radio Buttons
+    document.querySelectorAll('input[name="sizeOpt"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            setDrawingSize(e.target.value);
+        });
+    });
+
+    document.querySelectorAll('input[name="widthOpt"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            setLineWidth(e.target.value);
+        });
+    });
 
     // Dropzone Interactivity
     if (dropzone && imageInput) {
@@ -326,19 +419,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Drawing Size & Line Width Selectors
-    document.querySelectorAll('input[name="sizeOpt"], input[name="widthOpt"]').forEach(radio => {
-        radio.addEventListener('change', () => {
-            if (uploadForm && imageInput.files && imageInput.files[0]) {
-                const submitEvent = new Event('submit', { cancelable: true });
-                uploadForm.dispatchEvent(submitEvent);
-            } else {
-                calculateEstimatedTime();
-                resetSimulation();
-            }
-        });
-    });
-
     // Draw Planned Vector Path Layer & Executed Completed Path
     function drawPlannedPathLayer() {
         if (!ctx || !executionSegments || executionSegments.length === 0) return;
@@ -372,11 +452,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2. Render Executed Completed Drawing Layer (Solid Emerald Green #10B981) Behind Robot
         if (segIdx > 0 || ptIdx > 0 || lerpProgress > 0 || robotState === 'COMPLETED') {
-            const widthOpt = document.querySelector('input[name="widthOpt"]:checked');
-            const lineW = widthOpt ? parseFloat(widthOpt.value) : 3.0;
-
             ctx.strokeStyle = '#10B981'; // Emerald Green = Completed Rangoli drawing
-            ctx.lineWidth = Math.max(2.5, lineW);
+            ctx.lineWidth = Math.max(2.5, currentLineWidthMm);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
 
@@ -722,12 +799,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!fileInput.files || !fileInput.files[0]) return;
 
-            const sizeOpt = document.querySelector('input[name="sizeOpt"]:checked');
-            const sizeVal = sizeOpt ? sizeOpt.value : 'full';
+            const sizeValStr = currentDrawingSizeMm === 300.0 ? 'small' : (currentDrawingSizeMm === 450.0 ? 'medium' : (currentDrawingSizeMm === 525.0 ? 'large' : 'full'));
 
             const formData = new FormData();
             formData.append('image', fileInput.files[0]);
-            formData.append('drawing_size', sizeVal);
+            formData.append('drawing_size', sizeValStr);
 
             processBtn.disabled = true;
             processBtn.textContent = 'Processing Image...';
