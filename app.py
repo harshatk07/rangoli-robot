@@ -256,7 +256,7 @@ async def heartbeat_watchdog():
 # ============================================================================
 @app.get("/")
 def get_index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html")
 
 @app.get("/health")
 def health_check():
