@@ -1,7 +1,7 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Web Application Script
- * Final Production Version — Authoritative physicalToCanvas Coordinate Transformation & Exact Robot Placement
+ * Final Production Version — Permanent HOME (0,0) Top-Left Initial Position & Exact State Model
  */
 
 let currentRobotMode = 'DEMO'; // 'DEMO' or 'REAL'
@@ -174,8 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let isRunning = false;
     let isPaused = false;
 
-    let robotX = 0.0; // mm
-    let robotY = 0.0; // mm
+    let robotX = 0.0; // mm (HOME = 0.0 mm)
+    let robotY = 0.0; // mm (HOME = 0.0 mm)
     let robotTheta = 0.0; // deg
     let isPowderOn = false;
     let robotState = 'IDLE';
@@ -365,12 +365,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ctx.setLineDash([]);
 
-        // Render Start Point (Green) & End Point (Red) Markers via physicalToCanvas
-        const firstSeg = executionSegments.find(s => s.type === 'DRAW') || executionSegments[0];
-        const lastSeg = [...executionSegments].reverse().find(s => s.type === 'DRAW') || executionSegments[executionSegments.length - 1];
+        // Render Start Point (Green) & End Point (Red) Markers on DRAW path via physicalToCanvas
+        const firstDrawSeg = executionSegments.find(s => s.type === 'DRAW') || executionSegments[0];
+        const lastDrawSeg = [...executionSegments].reverse().find(s => s.type === 'DRAW') || executionSegments[executionSegments.length - 1];
 
-        if (firstSeg && firstSeg.pts.length > 0) {
-            const startPtMm = firstSeg.pts[0];
+        if (firstDrawSeg && firstDrawSeg.pts.length > 0) {
+            const startPtMm = firstDrawSeg.pts[0];
             const startPx = physicalToCanvas(startPtMm[0], startPtMm[1]);
             ctx.fillStyle = '#10B981';
             ctx.beginPath();
@@ -381,8 +381,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.stroke();
         }
 
-        if (lastSeg && lastSeg.pts.length > 0) {
-            const endPtMm = lastSeg.pts[lastSeg.pts.length - 1];
+        if (lastDrawSeg && lastDrawSeg.pts.length > 0) {
+            const endPtMm = lastDrawSeg.pts[lastDrawSeg.pts.length - 1];
             const endPx = physicalToCanvas(endPtMm[0], endPtMm[1]);
             ctx.fillStyle = '#EF4444';
             ctx.beginPath();
@@ -453,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Reset Simulation State (Robot marker starts EXACTLY on first DRAW point P_start)
+    // Reset Simulation State (Robot marker stays permanently at HOME (0,0) Top-Left before execution)
     function resetSimulation() {
         if (animFrame) cancelAnimationFrame(animFrame);
         isRunning = false;
@@ -463,16 +463,9 @@ document.addEventListener('DOMContentLoaded', () => {
         lerpProgress = 0.0;
         executedDistMm = 0.0;
 
-        // Robot marker starts at first DRAW coordinate of generated path
-        const firstSeg = executionSegments.find(s => s.type === 'DRAW') || executionSegments[0];
-        if (firstSeg && firstSeg.pts.length > 0) {
-            robotX = firstSeg.pts[0][0];
-            robotY = firstSeg.pts[0][1];
-        } else {
-            robotX = 0.0;
-            robotY = 0.0;
-        }
-
+        // Robot marker is permanently at HOME (0,0) Top-Left before execution starts
+        robotX = 0.0;
+        robotY = 0.0;
         robotTheta = 0.0;
         isPowderOn = false;
         robotState = 'IDLE';
@@ -524,6 +517,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ptIdx = 0;
                 lerpProgress = 0.0;
                 executedDistMm = 0.0;
+                robotX = 0.0;
+                robotY = 0.0;
             }
 
             isRunning = true;

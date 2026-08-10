@@ -947,6 +947,21 @@ async def process_image(
         
         planner = GridPlanner(canvas_width_mm=610.0, canvas_height_mm=610.0)
         planned_segments = planner.plan_grid_aware_path(raw_paths, drawing_size_mm=size_val)
+
+        # Prepend initial travel segment from HOME (0,0) to first DRAW start point
+        first_draw_seg = next((s for s in planned_segments if s.get("type") == "DRAW"), None)
+        if first_draw_seg and len(first_draw_seg.get("pts", [])) > 0:
+            first_pt = first_draw_seg["pts"][0]
+            if math.hypot(first_pt[0], first_pt[1]) > 0.1:
+                if not (planned_segments and planned_segments[0].get("type") == "MOVE" and planned_segments[0]["pts"][0] == [0.0, 0.0]):
+                    home_travel_seg = {
+                        "type": "MOVE",
+                        "pts": [[0.0, 0.0], [first_pt[0], first_pt[1]]],
+                        "dispense": False,
+                        "grid": False
+                    }
+                    planned_segments.insert(0, home_travel_seg)
+
         print(f"[PIPELINE] Workspace Scaling ({size_val}mm) & TSP Optimization complete: {len(planned_segments)} segments")
 
         # Step 8: Kinematics Generation for ESP32
