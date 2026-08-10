@@ -1,12 +1,25 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Web Application Script
- * Final Production Version — Clean Workspace, Zero Persistent Smudge, Strict 0% Post-Process Progress & Telemetry Isolation
+ * Final Production Version — Authoritative physicalToCanvas Coordinate Transformation & Exact Robot Placement
  */
 
 let currentRobotMode = 'DEMO'; // 'DEMO' or 'REAL'
 let selectedRobotId = null;
 let activeOnlineRobots = [];
+
+// Single Authoritative Physical (mm) to Canvas (px) Coordinate Transformation
+function physicalToCanvas(x_mm, y_mm) {
+    const canvasWidth = 600.0;
+    const canvasHeight = 600.0;
+    const workspaceWidth = 610.0;
+    const workspaceHeight = 610.0;
+
+    const cx = (x_mm / workspaceWidth) * canvasWidth;
+    const cy = (y_mm / workspaceHeight) * canvasHeight;
+
+    return { x: cx, y: cy };
+}
 
 function setRobotMode(mode) {
     currentRobotMode = mode;
@@ -161,9 +174,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let isRunning = false;
     let isPaused = false;
 
-    let robotX = 0.0;
-    let robotY = 0.0;
-    let robotTheta = 0.0;
+    let robotX = 0.0; // mm
+    let robotY = 0.0; // mm
+    let robotTheta = 0.0; // deg
     let isPowderOn = false;
     let robotState = 'IDLE';
 
@@ -322,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Draw Planned Vector Path Layer & Start/End Markers
+    // Draw Planned Vector Path Layer & Start/End Markers via physicalToCanvas
     function drawPlannedPathLayer() {
         if (!ctx || !executionSegments || executionSegments.length === 0) return;
 
@@ -341,24 +354,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.setLineDash([4, 4]);
             }
 
-            ctx.moveTo(pts[0][0], pts[0][1]);
+            const p0 = physicalToCanvas(pts[0][0], pts[0][1]);
+            ctx.moveTo(p0.x, p0.y);
             for (let i = 1; i < pts.length; i++) {
-                ctx.lineTo(pts[i][0], pts[i][1]);
+                const p = physicalToCanvas(pts[i][0], pts[i][1]);
+                ctx.lineTo(p.x, p.y);
             }
             ctx.stroke();
         });
 
         ctx.setLineDash([]);
 
-        // Render Start Point (Green) & End Point (Red) Markers
+        // Render Start Point (Green) & End Point (Red) Markers via physicalToCanvas
         const firstSeg = executionSegments.find(s => s.type === 'DRAW') || executionSegments[0];
         const lastSeg = [...executionSegments].reverse().find(s => s.type === 'DRAW') || executionSegments[executionSegments.length - 1];
 
         if (firstSeg && firstSeg.pts.length > 0) {
-            const startPt = firstSeg.pts[0];
+            const startPtMm = firstSeg.pts[0];
+            const startPx = physicalToCanvas(startPtMm[0], startPtMm[1]);
             ctx.fillStyle = '#10B981';
             ctx.beginPath();
-            ctx.arc(startPt[0], startPt[1], 6, 0, 2 * Math.PI);
+            ctx.arc(startPx.x, startPx.y, 6, 0, 2 * Math.PI);
             ctx.fill();
             ctx.strokeStyle = '#FFFFFF';
             ctx.lineWidth = 1.5;
@@ -366,10 +382,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (lastSeg && lastSeg.pts.length > 0) {
-            const endPt = lastSeg.pts[lastSeg.pts.length - 1];
+            const endPtMm = lastSeg.pts[lastSeg.pts.length - 1];
+            const endPx = physicalToCanvas(endPtMm[0], endPtMm[1]);
             ctx.fillStyle = '#EF4444';
             ctx.beginPath();
-            ctx.arc(endPt[0], endPt[1], 6, 0, 2 * Math.PI);
+            ctx.arc(endPx.x, endPx.y, 6, 0, 2 * Math.PI);
             ctx.fill();
             ctx.strokeStyle = '#FFFFFF';
             ctx.lineWidth = 1.5;
@@ -377,32 +394,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Render Canvas Viewport & Clean Vector Path Display
+    // Render Canvas Viewport & Exact Robot Placement via physicalToCanvas
     function renderViewport() {
         if (!ctx) return;
 
         ctx.clearRect(0, 0, 600, 600);
         drawPlannedPathLayer();
 
+        const canvasRobotPt = physicalToCanvas(robotX, robotY);
+
         // Render Active Dispensing Nozzle Indicator ONLY while active DRAWING!
         if (isPowderOn && robotState === 'DRAWING') {
             const rad = (robotTheta * Math.PI) / 180.0;
-            const nozX = robotX + 60.0 * Math.cos(rad);
-            const nozY = robotY + 60.0 * Math.sin(rad);
+            const nozMmX = robotX + 60.0 * Math.cos(rad);
+            const nozMmY = robotY + 60.0 * Math.sin(rad);
+            const nozPx = physicalToCanvas(nozMmX, nozMmY);
 
             ctx.fillStyle = '#10B981';
             ctx.beginPath();
-            ctx.arc(nozX, nozY, 4, 0, 2 * Math.PI);
+            ctx.arc(nozPx.x, nozPx.y, 4, 0, 2 * Math.PI);
             ctx.fill();
             ctx.strokeStyle = '#FFFFFF';
             ctx.lineWidth = 1.2;
             ctx.stroke();
         }
 
-        // Update Robot SVG position
+        // Update Robot SVG position EXACTLY on top of canvasRobotPt (0,0 relative to container)
         const svgRobot = document.getElementById('robotSvgVisual');
         if (svgRobot) {
-            svgRobot.style.transform = `translate(${robotX - 22}px, ${robotY - 24}px) rotate(${robotTheta}deg)`;
+            svgRobot.style.left = '0px';
+            svgRobot.style.top = '0px';
+            svgRobot.style.transform = `translate(${canvasRobotPt.x - 22}px, ${canvasRobotPt.y - 24}px) rotate(${robotTheta}deg)`;
         }
 
         // Strict Telemetry Isolation for REAL vs DEMO mode
@@ -431,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Reset Simulation State (MUST RESET PROGRESS TO STRICT 0%)
+    // Reset Simulation State (Robot marker starts EXACTLY on first DRAW point P_start)
     function resetSimulation() {
         if (animFrame) cancelAnimationFrame(animFrame);
         isRunning = false;
@@ -441,29 +463,28 @@ document.addEventListener('DOMContentLoaded', () => {
         lerpProgress = 0.0;
         executedDistMm = 0.0;
 
-        // Robot marker starts at first coordinate of generated path
-        if (executionSegments.length > 0 && executionSegments[0].pts.length > 0) {
-            robotX = executionSegments[0].pts[0][0];
-            robotY = executionSegments[0].pts[0][1];
+        // Robot marker starts at first DRAW coordinate of generated path
+        const firstSeg = executionSegments.find(s => s.type === 'DRAW') || executionSegments[0];
+        if (firstSeg && firstSeg.pts.length > 0) {
+            robotX = firstSeg.pts[0][0];
+            robotY = firstSeg.pts[0][1];
         } else {
-            robotX = 0;
-            robotY = 0;
+            robotX = 0.0;
+            robotY = 0.0;
         }
 
-        robotTheta = 0;
+        robotTheta = 0.0;
         isPowderOn = false;
         robotState = 'IDLE';
 
         if (btnStart) btnStart.textContent = '▶ START DRAWING';
         if (btnPause) btnPause.textContent = '⏸ PAUSE';
 
-        // STRICT REQUIREMENT: Progress MUST be 0% after process / reset
         if (txtProgress) txtProgress.textContent = '0%';
         const valStatProgress = document.getElementById('valStatProgress');
         if (valStatProgress) valStatProgress.textContent = '0 %';
         if (barProgress) barProgress.style.width = '0%';
 
-        // Remaining time starts equal to estimated time
         if (valEstTime && valRemTime && valEstTime.textContent !== '—') {
             valRemTime.textContent = valEstTime.textContent;
         }
@@ -583,7 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
             robotState = 'COMPLETED';
             isPowderOn = false;
             if (btnStart) btnStart.textContent = '▶ RE-START DRAWING';
-            
+
             if (txtProgress) txtProgress.textContent = '100%';
             const valStatProgress = document.getElementById('valStatProgress');
             if (valStatProgress) valStatProgress.textContent = '100 %';
