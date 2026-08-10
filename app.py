@@ -831,6 +831,17 @@ async def process_image(
     upload_file = file or image
     target_image_id = None
     file_path = None
+    data = {}
+
+    if request:
+        try:
+            form_data = await request.form()
+            data = dict(form_data)
+        except Exception:
+            try:
+                data = await request.json()
+            except Exception:
+                data = {}
 
     # Step 1: Direct File Upload Handling
     if upload_file:
@@ -844,12 +855,6 @@ async def process_image(
         print(f"[PIPELINE] Direct file upload received: {filename} ({len(content)} bytes)")
     else:
         # Step 2: JSON or Query Param Reference
-        data = {}
-        if request:
-            try:
-                data = await request.json()
-            except Exception:
-                pass
         target_image_id = image_id or data.get("image_id") or data.get("image_name")
         if target_image_id:
             file_path = os.path.join(UPLOAD_FOLDER, target_image_id)
