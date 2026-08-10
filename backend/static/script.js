@@ -1,7 +1,7 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Web Application Script
- * Final Production Version — Strict Telemetry Isolation & Calibrated Path Model
+ * Final Production Version — Strict Telemetry Isolation, Nearest-Neighbor TSP, Zero Initial Progress, & Precise Powder Rendering
  */
 
 let currentRobotMode = 'DEMO'; // 'DEMO' or 'REAL'
@@ -167,8 +167,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let isPowderOn = false;
     let robotState = 'IDLE';
 
-    let currentSpeedMmPerSec = 80.0;
+    let currentSpeedMmPerSec = 80.0; // Draw speed: 80 mm/s
+    let currentTravelSpeedMmPerSec = 150.0; // Travel speed: 150 mm/s
     let totalPathLengthMm = 0.0;
+    let totalDrawDistMm = 0.0;
+    let totalTravelDistMm = 0.0;
+    let totalEstimatedSec = 0;
+    let executedDistMm = 0.0;
 
     // Off-screen canvas for persistent powder trail
     const powderCanvas = document.createElement('canvas');
@@ -177,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const powderCtx = powderCanvas.getContext('2d');
 
     function calculateEstimatedTime() {
-        if (totalPathLengthMm === 0 || executionSegments.length === 0) {
+        if (executionSegments.length === 0) {
             if (valEstTime) valEstTime.textContent = "—";
             if (valRemTime) valRemTime.textContent = "—";
             const valDrawDist = document.getElementById('valDrawDist');
@@ -195,26 +200,30 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        let drawDistMm = 0.0;
-        let travelDistMm = 0.0;
+        totalDrawDistMm = 0.0;
+        totalTravelDistMm = 0.0;
 
         executionSegments.forEach(seg => {
             const pts = seg.pts;
             for (let i = 0; i < pts.length - 1; i++) {
                 const d = Math.hypot(pts[i+1][0] - pts[i][0], pts[i+1][1] - pts[i][1]);
                 if (seg.type === 'DRAW' && seg.dispense) {
-                    drawDistMm += d;
+                    totalDrawDistMm += d;
                 } else {
-                    travelDistMm += d;
+                    totalTravelDistMm += d;
                 }
             }
         });
 
-        const totalDistMm = drawDistMm + travelDistMm;
-        const totalSec = Math.round(totalDistMm / currentSpeedMmPerSec);
+        totalPathLengthMm = totalDrawDistMm + totalTravelDistMm;
 
-        const mins = Math.floor(totalSec / 60);
-        const secs = totalSec % 60;
+        // Estimated time = (Drawing distance / draw speed) + (Travel distance / travel speed)
+        const drawSec = totalDrawDistMm / currentSpeedMmPerSec;
+        const travelSec = totalTravelDistMm / currentTravelSpeedMmPerSec;
+        totalEstimatedSec = Math.round(drawSec + travelSec);
+
+        const mins = Math.floor(totalEstimatedSec / 60);
+        const secs = totalEstimatedSec % 60;
         const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
         if (valEstTime) valEstTime.textContent = formatted;
@@ -229,13 +238,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const widthOpt = document.querySelector('input[name="widthOpt"]:checked');
         const lineW = widthOpt ? parseFloat(widthOpt.value) : 3.0;
-        const powderGrams = Math.round((drawDistMm / 1000.0) * lineW * 4.17); // 4.17g per (m * mm_width)
+        const powderGrams = Math.round((totalDrawDistMm / 1000.0) * lineW * 4.17); // 4.17g per (m * mm_width)
 
-        if (valDrawDist) valDrawDist.textContent = `${(drawDistMm / 1000.0).toFixed(2)} m`;
-        if (valTravelDist) valTravelDist.textContent = `${(travelDistMm / 1000.0).toFixed(2)} m`;
-        if (valTotalDist) valTotalDist.textContent = `${(totalDistMm / 1000.0).toFixed(2)} m`;
+        if (valDrawDist) valDrawDist.textContent = `${(totalDrawDistMm / 1000.0).toFixed(2)} m`;
+        if (valTravelDist) valTravelDist.textContent = `${(totalTravelDistMm / 1000.0).toFixed(2)} m`;
+        if (valTotalDist) valTotalDist.textContent = `${(totalPathLengthMm / 1000.0).toFixed(2)} m`;
         if (valPowderUsage) valPowderUsage.textContent = `${powderGrams} g`;
-        if (valPathCount) valPathCount.textContent = executionSegments.length;
+        if (valPathCount) valPathCount.textContent = executionSegments.filter(s => s.type === 'DRAW').length;
         if (valTurnCount) valTurnCount.textContent = Math.max(0, executionSegments.length * 2);
     }
 
@@ -295,14 +304,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     executionSegments = data.execution_segments;
                     espCommands = data.esp32_commands;
 
-                    totalPathLengthMm = 0.0;
-                    executionSegments.forEach(seg => {
-                        const pts = seg.pts;
-                        for (let i = 0; i < pts.length - 1; i++) {
-                            totalPathLengthMm += Math.hypot(pts[i+1][0] - pts[i][0], pts[i+1][1] - pts[i][1]);
-                        }
-                    });
-
                     calculateEstimatedTime();
                     resetSimulation();
                 }
@@ -317,13 +318,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Drawing Size & Line Width Selectors
     document.querySelectorAll('input[name="sizeOpt"], input[name="widthOpt"]').forEach(radio => {
         radio.addEventListener('change', () => {
-            calculateEstimatedTime();
+            if (uploadForm && imageInput.files && imageInput.files[0]) {
+                const submitEvent = new Event('submit', { cancelable: true });
+                uploadForm.dispatchEvent(submitEvent);
+            } else {
+                calculateEstimatedTime();
+                resetSimulation();
+            }
         });
     });
 
-    // Draw Planned Vector Path Layer
+    // Draw Planned Vector Path Layer & Start/End Markers
     function drawPlannedPathLayer() {
-        if (!ctx || !executionSegments) return;
+        if (!ctx || !executionSegments || executionSegments.length === 0) return;
 
         executionSegments.forEach(seg => {
             const pts = seg.pts;
@@ -348,6 +355,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         ctx.setLineDash([]);
+
+        // Render Start Point (Green) & End Point (Red) Markers
+        const firstSeg = executionSegments.find(s => s.type === 'DRAW') || executionSegments[0];
+        const lastSeg = [...executionSegments].reverse().find(s => s.type === 'DRAW') || executionSegments[executionSegments.length - 1];
+
+        if (firstSeg && firstSeg.pts.length > 0) {
+            const startPt = firstSeg.pts[0];
+            ctx.fillStyle = '#10B981';
+            ctx.beginPath();
+            ctx.arc(startPt[0], startPt[1], 6, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+
+        if (lastSeg && lastSeg.pts.length > 0) {
+            const endPt = lastSeg.pts[lastSeg.pts.length - 1];
+            ctx.fillStyle = '#EF4444';
+            ctx.beginPath();
+            ctx.arc(endPt[0], endPt[1], 6, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
     }
 
     // Render Canvas Viewport & Strict Telemetry Isolation
@@ -374,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (valPose) valPose.textContent = '—';
                 if (valHeading) valHeading.textContent = '—';
                 if (valPowder) {
-                    valPowder.textContent = '—';
+                    valPowder.textContent = 'OFF';
                     valPowder.className = 'status-badge badge-off';
                 }
                 if (valBatteryPct) valBatteryPct.textContent = '—';
@@ -392,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Reset Simulation State
+    // Reset Simulation State (MUST RESET PROGRESS TO STRICT 0%)
     function resetSimulation() {
         if (animFrame) cancelAnimationFrame(animFrame);
         isRunning = false;
@@ -400,9 +433,11 @@ document.addEventListener('DOMContentLoaded', () => {
         segIdx = 0;
         ptIdx = 0;
         lerpProgress = 0.0;
+        executedDistMm = 0.0;
 
         powderCtx.clearRect(0, 0, 600, 600);
 
+        // Robot marker starts at first coordinate of generated path
         if (executionSegments.length > 0 && executionSegments[0].pts.length > 0) {
             robotX = executionSegments[0].pts[0][0];
             robotY = executionSegments[0].pts[0][1];
@@ -418,10 +453,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnStart) btnStart.textContent = '▶ START DRAWING';
         if (btnPause) btnPause.textContent = '⏸ PAUSE';
 
+        // STRICT REQUIREMENT #1 & #9: Progress MUST be 0% after process / reset
         if (txtProgress) txtProgress.textContent = '0%';
         const valStatProgress = document.getElementById('valStatProgress');
         if (valStatProgress) valStatProgress.textContent = '0 %';
         if (barProgress) barProgress.style.width = '0%';
+
+        // Remaining time starts equal to estimated time
+        if (valEstTime && valRemTime && valEstTime.textContent !== '—') {
+            valRemTime.textContent = valEstTime.textContent;
+        }
 
         renderViewport();
     }
@@ -457,6 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 segIdx = 0;
                 ptIdx = 0;
                 lerpProgress = 0.0;
+                executedDistMm = 0.0;
                 powderCtx.clearRect(0, 0, 600, 600);
             }
 
@@ -476,6 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isPaused = !isPaused;
             btnPause.textContent = isPaused ? '▶ RESUME' : '⏸ PAUSE';
             robotState = isPaused ? 'PAUSED' : 'DRAWING';
+            if (isPaused) isPowderOn = false;
             if (!isPaused) animate();
         });
     }
@@ -510,6 +553,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (valState) valState.textContent = 'EMERGENCY_STOP';
 
+            const isRobotConnected = selectedRobotId && activeOnlineRobots.some(r => r.robot_id === selectedRobotId);
+            if (currentRobotMode === 'REAL' && !isRobotConnected) {
+                btnEmergencyStop.textContent = '🛑 E-STOP (ESP32 Not Connected)';
+                setTimeout(() => { btnEmergencyStop.textContent = '🛑 EMERGENCY STOP'; }, 3000);
+            }
+
             try {
                 await fetch('/api/jobs/current/emergency-stop', { method: 'POST' });
             } catch (e) {}
@@ -531,35 +580,60 @@ document.addEventListener('DOMContentLoaded', () => {
             robotState = 'COMPLETED';
             isPowderOn = false;
             if (btnStart) btnStart.textContent = '▶ RE-START DRAWING';
+            
+            if (txtProgress) txtProgress.textContent = '100%';
+            const valStatProgress = document.getElementById('valStatProgress');
+            if (valStatProgress) valStatProgress.textContent = '100 %';
+            if (barProgress) barProgress.style.width = '100%';
+            if (valRemTime) valRemTime.textContent = '00:00';
+
             renderViewport();
             return;
         }
 
         const seg = executionSegments[segIdx];
         const pts = seg.pts;
-        isPowderOn = seg.dispense;
+
+        // Powder is ON ONLY during DRAW strokes!
+        isPowderOn = (seg.type === 'DRAW' && seg.dispense === true);
         robotState = isPowderOn ? 'DRAWING' : 'MOVING';
 
-        const pct = Math.min(100, Math.round(((segIdx + 1) / executionSegments.length) * 100));
+        // Calculate Executed Path Progress & Remaining Time
+        const pct = Math.min(100, Math.round((executedDistMm / Math.max(1.0, totalPathLengthMm)) * 100));
         if (txtProgress) txtProgress.textContent = `${pct}%`;
         const valStatProgress = document.getElementById('valStatProgress');
         if (valStatProgress) valStatProgress.textContent = `${pct} %`;
         if (barProgress) barProgress.style.width = `${pct}%`;
+
+        if (totalEstimatedSec > 0) {
+            const remSec = Math.max(0, Math.round(totalEstimatedSec * (1.0 - (executedDistMm / Math.max(1.0, totalPathLengthMm)))));
+            const rMins = Math.floor(remSec / 60);
+            const rSecs = remSec % 60;
+            if (valRemTime) valRemTime.textContent = `${String(rMins).padStart(2, '0')}:${String(rSecs).padStart(2, '0')}`;
+        }
 
         if (ptIdx < pts.length - 1) {
             const p1 = pts[ptIdx];
             const p2 = pts[ptIdx + 1];
 
             lerpProgress += 0.15;
+            let stepDist = 0.0;
+
             if (lerpProgress >= 1.0) {
+                stepDist = Math.hypot(p2[0] - robotX, p2[1] - robotY);
                 lerpProgress = 0.0;
                 ptIdx++;
                 robotX = p2[0];
                 robotY = p2[1];
             } else {
-                robotX = p1[0] + (p2[0] - p1[0]) * lerpProgress;
-                robotY = p1[1] + (p2[1] - p1[1]) * lerpProgress;
+                const nextX = p1[0] + (p2[0] - p1[0]) * lerpProgress;
+                const nextY = p1[1] + (p2[1] - p1[1]) * lerpProgress;
+                stepDist = Math.hypot(nextX - robotX, nextY - robotY);
+                robotX = nextX;
+                robotY = nextY;
             }
+
+            executedDistMm += stepDist;
 
             const dx = p2[0] - p1[0];
             const dy = p2[1] - p1[1];
@@ -567,8 +641,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 robotTheta = (Math.atan2(dy, dx) * 180.0) / Math.PI;
             }
 
-            // Render Powder Trail at Nozzle Tip (+60mm offset)
-            if (isPowderOn) {
+            // Render Powder Trail at Nozzle Tip (+60mm offset) ONLY when isPowderOn && DRAWING!
+            if (isPowderOn && robotState === 'DRAWING') {
                 const rad = (robotTheta * Math.PI) / 180.0;
                 const nozX = robotX + 60.0 * Math.cos(rad);
                 const nozY = robotY + 60.0 * Math.sin(rad);
@@ -598,8 +672,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!fileInput.files || !fileInput.files[0]) return;
 
+            const sizeOpt = document.querySelector('input[name="sizeOpt"]:checked');
+            const sizeVal = sizeOpt ? sizeOpt.value : 'full';
+
             const formData = new FormData();
             formData.append('image', fileInput.files[0]);
+            formData.append('drawing_size', sizeVal);
 
             processBtn.disabled = true;
             processBtn.textContent = 'Processing Image...';
@@ -614,14 +692,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.status === 'success') {
                     executionSegments = data.execution_segments;
                     espCommands = data.esp32_commands;
-
-                    totalPathLengthMm = 0.0;
-                    executionSegments.forEach(seg => {
-                        const pts = seg.pts;
-                        for (let i = 0; i < pts.length - 1; i++) {
-                            totalPathLengthMm += Math.hypot(pts[i+1][0] - pts[i][0], pts[i+1][1] - pts[i][1]);
-                        }
-                    });
 
                     calculateEstimatedTime();
                     resetSimulation();
@@ -697,5 +767,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial Viewport Draw & Calculations
     calculateEstimatedTime();
-    renderViewport();
+    resetSimulation();
 });

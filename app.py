@@ -933,10 +933,16 @@ async def process_image(
                 "error": "Failed to generate vector paths from extracted contours."
             }, status_code=400)
 
-        # Step 7: Grid Aware Path Planning & Workspace Scaling (610 x 610 mm)
+        # Step 7: Nearest-Neighbor Path Planning & Workspace Scaling
+        size_val = 610.0
+        size_str = str(data.get("drawing_size") or data.get("size") or "610").lower()
+        if "300" in size_str or "small" in size_str: size_val = 300.0
+        elif "450" in size_str or "medium" in size_str: size_val = 450.0
+        elif "525" in size_str or "large" in size_str: size_val = 525.0
+        
         planner = GridPlanner(canvas_width_mm=610.0, canvas_height_mm=610.0)
-        planned_segments = planner.plan_grid_aware_path(raw_paths)
-        print(f"[PIPELINE] Workspace Grid Planning & Scaling complete: {len(planned_segments)} segments")
+        planned_segments = planner.plan_grid_aware_path(raw_paths, drawing_size_mm=size_val)
+        print(f"[PIPELINE] Workspace Scaling ({size_val}mm) & TSP Optimization complete: {len(planned_segments)} segments")
 
         # Step 8: Kinematics Generation for ESP32
         solver = KinematicSolver(wheelbase_mm=120.0, wheel_diameter_mm=44.0)
