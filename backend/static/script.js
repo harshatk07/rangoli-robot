@@ -13,6 +13,7 @@ function setRobotMode(mode) {
     const btnDemo = document.getElementById('btnModeDemo');
     const btnReal = document.getElementById('btnModeReal');
     const btnDiscover = document.getElementById('btnDiscoverRobots');
+    const pillBackend = document.getElementById('pillWsBackend');
     const espStatusDot = document.getElementById('espStatusDot');
     const espStatusText = document.getElementById('espStatusText');
 
@@ -20,12 +21,14 @@ function setRobotMode(mode) {
         if (btnDemo) btnDemo.classList.add('active');
         if (btnReal) btnReal.classList.remove('active');
         if (btnDiscover) btnDiscover.style.display = 'none';
+        if (pillBackend) pillBackend.style.display = 'none';
         if (espStatusText) espStatusText.textContent = '● DEMO ROBOT (Simulation)';
         if (espStatusDot) espStatusDot.style.backgroundColor = '#F59E0B';
     } else {
         if (btnReal) btnReal.classList.add('active');
         if (btnDemo) btnDemo.classList.remove('active');
         if (btnDiscover) btnDiscover.style.display = 'inline-block';
+        if (pillBackend) pillBackend.style.display = 'inline-flex';
         updateRobotConnectionHeaderPill();
     }
 }
