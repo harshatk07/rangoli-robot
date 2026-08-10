@@ -1,7 +1,7 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Web Application Script
- * Final Production Version — Permanent HOME (0,0) Top-Left Initial Position & Exact State Model
+ * Final Production Version — Authoritative Coordinate Transformation, Clean Powder Tracing & Precise State Model
  */
 
 let currentRobotMode = 'DEMO'; // 'DEMO' or 'REAL'
@@ -174,8 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let isRunning = false;
     let isPaused = false;
 
-    let robotX = 0.0; // mm (HOME = 0.0 mm)
-    let robotY = 0.0; // mm (HOME = 0.0 mm)
+    let robotX = 0.0; // mm (HOME = 0.0 mm Top-Left)
+    let robotY = 0.0; // mm (HOME = 0.0 mm Top-Left)
     let robotTheta = 0.0; // deg
     let isPowderOn = false;
     let robotState = 'IDLE';
@@ -187,6 +187,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalTravelDistMm = 0.0;
     let totalEstimatedSec = 0;
     let executedDistMm = 0.0;
+
+    let segIdx = 0;
+    let ptIdx = 0;
+    let lerpProgress = 0.0;
 
     function calculateEstimatedTime() {
         if (executionSegments.length === 0) {
@@ -335,21 +339,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Draw Planned Vector Path Layer & Start/End Markers via physicalToCanvas
+    // Draw Planned Vector Path Layer & Executed Completed Path
     function drawPlannedPathLayer() {
         if (!ctx || !executionSegments || executionSegments.length === 0) return;
 
+        // 1. Render Path Preview Layer (Solid Blue for DRAW, Dashed Gray for TRAVEL)
         executionSegments.forEach(seg => {
             const pts = seg.pts;
             if (pts.length < 2) return;
 
             ctx.beginPath();
             if (seg.type === 'DRAW' && seg.dispense) {
-                ctx.strokeStyle = '#2563EB'; // Solid Blue = Drawing path
+                ctx.strokeStyle = '#2563EB'; // Solid Blue = Drawing path preview
                 ctx.lineWidth = 2.0;
                 ctx.setLineDash([]);
             } else {
-                ctx.strokeStyle = '#94A3B8'; // Dashed Gray = Travel path
+                ctx.strokeStyle = '#94A3B8'; // Dashed Gray = Travel path preview
                 ctx.lineWidth = 1.2;
                 ctx.setLineDash([4, 4]);
             }
@@ -364,6 +369,48 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         ctx.setLineDash([]);
+
+        // 2. Render Executed Completed Drawing Layer (Solid Emerald Green #10B981) Behind Robot
+        if (segIdx > 0 || ptIdx > 0 || lerpProgress > 0 || robotState === 'COMPLETED') {
+            const widthOpt = document.querySelector('input[name="widthOpt"]:checked');
+            const lineW = widthOpt ? parseFloat(widthOpt.value) : 3.0;
+
+            ctx.strokeStyle = '#10B981'; // Emerald Green = Completed Rangoli drawing
+            ctx.lineWidth = Math.max(2.5, lineW);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            for (let s = 0; s < executionSegments.length; s++) {
+                if (s > segIdx && robotState !== 'COMPLETED') break;
+
+                const seg = executionSegments[s];
+                if (seg.type !== 'DRAW' || !seg.dispense) continue; // Green line traces ONLY active DRAW strokes!
+
+                const pts = seg.pts;
+                if (pts.length < 2) continue;
+
+                ctx.beginPath();
+                const p0 = physicalToCanvas(pts[0][0], pts[0][1]);
+                ctx.moveTo(p0.x, p0.y);
+
+                if (s < segIdx || robotState === 'COMPLETED') {
+                    for (let i = 1; i < pts.length; i++) {
+                        const p = physicalToCanvas(pts[i][0], pts[i][1]);
+                        ctx.lineTo(p.x, p.y);
+                    }
+                } else if (s === segIdx) {
+                    for (let i = 1; i <= ptIdx; i++) {
+                        const p = physicalToCanvas(pts[i][0], pts[i][1]);
+                        ctx.lineTo(p.x, p.y);
+                    }
+                    if (ptIdx < pts.length - 1) {
+                        const currPx = physicalToCanvas(robotX, robotY);
+                        ctx.lineTo(currPx.x, currPx.y);
+                    }
+                }
+                ctx.stroke();
+            }
+        }
 
         // Render Start Point (Green) & End Point (Red) Markers on DRAW path via physicalToCanvas
         const firstDrawSeg = executionSegments.find(s => s.type === 'DRAW') || executionSegments[0];
@@ -587,10 +634,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Animation Loop
-    let segIdx = 0;
-    let ptIdx = 0;
-    let lerpProgress = 0.0;
-
     function animate() {
         if (!isRunning || isPaused) return;
 
