@@ -1,7 +1,7 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Web Application Script
- * Final Production Version — Strict Telemetry Isolation, Nearest-Neighbor TSP, Zero Initial Progress, & Precise Powder Rendering
+ * Final Production Version — Clean Workspace, Zero Persistent Smudge, Strict 0% Post-Process Progress & Telemetry Isolation
  */
 
 let currentRobotMode = 'DEMO'; // 'DEMO' or 'REAL'
@@ -174,12 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalTravelDistMm = 0.0;
     let totalEstimatedSec = 0;
     let executedDistMm = 0.0;
-
-    // Off-screen canvas for persistent powder trail
-    const powderCanvas = document.createElement('canvas');
-    powderCanvas.width = 600;
-    powderCanvas.height = 600;
-    const powderCtx = powderCanvas.getContext('2d');
 
     function calculateEstimatedTime() {
         if (executionSegments.length === 0) {
@@ -383,15 +377,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Render Canvas Viewport & Strict Telemetry Isolation
+    // Render Canvas Viewport & Clean Vector Path Display
     function renderViewport() {
         if (!ctx) return;
 
         ctx.clearRect(0, 0, 600, 600);
         drawPlannedPathLayer();
 
-        // Draw powder trail
-        ctx.drawImage(powderCanvas, 0, 0);
+        // Render Active Dispensing Nozzle Indicator ONLY while active DRAWING!
+        if (isPowderOn && robotState === 'DRAWING') {
+            const rad = (robotTheta * Math.PI) / 180.0;
+            const nozX = robotX + 60.0 * Math.cos(rad);
+            const nozY = robotY + 60.0 * Math.sin(rad);
+
+            ctx.fillStyle = '#10B981';
+            ctx.beginPath();
+            ctx.arc(nozX, nozY, 4, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+        }
 
         // Update Robot SVG position
         const svgRobot = document.getElementById('robotSvgVisual');
@@ -435,8 +441,6 @@ document.addEventListener('DOMContentLoaded', () => {
         lerpProgress = 0.0;
         executedDistMm = 0.0;
 
-        powderCtx.clearRect(0, 0, 600, 600);
-
         // Robot marker starts at first coordinate of generated path
         if (executionSegments.length > 0 && executionSegments[0].pts.length > 0) {
             robotX = executionSegments[0].pts[0][0];
@@ -453,7 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnStart) btnStart.textContent = '▶ START DRAWING';
         if (btnPause) btnPause.textContent = '⏸ PAUSE';
 
-        // STRICT REQUIREMENT #1 & #9: Progress MUST be 0% after process / reset
+        // STRICT REQUIREMENT: Progress MUST be 0% after process / reset
         if (txtProgress) txtProgress.textContent = '0%';
         const valStatProgress = document.getElementById('valStatProgress');
         if (valStatProgress) valStatProgress.textContent = '0 %';
@@ -499,7 +503,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 ptIdx = 0;
                 lerpProgress = 0.0;
                 executedDistMm = 0.0;
-                powderCtx.clearRect(0, 0, 600, 600);
             }
 
             isRunning = true;
@@ -639,18 +642,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const dy = p2[1] - p1[1];
             if (Math.hypot(dx, dy) > 0.1) {
                 robotTheta = (Math.atan2(dy, dx) * 180.0) / Math.PI;
-            }
-
-            // Render Powder Trail at Nozzle Tip (+60mm offset) ONLY when isPowderOn && DRAWING!
-            if (isPowderOn && robotState === 'DRAWING') {
-                const rad = (robotTheta * Math.PI) / 180.0;
-                const nozX = robotX + 60.0 * Math.cos(rad);
-                const nozY = robotY + 60.0 * Math.sin(rad);
-
-                powderCtx.fillStyle = '#10B981'; // Green = Completed drawing
-                powderCtx.beginPath();
-                powderCtx.arc(nozX, nozY, 3, 0, 2 * Math.PI);
-                powderCtx.fill();
             }
 
             renderViewport();
