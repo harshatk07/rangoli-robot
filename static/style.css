@@ -44,8 +44,8 @@ body.light-theme-body {
 .designer-app-header {
     background: #FFFFFF;
     border-bottom: 1px solid var(--card-border);
-    padding: 22px 44px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    padding: 16px 36px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -58,7 +58,7 @@ body.light-theme-body {
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
+    height: 3.5px;
     background: linear-gradient(90deg, #2563EB, #10B981, #6366F1);
 }
 
@@ -68,55 +68,61 @@ body.light-theme-body {
     align-items: center;
     max-width: 1440px;
     margin: 0 auto;
+    gap: 16px;
+    width: 100%;
 }
 
 .header-brand-box {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
+    min-width: 0;
 }
 
 .header-title-box {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    margin-left: 24px;
+    gap: 3px;
+    margin-left: 0;
+    min-width: 0;
 }
 
 .project-main-title {
-    font-size: 1.65rem;
+    font-size: 1.35rem;
     font-weight: 900;
     color: #0F172A;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.01em;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .project-subtitle-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    font-size: 0.92rem;
+    gap: 8px;
+    flex-wrap: nowrap;
+    font-size: 0.8rem;
     color: #475569;
+    white-space: nowrap;
 }
 
 .badge-project-type {
     background: #EFF6FF;
     color: #1D4ED8;
-    padding: 3px 10px;
-    border-radius: 6px;
+    padding: 2px 8px;
+    border-radius: 4px;
     font-weight: 800;
-    font-size: 0.8rem;
+    font-size: 0.73rem;
     border: 1px solid #BFDBFE;
 }
 
 .badge-team {
     background: #EFF6FF;
     color: #1D4ED8;
-    padding: 4px 10px;
-    border-radius: 6px;
+    padding: 2px 8px;
+    border-radius: 4px;
     font-weight: 800;
-    font-size: 0.85rem;
+    font-size: 0.73rem;
     border: 1px solid #BFDBFE;
     vertical-align: middle;
 }
@@ -135,35 +141,35 @@ body.light-theme-body {
     color: #0F172A;
     font-weight: 700;
     background: #F1F5F9;
-    padding: 3px 10px;
-    border-radius: 6px;
+    padding: 2px 8px;
+    border-radius: 4px;
     border: 1px solid #CBD5E1;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
+    font-size: 0.73rem;
 }
 
 .header-right-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: 10px;
+    flex-shrink: 0;
     justify-content: flex-end;
 }
 
 .mode-switch-group.sm-switch {
     display: flex;
     background: #F1F5F9;
-    padding: 3px;
-    border-radius: 8px;
+    padding: 2px;
+    border-radius: 6px;
     border: 1px solid #CBD5E1;
 }
 
 .btn-mode {
-    padding: 7px 14px;
-    font-size: 0.82rem;
+    padding: 6px 12px;
+    font-size: 0.78rem;
     font-weight: 800;
     border: none;
-    border-radius: 6px;
+    border-radius: 5px;
     cursor: pointer;
     background: transparent;
     color: var(--text-subtle);
@@ -188,9 +194,9 @@ body.light-theme-body {
     background: #2563EB;
     color: #FFFFFF;
     border: none;
-    padding: 7px 14px;
+    padding: 6px 12px;
     border-radius: 6px;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: 800;
     cursor: pointer;
     user-select: none;
@@ -199,19 +205,19 @@ body.light-theme-body {
 .header-status-column {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
     align-items: flex-end;
 }
 
 .header-status-pill.pill-sm {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     background: #F8FAFC;
     border: 1px solid #E2E8F0;
-    padding: 5px 12px;
-    border-radius: 16px;
-    font-size: 0.78rem;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 0.72rem;
     font-weight: 700;
     color: #334155;
 }
