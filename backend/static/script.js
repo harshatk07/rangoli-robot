@@ -222,6 +222,7 @@ window.setLineWidth = function(width) {
 
     window.updateActiveConfigBadge();
     if (window.recalculateDrawing) window.recalculateDrawing();
+    if (window.renderGlobalViewport) window.renderGlobalViewport();
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -563,7 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.beginPath();
             if (seg.type === 'DRAW' && seg.dispense) {
                 ctx.strokeStyle = '#2563EB';
-                ctx.lineWidth = 2.0;
+                ctx.lineWidth = Math.max(1.8, window.drawingConfig.lineWidth * 0.9);
                 ctx.setLineDash([]);
             } else {
                 ctx.strokeStyle = '#94A3B8';
