@@ -63,15 +63,21 @@ function setRobotMode(mode) {
     const btnDemo = document.getElementById('btnModeDemo');
     const btnReal = document.getElementById('btnModeReal');
     const btnDiscover = document.getElementById('btnDiscoverRobots');
+    const pillWsBackend = document.getElementById('pillWsBackend');
+    const pillRobotStatus = document.getElementById('pillRobotStatus');
 
     if (mode === 'DEMO') {
         if (btnDemo) btnDemo.classList.add('active');
         if (btnReal) btnReal.classList.remove('active');
         if (btnDiscover) btnDiscover.style.display = 'none';
+        if (pillWsBackend) pillWsBackend.style.display = 'none';
+        if (pillRobotStatus) pillRobotStatus.style.display = 'none';
     } else {
         if (btnReal) btnReal.classList.add('active');
         if (btnDemo) btnDemo.classList.remove('active');
         if (btnDiscover) btnDiscover.style.display = 'inline-block';
+        if (pillWsBackend) pillWsBackend.style.display = 'flex';
+        if (pillRobotStatus) pillRobotStatus.style.display = 'flex';
     }
     updateStatusDisplay();
 }
