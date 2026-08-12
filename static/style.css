@@ -29,11 +29,10 @@
     -webkit-font-smoothing: antialiased;
 }
 
-/* Designer Light Stage Background */
+/* Plain White Stage Background */
 body.light-theme-body {
-    background-color: var(--bg-light);
-    background-image: 
-        repeating-linear-gradient(45deg, rgba(15, 23, 42, 0.02), rgba(15, 23, 42, 0.02) 12px, transparent 12px, transparent 24px);
+    background-color: #FAFAFA;
+    background-image: none;
     color: var(--text-main);
     padding: 0;
     margin: 0;
