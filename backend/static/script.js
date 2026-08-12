@@ -1,13 +1,14 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Web Application Script
- * Final Production Version — Authoritative 610 x 610 mm Workspace & Pure State Engine
+ * Production Version — 610 x 610 mm Workspace, Precise Vectorization & Pure State Engine
  */
 
 let currentRobotMode = 'DEMO'; // 'DEMO' or 'REAL'
 let selectedRobotId = null;
 let activeOnlineRobots = [];
 let isBackendConnected = false;
+let isPathDebugEnabled = false;
 
 // Central Application State
 window.drawingConfig = {
@@ -26,6 +27,18 @@ function physicalToCanvas(x_mm, y_mm) {
     const cy = (y_mm / workspaceHeight) * canvasHeight;
 
     return { x: cx, y: cy };
+}
+
+function togglePathDebugMode() {
+    isPathDebugEnabled = !isPathDebugEnabled;
+    const btn = document.getElementById('btnPathDebugToggle');
+    if (btn) {
+        btn.textContent = isPathDebugEnabled ? '🛠️ PATH DEBUG: ON' : '🛠️ PATH DEBUG: OFF';
+        btn.style.background = isPathDebugEnabled ? '#EFF6FF' : '#F1F5F9';
+        btn.style.borderColor = isPathDebugEnabled ? '#2563EB' : '#CBD5E1';
+        btn.style.color = isPathDebugEnabled ? '#1D4ED8' : '#475569';
+    }
+    if (window.renderGlobalViewport) window.renderGlobalViewport();
 }
 
 function updateStatusDisplay() {
@@ -181,11 +194,6 @@ window.setDrawingSize = function(size) {
         }
     });
 
-    const gridBadge = document.querySelector('.hud-badge');
-    if (gridBadge) {
-        gridBadge.textContent = `610 × 610 mm (${s} × ${s} mm)`;
-    }
-
     window.updateActiveConfigBadge();
     if (window.recalculateDrawing) window.recalculateDrawing();
 };
@@ -273,11 +281,35 @@ document.addEventListener('DOMContentLoaded', () => {
     let ptIdx = 0;
     let lerpProgress = 0.0;
 
+    // Helper: Rotate closed contour point array so drawing starts at closest point to currPos
+    function rotateClosedContour(poly, currPos) {
+        if (!poly || poly.length < 3) return poly;
+        let pts = [...poly];
+        let isClosed = false;
+        if (pts[0][0] === pts[pts.length - 1][0] && pts[0][1] === pts[pts.length - 1][1]) {
+            isClosed = true;
+            pts.pop();
+        }
+        if (!isClosed) return poly;
+
+        let bestIdx = 0;
+        let bestDist = Infinity;
+        for (let i = 0; i < pts.length; i++) {
+            let d = Math.hypot(pts[i][0] - currPos[0], pts[i][1] - currPos[1]);
+            if (d < bestDist) {
+                bestDist = d;
+                bestIdx = i;
+            }
+        }
+        let rotated = pts.slice(bestIdx).concat(pts.slice(0, bestIdx));
+        rotated.push(rotated[0]);
+        return rotated;
+    }
+
     // Helper: Rescales raw contours to selected size (300, 450, 525, 610 mm) centered in 610x610 mm workspace
     function buildScaledExecutionSegments(contours, targetSizeMm) {
         if (!contours || contours.length === 0) return [];
 
-        // 1. Gather all points to compute original bounding box
         let allPts = [];
         contours.forEach(c => {
             if (Array.isArray(c)) {
@@ -299,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let wPx = Math.max(1.0, maxX - minX);
         let hPx = Math.max(1.0, maxY - minY);
 
-        // 2. Safety margin of 20 mm from workspace boundary
+        // Safety margin of 20 mm from workspace boundary
         const marginMm = 20.0;
         const availableSizeMm = Math.max(50.0, targetSizeMm - (2.0 * marginMm));
 
@@ -309,7 +341,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const offsetX = 305.0 - (wPx * scale) / 2.0;
         const offsetY = 305.0 - (hPx * scale) / 2.0;
 
-        // 3. Build scaled polylines
         let scaledContours = contours.map(c => {
             return c.map(pt => [
                 Math.round((offsetX + (pt[0] - minX) * scale) * 10.0) / 10.0,
@@ -317,9 +348,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ]);
         });
 
-        // 4. Build execution segments with Nearest-Neighbor ordering & Initial HOME travel path from (0,0)
         let segments = [];
-        let currPos = [0.0, 0.0]; // Startup & Reset HOME position (0,0) mm
+        let currPos = [0.0, 0.0]; // HOME startup position (0,0) mm
 
         let unvisited = [...scaledContours];
 
@@ -346,7 +376,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             let nextPath = unvisited.splice(bestIdx, 1)[0];
-            if (bestReverse) nextPath.reverse();
+
+            if (nextPath[0][0] === nextPath[nextPath.length - 1][0] && nextPath[0][1] === nextPath[nextPath.length - 1][1]) {
+                nextPath = rotateClosedContour(nextPath, currPos);
+            } else if (bestReverse) {
+                nextPath.reverse();
+            }
 
             const startPt = nextPath[0];
             const endPt = nextPath[nextPath.length - 1];
@@ -427,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (valEstTime) valEstTime.textContent = formatted;
         if (valRemTime) valRemTime.textContent = formatted;
 
-        const powderGrams = Math.round((totalDrawDistMm / 1000.0) * window.drawingConfig.lineWidth * 4.17); // Estimated powder usage: 4.17g per (m * mm_width)
+        const powderGrams = Math.round((totalDrawDistMm / 1000.0) * window.drawingConfig.lineWidth * 4.17);
 
         if (valDrawDist) valDrawDist.textContent = `${(totalDrawDistMm / 1000.0).toFixed(2)} m`;
         if (valTravelDist) valTravelDist.textContent = `${(totalTravelDistMm / 1000.0).toFixed(2)} m`;
@@ -501,7 +536,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     executionSegments = data.execution_segments;
                     espCommands = data.esp32_commands;
 
-                    // Extract raw draw contours for local size scaling
                     rawContoursData = executionSegments
                         .filter(s => s.type === 'DRAW')
                         .map(s => s.pts);
@@ -528,11 +562,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             ctx.beginPath();
             if (seg.type === 'DRAW' && seg.dispense) {
-                ctx.strokeStyle = '#2563EB'; // Solid Blue = Drawing path preview
+                ctx.strokeStyle = '#2563EB';
                 ctx.lineWidth = 2.0;
                 ctx.setLineDash([]);
             } else {
-                ctx.strokeStyle = '#94A3B8'; // Dashed Gray = Travel path preview
+                ctx.strokeStyle = '#94A3B8';
                 ctx.lineWidth = 1.2;
                 ctx.setLineDash([4, 4]);
             }
@@ -550,7 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2. Render Executed Completed Drawing Layer (Solid Emerald Green #10B981) Behind Robot
         if (segIdx > 0 || ptIdx > 0 || lerpProgress > 0 || robotState === 'COMPLETED') {
-            ctx.strokeStyle = '#10B981'; // Emerald Green = Completed Rangoli drawing
+            ctx.strokeStyle = '#10B981';
             ctx.lineWidth = Math.max(2.5, window.drawingConfig.lineWidth);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
@@ -559,7 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (s > segIdx && robotState !== 'COMPLETED') break;
 
                 const seg = executionSegments[s];
-                if (seg.type !== 'DRAW' || !seg.dispense) continue; // Green line traces ONLY active DRAW strokes!
+                if (seg.type !== 'DRAW' || !seg.dispense) continue;
 
                 const pts = seg.pts;
                 if (pts.length < 2) continue;
@@ -613,6 +647,22 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.strokeStyle = '#FFFFFF';
             ctx.lineWidth = 1.5;
             ctx.stroke();
+        }
+
+        // PATH DEBUG Overlay
+        if (isPathDebugEnabled) {
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.fillRect(10, 10, 230, 90);
+            ctx.fillStyle = '#10B981';
+            ctx.font = '700 11px "JetBrains Mono", monospace';
+            ctx.fillText(`PATH DEBUG MODE: ACTIVE`, 18, 28);
+            ctx.fillStyle = '#F8FAFC';
+            ctx.font = '600 11px "JetBrains Mono", monospace';
+            const drawCount = executionSegments.filter(s => s.type === 'DRAW').length;
+            const totalPts = executionSegments.reduce((sum, s) => sum + s.pts.length, 0);
+            ctx.fillText(`Paths: ${drawCount} | Points: ${totalPts}`, 18, 46);
+            ctx.fillText(`Size: ${window.drawingConfig.size}×${window.drawingConfig.size} mm`, 18, 64);
+            ctx.fillText(`Width: ${window.drawingConfig.lineWidth} mm | Mode: ${currentRobotMode}`, 18, 82);
         }
     }
 
@@ -691,6 +741,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    window.renderGlobalViewport = renderViewport;
+
     // Reset Simulation State (Robot marker stays at HOME (0.0, 0.0) mm Top-Left before execution)
     function resetSimulation() {
         if (animFrame) cancelAnimationFrame(animFrame);
@@ -701,7 +753,6 @@ document.addEventListener('DOMContentLoaded', () => {
         lerpProgress = 0.0;
         executedDistMm = 0.0;
 
-        // Robot marker is at HOME (0.0, 0.0) mm Top-Left corner
         robotX = 0.0;
         robotY = 0.0;
         robotTheta = 0.0;
@@ -941,7 +992,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     executionSegments = data.execution_segments;
                     espCommands = data.esp32_commands;
 
-                    // Extract raw draw contours for instant client-side size scaling
                     rawContoursData = executionSegments
                         .filter(s => s.type === 'DRAW')
                         .map(s => s.pts);

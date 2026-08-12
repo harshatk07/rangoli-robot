@@ -73,7 +73,10 @@
                             <h2>Workspace Preview (610 × 610 mm)</h2>
                             <span class="card-subtitle">Physical Drawing Area &bull; Top-Left HOME position (0,0)</span>
                         </div>
-                        <span class="hud-badge">610 × 610 mm</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button type="button" id="btnPathDebugToggle" class="hud-badge" style="cursor: pointer; background: #F1F5F9; border: 1px solid #CBD5E1; color: #475569;" onclick="togglePathDebugMode()">🛠️ PATH DEBUG: OFF</button>
+                            <span class="hud-badge">610 × 610 mm</span>
+                        </div>
                     </div>
 
                     <!-- Overlay Legend inside Workspace Card -->
