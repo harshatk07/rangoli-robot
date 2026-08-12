@@ -35,10 +35,10 @@
 
 ## 📸 System Screenshots & Demonstrations
 
-| Web Dashboard ($610 \times 610\text{ mm}$ Workspace) | Automated Vectorization Pipeline |
+| Web Dashboard ($610 \times 610\text{ mm}$ Workspace Preview) | Image Vectorization Pipeline (Ganesha Vector Drawing) |
 | :---: | :---: |
-| ![Web Dashboard Preview](static/uploads/rangoli_dashboard_preview.jpg) | ![Image Vectorization Pipeline](static/uploads/rangoli_pipeline_preview.jpg) |
-| *Real-time vector trajectory rendering & kinematics telemetry* | *Raster image binarization, contour isolation & continuous motion G-Code* |
+| ![Web Dashboard Preview](static/uploads/rangoli_dashboard_preview.png) | ![Image Vectorization Pipeline](static/uploads/rangoli_pipeline_preview.png) |
+| *Authoritative $610 \times 610\text{ mm}$ physical workspace with TOP-LEFT $(0,0)$ HOME position* | *High-fidelity line art binarization, continuous contour isolation & real-time travel motion rendering* |
 
 ---
 
