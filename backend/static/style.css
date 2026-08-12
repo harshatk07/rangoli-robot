@@ -1,55 +1,56 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Master Stylesheet
- * Dribbble Drone Delivery Design System applied to Wireframe Layout
+ * High-End Designer UI System (Outfit + Inter + JetBrains Mono)
  */
 
 :root {
-    --stage-red-bg: #C40C21;
-    --stage-red-dark: #9E0818;
-    --card-black-bg: #0E0E0E;
-    --card-black-border: #222222;
-    --card-black-border-hover: #FF2E4D;
+    --stage-red-bg: #A3091B;
+    --stage-red-dark: #7A0512;
+    --card-bg: #0D1117;
+    --card-border: #1F2633;
+    --card-border-hover: #FF2E4D;
     --vivid-red: #E50914;
     --vivid-red-hover: #B80710;
     --vivid-red-bright: #FF2E4D;
     --accent-green: #10B981;
-    --text-white: #FFFFFF;
-    --text-muted: #888888;
-    --viewport-bg: #0D0F14;
+    --text-main: #F8FAFC;
+    --text-muted: #94A3B8;
+    --text-subtle: #64748B;
+    --viewport-bg: #090C10;
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Outfit', 'Chakra Petch', 'Inter', -apple-system, sans-serif;
+    font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
 }
 
-/* Dribbble Stage Background: Vivid Crimson Red with Technical Hatch Texture */
-body.dribbble-stage-body {
+/* Designer Stage Background: Deep Crimson Red with Subtle Technical Texture */
+body.designer-stage-body {
     background-color: var(--stage-red-bg);
     background-image: 
-        repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.06) 12px, transparent 12px, transparent 24px),
+        repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 12px, transparent 12px, transparent 24px),
         linear-gradient(180deg, var(--stage-red-bg) 0%, var(--stage-red-dark) 100%);
-    color: var(--text-white);
+    color: var(--text-main);
     padding: 0;
     margin: 0;
     min-height: 100vh;
     line-height: 1.5;
 }
 
-/* Header Across Top Width */
-.dribbble-app-header {
-    background: #000000;
+/* Sticky Glassmorphic Header Bar Across Top Width */
+.designer-app-header {
+    background: rgba(10, 10, 10, 0.9);
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     padding: 16px 36px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
     position: sticky;
     top: 0;
     z-index: 100;
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
 }
 
 .header-container {
@@ -60,9 +61,24 @@ body.dribbble-stage-body {
     margin: 0 auto;
 }
 
+.header-brand-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.brand-logo-icon {
+    font-size: 2rem;
+    line-height: 1;
+    background: rgba(255, 46, 77, 0.15);
+    padding: 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 46, 77, 0.3);
+}
+
 .header-title-box h1 {
     font-size: 1.25rem;
-    font-weight: 900;
+    font-weight: 800;
     color: #FFFFFF;
     letter-spacing: -0.01em;
     text-transform: uppercase;
@@ -70,7 +86,7 @@ body.dribbble-stage-body {
 
 .college-subtitle {
     font-size: 0.8rem;
-    color: #CCCCCC;
+    color: var(--text-muted);
     font-weight: 500;
     margin-top: 1px;
 }
@@ -80,11 +96,21 @@ body.dribbble-stage-body {
     align-items: center;
     gap: 8px;
     font-size: 0.78rem;
-    color: var(--text-muted);
-    margin-top: 2px;
+    color: var(--text-subtle);
+    margin-top: 3px;
 }
 
-.meta-dot {
+.meta-tag {
+    background: rgba(255, 46, 77, 0.15);
+    color: var(--vivid-red-bright);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+}
+
+.meta-sep {
     color: var(--vivid-red-bright);
     font-weight: 900;
 }
@@ -103,10 +129,10 @@ body.dribbble-stage-body {
 
 .mode-switch-group {
     display: flex;
-    background: #181818;
+    background: #161B26;
     padding: 3px;
     border-radius: 8px;
-    border: 1px solid #333333;
+    border: 1px solid #2A3447;
 }
 
 .btn-mode {
@@ -117,7 +143,7 @@ body.dribbble-stage-body {
     border-radius: 6px;
     cursor: pointer;
     background: transparent;
-    color: #888888;
+    color: var(--text-muted);
     transition: all 0.2s ease;
     user-select: none;
     text-transform: uppercase;
@@ -151,8 +177,8 @@ body.dribbble-stage-body {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #121212;
-    border: 1px solid #2B2B2B;
+    background: #121620;
+    border: 1px solid #232B3A;
     padding: 8px 16px;
     border-radius: 20px;
     font-size: 0.82rem;
@@ -173,37 +199,37 @@ body.dribbble-stage-body {
     100% { transform: scale(0.95); opacity: 0.8; }
 }
 
-/* Main Wireframe Page Layout */
+/* Page Layout */
 .page-layout {
     max-width: 1440px;
     margin: 28px auto;
     padding: 0 24px;
 }
 
-.main-wireframe-grid {
+.main-designer-grid {
     display: grid;
     grid-template-columns: 660px 1fr;
     gap: 24px;
     align-items: start;
 }
 
-/* Card Containers (Matte Black Technical Panels) */
+/* Designer Card Containers */
 .card {
-    border-radius: 18px;
+    border-radius: 16px;
     padding: 22px;
     margin-bottom: 20px;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.card-black {
-    background: var(--card-black-bg);
-    color: var(--text-white);
-    border: 1px solid var(--card-black-border);
+.card-designer {
+    background: var(--card-bg);
+    color: var(--text-main);
+    border: 1px solid var(--card-border);
 }
 
-.card-black:hover {
-    border-color: var(--card-black-border-hover);
+.card-designer:hover {
+    border-color: var(--card-border-hover);
     box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5), 0 0 16px rgba(255, 46, 77, 0.15);
 }
 
@@ -214,37 +240,51 @@ body.dribbble-stage-body {
     margin-bottom: 14px;
 }
 
-.card-header h2 {
+.header-title-wrapper h2 {
     font-size: 1.1rem;
-    font-weight: 900;
+    font-weight: 800;
     color: #FFFFFF;
     letter-spacing: -0.01em;
 }
 
-.tech-badge {
+.card-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-top: 1px;
+    display: block;
+}
+
+.hud-badge {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.72rem;
     font-weight: 800;
-    background: rgba(255, 46, 77, 0.12);
+    background: rgba(37, 99, 235, 0.15);
+    color: #60A5FA;
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid #1D4ED8;
+}
+
+.hud-badge.red-badge {
+    background: rgba(255, 46, 77, 0.15);
     color: var(--vivid-red-bright);
-    padding: 3px 8px;
-    border-radius: 4px;
-    border: 1px solid rgba(255, 46, 77, 0.3);
+    border-color: rgba(255, 46, 77, 0.4);
 }
 
 /* Canvas Viewport */
 .canvas-workspace-wrapper {
-    margin-top: 6px;
+    margin-top: 8px;
 }
 
 .workspace-overlay-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 14px;
+    margin-bottom: 14px;
     font-size: 0.78rem;
-    color: #CCCCCC;
-    font-weight: 700;
+    color: var(--text-muted);
+    font-weight: 600;
 }
 
 .legend-item {
@@ -263,18 +303,18 @@ body.dribbble-stage-body {
 .dot-end { background: #EF4444; box-shadow: 0 0 6px #EF4444; }
 .dot-draw { background: #3B82F6; box-shadow: 0 0 6px #3B82F6; }
 .dot-completed { background: #10B981; box-shadow: 0 0 6px #10B981; }
-.dot-travel { background: #888888; }
+.dot-travel { background: #64748B; }
 
 .canvas-viewport {
     display: flex;
     justify-content: center;
     align-items: center;
     background: var(--viewport-bg);
-    border: 2px solid #222222;
+    border: 2px solid #1F2633;
     border-radius: 14px;
     padding: 6px;
     position: relative;
-    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+    box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.7);
 }
 
 #simCanvas {
@@ -283,7 +323,7 @@ body.dribbble-stage-body {
     display: block;
 }
 
-/* Progress Card */
+/* Progress Section */
 .progress-card {
     margin-bottom: 20px;
 }
@@ -301,26 +341,26 @@ body.dribbble-stage-body {
 
 .progress-track {
     width: 100%;
-    background: #1A1A1A;
+    background: #161B26;
     height: 12px;
     border-radius: 6px;
     overflow: hidden;
     margin-top: 6px;
-    border: 1px solid #2B2B2B;
+    border: 1px solid #232B3A;
 }
 
 .progress-fill {
     width: 0%;
     height: 100%;
-    background: linear-gradient(90deg, var(--vivid-red), #10B981);
-    box-shadow: 0 0 10px var(--vivid-red);
+    background: linear-gradient(90deg, var(--vivid-red-bright), #10B981);
+    box-shadow: 0 0 12px var(--vivid-red-bright);
     transition: width 0.2s ease;
 }
 
 /* Dropzone Interface */
 .upload-dropzone {
-    border: 2px dashed #2B2B2B;
-    background: #141414;
+    border: 2px dashed #232B3A;
+    background: #121620;
     border-radius: 12px;
     padding: 22px;
     text-align: center;
@@ -330,7 +370,8 @@ body.dribbble-stage-body {
 
 .upload-dropzone:hover {
     border-color: var(--vivid-red-bright);
-    background: #1A1A1A;
+    background: #161B26;
+    box-shadow: 0 0 14px rgba(255, 46, 77, 0.15);
 }
 
 .dropzone-icon {
@@ -346,20 +387,21 @@ body.dribbble-stage-body {
 
 .dropzone-sub {
     font-size: 0.78rem;
-    color: #888888;
+    color: var(--text-muted);
 }
 
 .url-input-container {
-    margin-top: 12px;
+    margin-top: 14px;
 }
 
 .input-label {
     display: block;
     font-size: 0.78rem;
     font-weight: 700;
-    color: #AAAAAA;
+    color: var(--text-muted);
     margin-bottom: 4px;
     text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .url-row {
@@ -370,8 +412,8 @@ body.dribbble-stage-body {
 .text-input {
     flex: 1;
     padding: 9px 12px;
-    background: #141414;
-    border: 1px solid #2B2B2B;
+    background: #121620;
+    border: 1px solid #232B3A;
     border-radius: 6px;
     color: #FFFFFF;
     font-size: 0.85rem;
@@ -386,7 +428,7 @@ body.dribbble-stage-body {
 .divider-top {
     margin-top: 16px;
     padding-top: 12px;
-    border-top: 1px solid #222222;
+    border-top: 1px solid #1F2633;
 }
 
 .setting-options-grid {
@@ -405,38 +447,38 @@ body.dribbble-stage-body {
     align-items: center;
     justify-content: center;
     padding: 10px 12px;
-    background: #141414;
-    border: 1px solid #2B2B2B;
+    background: #121620;
+    border: 1px solid #232B3A;
     border-radius: 8px;
     font-size: 0.82rem;
     font-weight: 700;
-    color: #CCCCCC;
+    color: #CBD5E1;
     cursor: pointer;
     transition: all 0.15s ease;
     user-select: none;
 }
 
 .btn-option:hover {
-    background: #1A1A1A;
-    border-color: #444444;
+    background: #161B26;
+    border-color: #3B82F6;
     color: #FFFFFF;
 }
 
 .btn-option.active {
-    background: var(--vivid-red) !important;
-    border-color: var(--vivid-red) !important;
-    color: #FFFFFF !important;
+    background: rgba(255, 46, 77, 0.15) !important;
+    border-color: var(--vivid-red-bright) !important;
+    color: var(--vivid-red-bright) !important;
     font-weight: 800 !important;
-    box-shadow: 0 4px 14px rgba(229, 9, 20, 0.4) !important;
+    box-shadow: 0 0 12px rgba(255, 46, 77, 0.25) !important;
 }
 
 .active-config-badge {
-    margin-top: 12px;
+    margin-top: 14px;
     font-size: 0.78rem;
     font-weight: 800;
     color: var(--vivid-red-bright);
     background: rgba(255, 46, 77, 0.1);
-    padding: 7px 12px;
+    padding: 8px 14px;
     border-radius: 6px;
     border: 1px solid rgba(255, 46, 77, 0.3);
     text-align: center;
@@ -452,29 +494,30 @@ body.dribbble-stage-body {
 }
 
 .metric-box {
-    background: #141414;
-    border: 1px solid #222222;
-    padding: 10px;
+    background: #121620;
+    border: 1px solid #232B3A;
+    padding: 10px 12px;
     border-radius: 8px;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .metric-box:hover {
     border-color: var(--vivid-red-bright);
+    box-shadow: 0 2px 10px rgba(255, 46, 77, 0.12);
 }
 
 .metric-label {
     font-size: 0.65rem;
     font-weight: 800;
-    color: #777777;
+    color: var(--text-subtle);
     display: block;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
 }
 
 .metric-value {
-    font-size: 1.05rem;
-    font-weight: 900;
+    font-size: 1.08rem;
+    font-weight: 800;
     color: #FFFFFF;
     margin-top: 2px;
     display: block;
@@ -483,11 +526,11 @@ body.dribbble-stage-body {
 
 .red-highlight { color: var(--vivid-red-bright) !important; }
 
-/* Telemetry Rows */
+/* Telemetry Summary Rows */
 .telemetry-summary-container {
     margin-top: 16px;
     padding-top: 12px;
-    border-top: 1px solid #222222;
+    border-top: 1px solid #1F2633;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -502,7 +545,7 @@ body.dribbble-stage-body {
 
 .tel-lbl {
     font-weight: 700;
-    color: #888888;
+    color: var(--text-muted);
 }
 
 .tel-val {
@@ -520,11 +563,11 @@ body.dribbble-stage-body {
     font-size: 0.76rem;
 }
 
-.badge-idle { background: rgba(37, 99, 235, 0.15); color: #60A5FA; }
-.badge-on { background: rgba(16, 185, 129, 0.15); color: #10B981; }
-.badge-off { background: rgba(239, 68, 68, 0.15); color: #EF4444; }
+.badge-idle { background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid #1D4ED8; }
+.badge-on { background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid #059669; }
+.badge-off { background: rgba(239, 68, 68, 0.15); color: #EF4444; border: 1px solid #B91C1C; }
 
-/* Button Controls */
+/* Motion Controls */
 .controls-action-bar {
     display: flex;
     flex-direction: column;
@@ -559,7 +602,7 @@ body.dribbble-stage-body {
 
 .btn:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 .btn:disabled {
@@ -568,13 +611,13 @@ body.dribbble-stage-body {
 }
 
 .btn-red-cta {
-    background: var(--vivid-red);
+    background: linear-gradient(135deg, #FF2E4D, #E50914);
     color: #FFFFFF;
-    box-shadow: 0 4px 14px rgba(229, 9, 20, 0.4);
+    box-shadow: 0 4px 18px rgba(255, 46, 77, 0.35);
 }
 
 .btn-red-cta:hover:not(:disabled) {
-    background: var(--vivid-red-hover);
+    background: linear-gradient(135deg, #FF4563, #C40712);
 }
 
 .btn-cta-full {
@@ -589,44 +632,46 @@ body.dribbble-stage-body {
 }
 
 .btn-dark-action {
-    background: #181818;
+    background: #161B26;
     color: #FFFFFF;
-    border: 1px solid #333333;
+    border: 1px solid #232B3A;
 }
 
 .btn-green-action {
     background: #10B981;
     color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .btn-blue-action {
     background: #2563EB;
     color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .btn-estop {
-    background: #DC2626;
+    background: linear-gradient(135deg, #EF4444, #991B1B);
     color: #FFFFFF;
-    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
     width: 100%;
 }
 
 .btn-sm { padding: 8px 14px; font-size: 0.8rem; }
 .btn-full { width: 100%; margin-top: 14px; padding: 12px; font-size: 0.88rem; }
 
-/* Footer */
-.dribbble-app-footer {
+/* Footer Across Bottom Width */
+.designer-app-footer {
     text-align: center;
     padding: 32px;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-muted);
     font-size: 0.82rem;
     margin-top: 40px;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
-    background: #000000;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    background: #0A0A0A;
 }
 
 .footer-title {
-    font-weight: 900;
+    font-weight: 800;
     color: #FFFFFF;
     letter-spacing: 0.04em;
 }

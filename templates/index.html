@@ -3,33 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IoT Based Autonomous Rangoli Drawing Robot</title>
+    <title>IoT Based Autonomous Rangoli Drawing Robot — Control Center</title>
     
-    <!-- Google Fonts: Outfit, Chakra Petch, Inter & JetBrains Mono -->
+    <!-- Premium Google Fonts: Outfit, Inter & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- Master Stylesheet (Cache-Buster v=11.0) -->
-    <link rel="stylesheet" href="/static/style.css?v=11.0">
+    <!-- Designer Master Stylesheet (Cache-Buster v=12.0) -->
+    <link rel="stylesheet" href="/static/style.css?v=12.0">
 </head>
-<body class="dribbble-stage-body">
+<body class="designer-stage-body">
 
-    <!-- HEADER BAR (Top Width Across Screen) -->
-    <header class="dribbble-app-header">
+    <!-- HEADER BAR Across Top Width -->
+    <header class="designer-app-header">
         <div class="header-container">
             <div class="header-brand-box">
+                <div class="brand-logo-icon">🤖</div>
                 <div class="header-title-box">
                     <h1>IoT BASED AUTONOMOUS RANGOLI DRAWING ROBOT</h1>
-                    <div class="college-subtitle">IoT Final Year B.Tech Project &bull; PSCMR College of Engineering & Technology &bull; Team No. 12</div>
+                    <div class="college-subtitle">PSCMR College of Engineering & Technology &bull; Department of CSE (IoT) &bull; Team No. 12</div>
                     <div class="header-meta">
-                        <span class="meta-dot">•</span>
+                        <span class="meta-tag">B.Tech Final Year Project</span>
+                        <span class="meta-sep">•</span>
                         <span class="workspace-pill">Workspace: 610 × 610 mm (2 × 2 ft)</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Header Right Action Buttons & Independent Status Pills -->
+            <!-- Header Right Actions & Independent Status Badges -->
             <div class="header-right-actions">
                 <div class="mode-switch-group">
                     <button id="btnModeDemo" class="btn-mode active" onclick="setRobotMode('DEMO')">🟡 DEMO ROBOT</button>
@@ -49,18 +51,21 @@
         </div>
     </header>
 
-    <!-- MAIN TWO-COLUMN WORKSTATION LAYOUT (Matching Wireframe Image Exactly) -->
+    <!-- MAIN TWO-COLUMN WORKSTATION LAYOUT -->
     <main class="page-layout">
-        <div class="main-wireframe-grid">
+        <div class="main-designer-grid">
             
             <!-- LEFT COLUMN: Workspace Preview -> Drawing Progress -> Robot Controls -->
             <div class="left-column">
                 
                 <!-- 1. Workspace Preview (610 x 610 mm) Card -->
-                <section class="card card-black workspace-card" id="sectionWorkspace">
+                <section class="card card-designer workspace-card" id="sectionWorkspace">
                     <div class="card-header">
-                        <h2>Workspace Preview (610 × 610 mm)</h2>
-                        <span class="tech-badge">PHYSICAL AREA</span>
+                        <div class="header-title-wrapper">
+                            <h2>Workspace Navigation Viewport</h2>
+                            <span class="card-subtitle">610 × 610 mm Physical Drawing Area &bull; Top-Left HOME (0,0)</span>
+                        </div>
+                        <span class="hud-badge">LIVE HUD MAP</span>
                     </div>
 
                     <!-- Top Overlay Legend inside Workspace Card -->
@@ -68,7 +73,7 @@
                         <span class="legend-item"><span class="legend-dot dot-start"></span> Start Point</span>
                         <span class="legend-item"><span class="legend-dot dot-end"></span> End Point</span>
                         <span class="legend-item"><span class="legend-dot dot-draw"></span> Drawing Path (Blue)</span>
-                        <span class="legend-item"><span class="legend-dot dot-completed"></span> Completed Drawing (Green)</span>
+                        <span class="legend-item"><span class="legend-dot dot-completed"></span> Executed Trace (Green)</span>
                         <span class="legend-item"><span class="legend-dot dot-travel"></span> Travel Path (Gray)</span>
                     </div>
 
@@ -80,8 +85,8 @@
                             <!-- SVG Robot Marker Overlay -->
                             <svg id="robotSvgVisual" class="robot-vector-marker" width="44" height="48" viewBox="0 0 44 48" style="position: absolute; top: 0px; left: 0px; z-index: 10; pointer-events: none;">
                                 <g transform="translate(22, 24)">
-                                    <rect x="-16" y="-18" width="32" height="36" rx="6" fill="#0E0E0E" stroke="#FF2E4D" stroke-width="2"/>
-                                    <rect x="-12" y="-14" width="24" height="28" rx="4" fill="#181818"/>
+                                    <rect x="-16" y="-18" width="32" height="36" rx="6" fill="#0C1017" stroke="#FF2E4D" stroke-width="2"/>
+                                    <rect x="-12" y="-14" width="24" height="28" rx="4" fill="#161B26"/>
                                     <circle id="robotStatusLed" cx="0" cy="-6" r="3" fill="#10B981"/>
                                     <polygon points="0,-20 -5,-14 5,-14" fill="#FF2E4D"/>
                                     <circle id="robotDispenserNozzle" cx="0" cy="18" r="4" fill="#64748B"/>
@@ -92,9 +97,11 @@
                 </section>
 
                 <!-- 2. Drawing Progress Card -->
-                <section class="card card-black progress-card">
+                <section class="card card-designer progress-card">
                     <div class="card-header progress-header">
-                        <h2>Drawing Progress</h2>
+                        <div class="header-title-wrapper">
+                            <h2>Execution Progress</h2>
+                        </div>
                         <span id="txtProgress" class="progress-pct-readout">0%</span>
                     </div>
                     <div class="progress-track">
@@ -103,9 +110,12 @@
                 </section>
 
                 <!-- 3. Robot Controls Card -->
-                <section class="card card-black robot-controls-card" id="sectionRobotControls">
+                <section class="card card-designer robot-controls-card" id="sectionRobotControls">
                     <div class="card-header">
-                        <h2>Robot Controls</h2>
+                        <div class="header-title-wrapper">
+                            <h2>Robot Motion Controls</h2>
+                        </div>
+                        <span class="hud-badge red-badge">CONTROL PANEL</span>
                     </div>
 
                     <div class="controls-action-bar">
@@ -126,9 +136,12 @@
             <div class="right-column">
                 
                 <!-- 1. Upload Rangoli Design Card -->
-                <section class="card card-black upload-card" id="sectionUpload">
+                <section class="card card-designer upload-card" id="sectionUpload">
                     <div class="card-header">
-                        <h2>Upload Rangoli Design</h2>
+                        <div class="header-title-wrapper">
+                            <h2>Upload Rangoli Design</h2>
+                            <span class="card-subtitle">Drag & Drop, Browse File, or Import URL</span>
+                        </div>
                     </div>
 
                     <form id="uploadForm" enctype="multipart/form-data">
@@ -136,15 +149,15 @@
                         <div class="upload-dropzone" id="dropzone">
                             <div class="dropzone-icon">📥</div>
                             <div class="dropzone-text">
-                                <strong>Drag & Drop Rangoli Design File Here</strong><br>
-                                <span class="dropzone-sub">or click to browse from device (JPG, PNG, WEBP, SVG)</span>
+                                <strong>Drag & Drop Rangoli File Here</strong><br>
+                                <span class="dropzone-sub">Supports JPG, PNG, WEBP, SVG files</span>
                             </div>
                             <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp,image/svg+xml" style="display: none;">
                         </div>
 
                         <!-- URL Import Row -->
                         <div class="url-input-container">
-                            <label class="input-label">Or Paste Image URL:</label>
+                            <label class="input-label">Or Import Image URL:</label>
                             <div class="url-row">
                                 <input type="url" id="imageUrlInput" class="text-input" placeholder="https://example.com/rangoli.png">
                                 <button type="button" id="btnLoadUrl" class="btn btn-red-action btn-sm">Import</button>
@@ -152,15 +165,17 @@
                         </div>
 
                         <button type="submit" id="processBtn" class="btn btn-red-cta btn-full">
-                            PROCESS RANGOLI DESIGN
+                            PROCESS RANGOLI DESIGN &raquo;
                         </button>
                     </form>
                 </section>
 
                 <!-- 2. Drawing Size & Line Width Card -->
-                <section class="card card-black drawing-options-card" id="sectionSettings">
+                <section class="card card-designer drawing-options-card" id="sectionSettings">
                     <div class="card-header">
-                        <h2>Drawing Size</h2>
+                        <div class="header-title-wrapper">
+                            <h2>Drawing Area Size</h2>
+                        </div>
                     </div>
                     <div class="setting-group">
                         <div class="setting-options-grid">
@@ -172,7 +187,9 @@
                     </div>
 
                     <div class="card-header divider-top">
-                        <h2>Line Width</h2>
+                        <div class="header-title-wrapper">
+                            <h2>Dispenser Line Width</h2>
+                        </div>
                     </div>
                     <div class="setting-group">
                         <div class="setting-options-grid grid-3">
@@ -188,9 +205,11 @@
                 </section>
 
                 <!-- 3. Drawing Statistics & Telemetry Card -->
-                <section class="card card-black statistics-card">
+                <section class="card card-designer statistics-card">
                     <div class="card-header">
-                        <h2>Drawing Statistics & Telemetry</h2>
+                        <div class="header-title-wrapper">
+                            <h2>Drawing Statistics & Path Metrics</h2>
+                        </div>
                     </div>
 
                     <div class="info-metrics-grid">
@@ -266,10 +285,10 @@
     </main>
 
     <!-- OpenCV 5-Stage Diagnostics (Collapsible if active) -->
-    <section class="card card-black pipeline-diagnostics-bar" id="pipelineCard" style="display: none; margin: 24px auto; max-width: 1440px;">
+    <section class="card card-designer pipeline-diagnostics-bar" id="pipelineCard" style="display: none; margin: 24px auto; max-width: 1440px;">
         <div class="card-header">
-            <h2>OpenCV 5-Stage Diagnostics</h2>
-            <span id="txtDiagBadge" class="tech-badge">Vector Extraction</span>
+            <h2>OpenCV 5-Stage Vector Diagnostics</h2>
+            <span id="txtDiagBadge" class="hud-badge">Vector Diagnostics</span>
         </div>
         <div class="diag-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px;">
             <div class="diag-stage"><span class="diag-lbl">1. Original</span><img id="imgOriginal" src="" alt="Original" style="width: 100%; height: 90px; object-fit: contain; background: #000; border-radius: 4px;"></div>
@@ -278,7 +297,7 @@
             <div class="diag-stage"><span class="diag-lbl">4. Contours</span><img id="imgEdges" src="" alt="Contours" style="width: 100%; height: 90px; object-fit: contain; background: #000; border-radius: 4px;"></div>
             <div class="diag-stage"><span class="diag-lbl">5. Overlay</span><img id="imgGrayscale" src="" alt="Overlay" style="width: 100%; height: 90px; object-fit: contain; background: #000; border-radius: 4px;"></div>
         </div>
-        <div id="diagDetails" class="diag-details" style="margin-top: 10px; font-size: 0.8rem; color: #888888;"></div>
+        <div id="diagDetails" class="diag-details" style="margin-top: 10px; font-size: 0.8rem; color: #94A3B8;"></div>
     </section>
 
     <!-- ESP32 Robot Discovery Modal -->
@@ -301,12 +320,12 @@
     </div>
 
     <!-- Footer Across Bottom Width -->
-    <footer class="dribbble-app-footer">
+    <footer class="designer-app-footer">
         <div class="footer-title">IoT BASED AUTONOMOUS RANGOLI DRAWING ROBOT</div>
         <div>PSCMR College of Engineering & Technology &bull; Department of CSE (IoT) &bull; TEAM NO. 12</div>
     </footer>
 
-    <!-- Frontend Application Logic Script (With Cache-Buster v=11.0) -->
-    <script src="/static/script.js?v=11.0"></script>
+    <!-- Frontend Application Logic Script (With Cache-Buster v=12.0) -->
+    <script src="/static/script.js?v=12.0"></script>
 </body>
 </html>
