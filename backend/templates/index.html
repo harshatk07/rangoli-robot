@@ -3,31 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IoT Based Autonomous Rangoli Drawing Robot — Cyberpunk Control Center</title>
+    <title>IoT Based Autonomous Rangoli Drawing Robot</title>
     
-    <!-- Google Fonts: Chakra Petch & Inter -->
+    <!-- Google Fonts: Chakra Petch, Outfit, Inter & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- Master Stylesheet (Cache-Buster v=9.0) -->
-    <link rel="stylesheet" href="/static/style.css?v=9.0">
+    <!-- Master Stylesheet (Cache-Buster v=10.0) -->
+    <link rel="stylesheet" href="/static/style.css?v=10.0">
 </head>
-<body class="cyberpunk-theme">
+<body class="dribbble-stage-body">
 
-    <!-- Header Across Top Width (Cyberpunk Robotics Control Header) -->
-    <header class="app-header">
+    <!-- Header Across Top Width -->
+    <header class="dribbble-app-header">
         <div class="header-container">
             <div class="header-brand-box">
+                <span class="version-tag">VERSION 12.347.85A</span>
+                <span class="meta-divider">//</span>
                 <div class="header-title-box">
                     <h1>IoT BASED AUTONOMOUS RANGOLI DRAWING ROBOT</h1>
-                    <div class="college-subtitle">PSCMR College of Engineering & Technology &bull; Department of CSE (IoT)</div>
-                    <div class="header-meta">
-                        <span class="dept-badge">B.Tech Project</span>
-                        <span class="team-meta-badge">TEAM NO. 12</span>
-                        <span class="meta-divider">&bull;</span>
-                        <span class="workspace-pill">Physical Workspace: 610 × 610 mm</span>
-                    </div>
+                    <div class="college-subtitle">PSCMR College of Engineering & Technology &bull; Department of CSE (IoT) &bull; Team No. 12</div>
                 </div>
             </div>
 
@@ -51,172 +47,58 @@
         </div>
     </header>
 
-    <!-- Main Workstation Layout (Desktop Control Workstation) -->
-    <main class="page-layout">
-        <div class="main-dashboard">
-            
-            <!-- LEFT COLUMN: Physical 610 x 610 mm Workspace Canvas Viewport -->
-            <div class="left-column">
-                
-                <section class="card workspace-card" id="sectionWorkspace">
-                    <div class="card-header">
-                        <h2>Physical Workspace Navigation Viewport</h2>
-                        <span class="grid-badge">610 × 610 mm Workstation</span>
+    <!-- Main Dribbble Visual Composition Deck (3 Primary Cards set against Red Backdrop) -->
+    <main class="dribbble-deck-stage">
+        
+        <div class="dribbble-deck-grid">
+
+            <!-- CARD 1: MATTE BLACK TECHNICAL UPLOAD & OPTIONS PANEL -->
+            <section class="dribbble-card card-black" id="cardUploadPipeline">
+                <div class="card-top-bar">
+                    <span class="tech-code-badge">01 // PROCESSOR</span>
+                    <span class="tech-hatch">/////////</span>
+                </div>
+
+                <h2 class="card-main-title">Upload & Process Rangoli</h2>
+                <div class="card-sub-title">Vector Image Extraction & Scaled Path Generation</div>
+
+                <form id="uploadForm" enctype="multipart/form-data" class="dribbble-form">
+                    <!-- Dropzone Interface -->
+                    <div class="upload-dropzone" id="dropzone">
+                        <div class="dropzone-icon">📥</div>
+                        <div class="dropzone-text">
+                            <strong>Drag & Drop Rangoli Design</strong><br>
+                            <span class="dropzone-sub">JPG, PNG, WEBP, SVG files supported</span>
+                        </div>
+                        <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp,image/svg+xml" style="display: none;">
                     </div>
 
-                    <div class="canvas-workspace-wrapper">
-                        <!-- Interactive HUD Legend Overlay -->
-                        <div class="workspace-overlay-legend" id="workspaceLegend">
-                            <span class="legend-item"><span class="legend-dot dot-start"></span> Start Point</span>
-                            <span class="legend-item"><span class="legend-dot dot-end"></span> End Point</span>
-                            <span class="legend-item"><span class="legend-dot dot-draw"></span> Drawing Path</span>
-                            <span class="legend-item"><span class="legend-dot dot-completed"></span> Completed Trace</span>
-                            <span class="legend-item"><span class="legend-dot dot-travel"></span> Travel Segment</span>
-                        </div>
-
-                        <!-- 610x610 mm Physical Canvas Viewport (No 8x8 grid cells) -->
-                        <div class="canvas-viewport" id="canvasContainer">
-                            <canvas id="simCanvas" width="600" height="600"></canvas>
-
-                            <!-- SVG Robot Vector Overlay Marker -->
-                            <svg id="robotSvgVisual" class="robot-vector-marker" width="44" height="48" viewBox="0 0 44 48" style="position: absolute; top: 0px; left: 0px; z-index: 10; pointer-events: none;">
-                                <g transform="translate(22, 24)">
-                                    <rect x="-16" y="-18" width="32" height="36" rx="6" fill="#0D1117" stroke="#FF2E4D" stroke-width="2"/>
-                                    <rect x="-12" y="-14" width="24" height="28" rx="4" fill="#161C26"/>
-                                    <circle id="robotStatusLed" cx="0" cy="-6" r="3" fill="#10B981"/>
-                                    <polygon points="0,-20 -5,-14 5,-14" fill="#FF2E4D"/>
-                                    <circle id="robotDispenserNozzle" cx="0" cy="18" r="4" fill="#64748B"/>
-                                </g>
-                            </svg>
+                    <!-- URL Import Row -->
+                    <div class="url-input-container">
+                        <label class="input-label">Or Import Image URL:</label>
+                        <div class="url-row">
+                            <input type="url" id="imageUrlInput" class="text-input" placeholder="https://example.com/rangoli.png">
+                            <button type="button" id="btnLoadUrl" class="btn btn-red-action btn-sm">Import</button>
                         </div>
                     </div>
-                </section>
 
-                <!-- 5-Stage OpenCV Pipeline Diagnostics (Collapsible) -->
-                <section class="card pipeline-card" id="pipelineCard" style="display: none; margin-top: 16px;">
-                    <div class="card-header">
-                        <h2>OpenCV 5-Stage Vector Diagnostics</h2>
-                        <span id="txtDiagBadge" class="hud-tag">Vector Processing</span>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px;">
-                        <div class="diag-stage-box">
-                            <span class="diag-stage-label">1. Original</span>
-                            <img id="imgOriginal" src="" alt="Original Stage" class="diag-img">
-                        </div>
-                        <div class="diag-stage-box">
-                            <span class="diag-stage-label">2. Threshold</span>
-                            <img id="imgThreshold" src="" alt="Threshold Stage" class="diag-img">
-                        </div>
-                        <div class="diag-stage-box">
-                            <span class="diag-stage-label">3. Morphology</span>
-                            <img id="imgMorphology" src="" alt="Morphology Stage" class="diag-img">
-                        </div>
-                        <div class="diag-stage-box">
-                            <span class="diag-stage-label">4. Contours</span>
-                            <img id="imgEdges" src="" alt="Contours Stage" class="diag-img">
-                        </div>
-                        <div class="diag-stage-box">
-                            <span class="diag-stage-label">5. Overlay</span>
-                            <img id="imgGrayscale" src="" alt="Overlay Stage" class="diag-img">
-                        </div>
-                    </div>
-                    <div id="diagDetails" class="diag-details-box"></div>
-                </section>
-
-            </div>
-
-            <!-- RIGHT COLUMN: Compact Robot Telemetry + Upload + Size & Line Width Options -->
-            <div class="right-column">
-                
-                <!-- 1. Compact Robot Telemetry Panel (BOT-01) -->
-                <section class="card telemetry-card" id="sectionTelemetry">
-                    <div class="card-header">
-                        <h2>Robot Telemetry (BOT-01)</h2>
-                        <span class="hud-tag red-tag">LIVE HUD</span>
-                    </div>
-
-                    <div class="telemetry-compact-grid">
-                        <div class="telemetry-row">
-                            <span class="tel-label">ROBOT STATUS:</span>
-                            <span class="status-badge badge-idle" id="valState">IDLE</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="tel-label">POSITION (X, Y):</span>
-                            <span class="tel-value" id="valPose">22.4, 24.4 mm</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="tel-label">HEADING (IMU °):</span>
-                            <span class="tel-value" id="valHeading">0.0°</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="tel-label">TRAVEL SPEED:</span>
-                            <span class="tel-value" id="valSpeed">80.0 mm/s</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="tel-label">BATTERY LEVEL:</span>
-                            <span class="tel-value green-text" id="valBatteryPct">95% (12.2V)</span>
-                        </div>
-                        <div class="telemetry-row">
-                            <span class="tel-label">POWDER DISPENSER:</span>
-                            <span class="status-badge badge-off" id="valPowder">OFF</span>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 2. Upload Rangoli Design Panel -->
-                <section class="card upload-card" id="sectionUpload">
-                    <div class="card-header">
-                        <h2>Upload Rangoli Design</h2>
-                    </div>
-
-                    <form id="uploadForm" enctype="multipart/form-data">
-                        <!-- Dropzone Interface -->
-                        <div class="upload-dropzone" id="dropzone">
-                            <div class="dropzone-icon">📥</div>
-                            <div class="dropzone-text">
-                                <strong>Drag & Drop Rangoli File Here</strong><br>
-                                <span class="dropzone-sub">Click to browse (JPG, PNG, WEBP, SVG)</span>
-                            </div>
-                            <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp,image/svg+xml" style="display: none;">
-                        </div>
-
-                        <!-- URL Import Row -->
-                        <div class="url-input-container">
-                            <label class="input-label">Or Paste Image URL:</label>
-                            <div class="url-row">
-                                <input type="url" id="imageUrlInput" class="text-input" placeholder="https://example.com/rangoli.png">
-                                <button type="button" id="btnLoadUrl" class="btn btn-primary btn-sm">Import</button>
-                            </div>
-                        </div>
-
-                        <button type="submit" id="processBtn" class="btn btn-primary btn-full">
-                            PROCESS RANGOLI DESIGN
-                        </button>
-                    </form>
-                </section>
-
-                <!-- 3. Drawing Size & Line Width Controls Panel -->
-                <section class="card drawing-options-card" id="sectionSettings">
-                    <div class="card-header">
-                        <h2>Drawing Area Size</h2>
-                    </div>
-                    <div class="setting-group">
+                    <!-- Drawing Size Selection Grid -->
+                    <div class="option-section">
+                        <label class="input-label">Drawing Size (Physical Workstation):</label>
                         <div class="setting-options-grid">
-                            <button type="button" class="btn-option" id="btnSize300" onclick="setDrawingSize(300)">Small (300 × 300 mm)</button>
-                            <button type="button" class="btn-option" id="btnSize450" onclick="setDrawingSize(450)">Medium (450 × 450 mm)</button>
-                            <button type="button" class="btn-option" id="btnSize525" onclick="setDrawingSize(525)">Large (525 × 525 mm)</button>
-                            <button type="button" class="btn-option active" id="btnSize610" onclick="setDrawingSize(610)">Full (610 × 610 mm)</button>
+                            <button type="button" class="btn-option" id="btnSize300" onclick="setDrawingSize(300)">Small (300×300)</button>
+                            <button type="button" class="btn-option" id="btnSize450" onclick="setDrawingSize(450)">Medium (450×450)</button>
+                            <button type="button" class="btn-option" id="btnSize525" onclick="setDrawingSize(525)">Large (525×525)</button>
+                            <button type="button" class="btn-option active" id="btnSize610" onclick="setDrawingSize(610)">Full (610×610)</button>
                         </div>
                     </div>
 
-                    <div class="card-header divider-top">
-                        <h2>Nozzle Line Width</h2>
-                    </div>
-                    <div class="setting-group">
+                    <!-- Line Width Selection Grid -->
+                    <div class="option-section">
+                        <label class="input-label">Dispenser Nozzle Line Width:</label>
                         <div class="setting-options-grid grid-3">
                             <button type="button" class="btn-option" id="btnWidth2" onclick="setLineWidth(2)">2 mm</button>
-                            <button type="button" class="btn-option active" id="btnWidth3" onclick="setLineWidth(3)">3 mm (Default)</button>
+                            <button type="button" class="btn-option active" id="btnWidth3" onclick="setLineWidth(3)">3 mm (Def)</button>
                             <button type="button" class="btn-option" id="btnWidth4" onclick="setLineWidth(4)">4 mm</button>
                         </div>
                     </div>
@@ -224,54 +106,139 @@
                     <div id="txtActiveConfigBadge" class="active-config-badge">
                         Active Config: Size 610 × 610 mm | Width 3 mm
                     </div>
-                </section>
 
-            </div>
-        </div>
+                    <button type="submit" id="processBtn" class="btn btn-red-cta btn-full">
+                        PROCESS RANGOLI DESIGN &raquo;
+                    </button>
+                </form>
+            </section>
 
-        <!-- BOTTOM WORKSTATION BAR: Progress + Compact Statistics + Robot Controls -->
-        <div class="bottom-workstation-bar">
-            
-            <!-- 1. Drawing Progress Bar -->
-            <section class="card progress-card">
-                <div class="card-header">
-                    <h2>Execution Progress</h2>
-                    <span id="txtProgress" class="progress-pct-text">0%</span>
+
+            <!-- CARD 2: PURE WHITE CONTAINER + DARK AERIAL WORKSPACE MAP VIEWPORT -->
+            <section class="dribbble-card card-white" id="cardWorkspaceView">
+                <div class="card-top-bar">
+                    <span class="tech-code-badge dark-badge">02 // WORKSPACE MAP</span>
+                    <span class="workspace-dim-tag">610 × 610 mm PHYSICAL AREA</span>
                 </div>
-                <div class="progress-track">
-                    <div id="barProgress" class="progress-fill"></div>
+
+                <h2 class="card-main-title dark-text">Physical Drawing Workspace</h2>
+                <div class="card-sub-title dark-sub">HOME position (0,0) Top-Left &bull; Real-Time Execution Map</div>
+
+                <!-- 610x610 Physical Workspace Viewport -->
+                <div class="canvas-workspace-wrapper">
+                    <!-- HUD Legend Overlay -->
+                    <div class="workspace-overlay-legend" id="workspaceLegend">
+                        <span class="legend-item"><span class="legend-dot dot-start"></span> Start Point</span>
+                        <span class="legend-item"><span class="legend-dot dot-end"></span> End Point</span>
+                        <span class="legend-item"><span class="legend-dot dot-draw"></span> Drawing Path</span>
+                        <span class="legend-item"><span class="legend-dot dot-completed"></span> Executed Trace</span>
+                        <span class="legend-item"><span class="legend-dot dot-travel"></span> Travel Path</span>
+                    </div>
+
+                    <div class="canvas-viewport" id="canvasContainer">
+                        <canvas id="simCanvas" width="600" height="600"></canvas>
+
+                        <!-- SVG Robot Overlay Marker -->
+                        <svg id="robotSvgVisual" class="robot-vector-marker" width="44" height="48" viewBox="0 0 44 48" style="position: absolute; top: 0px; left: 0px; z-index: 10; pointer-events: none;">
+                            <g transform="translate(22, 24)">
+                                <rect x="-16" y="-18" width="32" height="36" rx="6" fill="#0D0D0D" stroke="#FF2E4D" stroke-width="2"/>
+                                <rect x="-12" y="-14" width="24" height="28" rx="4" fill="#1A1A1A"/>
+                                <circle id="robotStatusLed" cx="0" cy="-6" r="3" fill="#10B981"/>
+                                <polygon points="0,-20 -5,-14 5,-14" fill="#FF2E4D"/>
+                                <circle id="robotDispenserNozzle" cx="0" cy="18" r="4" fill="#64748B"/>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Execution Progress Segment Bar -->
+                <div class="progress-section">
+                    <div class="progress-label-row">
+                        <span class="progress-title">DRAWING PROGRESS</span>
+                        <span id="txtProgress" class="progress-pct">0%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div id="barProgress" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <!-- Control Buttons Deck -->
+                <div class="controls-action-bar">
+                    <button type="button" id="btnStartDrawing" class="btn btn-red-cta">▶ START DRAWING</button>
+                    <button type="button" id="btnPause" class="btn btn-dark-action">⏸ PAUSE</button>
+                    <button type="button" id="btnResume" class="btn btn-green-action">▶ RESUME</button>
+                    <button type="button" id="btnStop" class="btn btn-dark-action">■ STOP</button>
+                    <button type="button" id="btnReset" class="btn btn-blue-action">🔄 RESET</button>
+                    <button type="button" id="btnEmergencyStop" class="btn btn-estop">🛑 EMERGENCY STOP</button>
                 </div>
             </section>
 
-            <!-- 2. Compact Statistics Grid Section -->
-            <section class="card statistics-card">
-                <div class="card-header">
-                    <h2>Drawing Statistics & Path Metrics</h2>
+
+            <!-- CARD 3: MATTE BLACK ROBOT TELEMETRY & SPECIFICATION CARD -->
+            <section class="dribbble-card card-black" id="cardTelemetrySpecs">
+                <div class="card-top-bar">
+                    <span class="tech-code-badge">03 // ROBOT TELEMETRY</span>
+                    <span class="robot-rating-badge">●●●●● 5/5 ONLINE</span>
                 </div>
 
+                <div class="robot-hero-box">
+                    <h2 class="card-main-title">BOT-01 RANGOLI ROBOT</h2>
+                    <div class="robot-sub-spec">IoT Autonomous Dual-Stepper Carthesian Drawing System</div>
+                </div>
+
+                <!-- Live Robot Telemetry Specs -->
+                <div class="telemetry-spec-panel">
+                    <div class="spec-row">
+                        <span class="spec-label">ROBOT STATUS:</span>
+                        <span class="status-badge badge-idle" id="valState">IDLE</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">POSITION (X, Y):</span>
+                        <span class="spec-val" id="valPose">22.4, 24.4 mm</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">HEADING (IMU °):</span>
+                        <span class="spec-val" id="valHeading">0.0°</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">TRAVEL SPEED:</span>
+                        <span class="spec-val" id="valSpeed">80.0 mm/s</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">BATTERY LEVEL:</span>
+                        <span class="spec-val green-text" id="valBatteryPct">95% (12.2V)</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">POWDER DISPENSER:</span>
+                        <span class="status-badge badge-off" id="valPowder">OFF</span>
+                    </div>
+                </div>
+
+                <!-- Compact Path Statistics Grid -->
+                <div class="stats-header-title">PATH METRICS &amp; STATISTICS</div>
                 <div class="info-metrics-grid">
                     <div class="metric-box">
-                        <span class="metric-label">DRAWING TIME</span>
+                        <span class="metric-label">DRAW TIME</span>
                         <span class="metric-value" id="valEstTime">00:00</span>
                     </div>
                     <div class="metric-box">
-                        <span class="metric-label">REMAINING TIME</span>
+                        <span class="metric-label">REMAIN TIME</span>
                         <span class="metric-value" id="valRemTime">00:00</span>
                     </div>
                     <div class="metric-box">
-                        <span class="metric-label">DRAWING DISTANCE</span>
+                        <span class="metric-label">DRAW DIST</span>
                         <span class="metric-value" id="valDrawDist">0.0 m</span>
                     </div>
                     <div class="metric-box">
-                        <span class="metric-label">TRAVEL DISTANCE</span>
+                        <span class="metric-label">TRAVEL DIST</span>
                         <span class="metric-value" id="valTravelDist">0.0 m</span>
                     </div>
                     <div class="metric-box">
-                        <span class="metric-label">TOTAL DISTANCE</span>
+                        <span class="metric-label">TOTAL DIST</span>
                         <span class="metric-value" id="valTotalDist">0.0 m</span>
                     </div>
                     <div class="metric-box">
-                        <span class="metric-label">POWDER USAGE</span>
+                        <span class="metric-label">POWDER USE</span>
                         <span class="metric-value" id="valPowderUsage">0 g</span>
                     </div>
                     <div class="metric-box">
@@ -279,34 +246,34 @@
                         <span class="metric-value red-highlight" id="valStatProgress">0 %</span>
                     </div>
                     <div class="metric-box">
-                        <span class="metric-label">NUMBER OF PATHS</span>
+                        <span class="metric-label">PATHS</span>
                         <span class="metric-value" id="valPathCount">0</span>
                     </div>
                     <div class="metric-box">
-                        <span class="metric-label">NUMBER OF TURNS</span>
+                        <span class="metric-label">TURNS</span>
                         <span class="metric-value" id="valTurnCount">0</span>
                     </div>
                 </div>
             </section>
 
-            <!-- 3. Robot Control Action Buttons Section -->
-            <section class="card robot-controls-card" id="sectionRobotControls">
-                <div class="card-header">
-                    <h2>Robot Motion Controls</h2>
-                </div>
-
-                <div class="controls-action-bar">
-                    <button type="button" id="btnStartDrawing" class="btn btn-primary btn-cta">▶ START DRAWING</button>
-                    <button type="button" id="btnPause" class="btn btn-warning">⏸ PAUSE</button>
-                    <button type="button" id="btnResume" class="btn btn-resume">▶ RESUME</button>
-                    <button type="button" id="btnStop" class="btn btn-stop">■ STOP</button>
-                    <button type="button" id="btnReset" class="btn btn-reset">🔄 RESET</button>
-                    <button type="button" id="btnEmergencyStop" class="btn btn-danger btn-estop">🛑 EMERGENCY STOP</button>
-                </div>
-            </section>
-
         </div>
     </main>
+
+    <!-- OpenCV 5-Stage Diagnostics (Collapsible if active) -->
+    <section class="pipeline-diagnostics-bar" id="pipelineCard" style="display: none;">
+        <div class="diag-header">
+            <h3>OpenCV 5-Stage Diagnostics</h3>
+            <span id="txtDiagBadge">Vector Extraction</span>
+        </div>
+        <div class="diag-grid">
+            <div class="diag-stage"><span class="diag-lbl">1. Original</span><img id="imgOriginal" src="" alt="Original"></div>
+            <div class="diag-stage"><span class="diag-lbl">2. Threshold</span><img id="imgThreshold" src="" alt="Threshold"></div>
+            <div class="diag-stage"><span class="diag-lbl">3. Morphology</span><img id="imgMorphology" src="" alt="Morphology"></div>
+            <div class="diag-stage"><span class="diag-lbl">4. Contours</span><img id="imgEdges" src="" alt="Contours"></div>
+            <div class="diag-stage"><span class="diag-lbl">5. Overlay</span><img id="imgGrayscale" src="" alt="Overlay"></div>
+        </div>
+        <div id="diagDetails" class="diag-details"></div>
+    </section>
 
     <!-- ESP32 Robot Discovery Modal -->
     <div id="modalRobotDiscovery" class="modal-backdrop" style="display: none;">
@@ -328,12 +295,12 @@
     </div>
 
     <!-- Footer -->
-    <footer class="app-footer">
-        <div class="footer-title">IoT BASED AUTONOMOUS RANGOLI DRAWING ROBOT</div>
+    <footer class="dribbble-app-footer">
+        <div class="footer-title">IoT BASED AUTONOMOUS RANGOLI DRAWING ROBOT // 2026</div>
         <div>PSCMR College of Engineering & Technology &bull; Department of CSE (IoT) &bull; TEAM NO. 12</div>
     </footer>
 
-    <!-- Frontend Application Logic Script (With Cache-Buster v=9.0) -->
-    <script src="/static/script.js?v=9.0"></script>
+    <!-- Frontend Application Logic Script (With Cache-Buster v=10.0) -->
+    <script src="/static/script.js?v=10.0"></script>
 </body>
 </html>
