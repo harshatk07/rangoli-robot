@@ -9,9 +9,9 @@
     --card-bg: #FFFFFF;
     --card-border: #E2E8F0;
     --card-border-hover: #94A3B8;
-    --vivid-red: #DC2626;
-    --vivid-red-hover: #B91C1C;
-    --vivid-red-bright: #EF4444;
+    --vivid-red: #2563EB;
+    --vivid-red-hover: #1D4ED8;
+    --vivid-red-bright: #3B82F6;
     --accent-green: #10B981;
     --text-main: #0F172A;
     --text-muted: #475569;
@@ -109,13 +109,13 @@ body.light-theme-body {
 }
 
 .badge-team {
-    background: #FEF2F2;
-    color: #DC2626;
+    background: #EFF6FF;
+    color: #1D4ED8;
     padding: 2px 8px;
     border-radius: 4px;
     font-weight: 800;
     font-size: 0.73rem;
-    border: 1px solid #FCA5A5;
+    border: 1px solid #BFDBFE;
 }
 
 .info-bold {
@@ -287,9 +287,9 @@ body.light-theme-body {
 }
 
 .hud-badge.red-badge {
-    background: #FEF2F2;
-    color: var(--vivid-red);
-    border-color: #FCA5A5;
+    background: #EFF6FF;
+    color: #2563EB;
+    border-color: #BFDBFE;
 }
 
 /* Canvas Viewport */
@@ -355,7 +355,7 @@ body.light-theme-body {
 .progress-pct-readout {
     font-size: 1.15rem;
     font-weight: 900;
-    color: var(--vivid-red);
+    color: #2563EB;
     font-family: 'JetBrains Mono', monospace;
 }
 
@@ -372,8 +372,8 @@ body.light-theme-body {
 .progress-fill {
     width: 0%;
     height: 100%;
-    background: linear-gradient(90deg, var(--vivid-red), #10B981);
-    box-shadow: 0 0 8px rgba(220, 38, 38, 0.3);
+    background: linear-gradient(90deg, #2563EB, #10B981);
+    box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
     transition: width 0.2s ease;
 }
 
@@ -484,22 +484,22 @@ body.light-theme-body {
 }
 
 .btn-option.active {
-    background: #FEF2F2 !important;
-    border-color: var(--vivid-red) !important;
-    color: var(--vivid-red) !important;
+    background: #EFF6FF !important;
+    border-color: #2563EB !important;
+    color: #2563EB !important;
     font-weight: 800 !important;
-    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15) !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15) !important;
 }
 
 .active-config-badge {
     margin-top: 14px;
     font-size: 0.78rem;
     font-weight: 800;
-    color: var(--vivid-red);
-    background: #FEF2F2;
+    color: #2563EB;
+    background: #EFF6FF;
     padding: 8px 14px;
     border-radius: 6px;
-    border: 1px solid #FCA5A5;
+    border: 1px solid #BFDBFE;
     text-align: center;
     font-family: 'JetBrains Mono', monospace;
 }
@@ -543,7 +543,7 @@ body.light-theme-body {
     font-family: 'JetBrains Mono', monospace;
 }
 
-.red-highlight { color: var(--vivid-red) !important; }
+.red-highlight { color: #2563EB !important; }
 
 /* Telemetry Summary Rows */
 .telemetry-summary-container {
@@ -630,13 +630,13 @@ body.light-theme-body {
 }
 
 .btn-red-cta {
-    background: linear-gradient(135deg, #DC2626, #B91C1C);
+    background: linear-gradient(135deg, #2563EB, #1D4ED8);
     color: #FFFFFF;
-    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
 }
 
 .btn-red-cta:hover:not(:disabled) {
-    background: linear-gradient(135deg, #EF4444, #991B1B);
+    background: linear-gradient(135deg, #3B82F6, #1E40AF);
 }
 
 .btn-cta-full {
@@ -646,7 +646,7 @@ body.light-theme-body {
 }
 
 .btn-red-action {
-    background: var(--vivid-red);
+    background: #2563EB;
     color: #FFFFFF;
 }
 
