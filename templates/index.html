@@ -10,26 +10,27 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- Master Stylesheet (Cache-Buster v=14.0) -->
-    <link rel="stylesheet" href="/static/style.css?v=14.0">
+    <!-- Master Stylesheet (Cache-Buster v=15.0) -->
+    <link rel="stylesheet" href="/static/style.css?v=15.0">
 </head>
 <body class="light-theme-body">
 
     <!-- HEADER BAR Across Top Width -->
     <header class="designer-app-header">
         <div class="header-container">
-            <!-- Left Side: Prominent Project Info & Team Details -->
+            <!-- Left Side: Prominent Title Line 1 (Project Name + Team No. 12) & Line 2 (College + B.Tech Project) -->
             <div class="header-brand-box">
                 <div class="header-title-box">
-                    <h1 class="project-main-title">IoT BASED AUTONOMOUS RANGOLI DRAWING ROBOT</h1>
+                    <!-- Line 1: Project Name followed by Team No. 12 -->
+                    <h1 class="project-main-title">
+                        IoT BASED AUTONOMOUS RANGOLI DRAWING ROBOT
+                        <span class="badge-team inline-badge">Team No. 12</span>
+                    </h1>
+                    <!-- Line 2: College Name and B.Tech Final Year Project -->
                     <div class="project-subtitle-row">
-                        <span class="badge-project-type">B.Tech Final Year Project</span>
-                        <span class="sep">•</span>
                         <span class="info-bold">PSCMR College of Engineering & Technology</span>
                         <span class="sep">•</span>
-                        <span class="info-bold">Department of CSE (IoT)</span>
-                        <span class="sep">•</span>
-                        <span class="badge-team">Team No. 12</span>
+                        <span class="badge-project-type">B.Tech Final Year Project</span>
                         <span class="sep">•</span>
                         <span class="workspace-pill">Workspace: 610 × 610 mm (2 × 2 ft)</span>
                     </div>
@@ -44,11 +45,11 @@
                 </div>
                 <button id="btnDiscoverRobots" class="btn-scan-header btn-sm-header" onclick="openRobotDiscoveryModal()" style="display: none;">🔍 Discover Robots</button>
                 
-                <div class="header-status-pill pill-sm" id="pillWsBackend">
+                <div class="header-status-pill pill-sm" id="pillWsBackend" style="display: none;">
                     <span class="status-dot-pulse" id="backendStatusDot" style="background-color: #EF4444;"></span>
                     <span id="backendStatusText">Backend: Disconnected</span>
                 </div>
-                <div class="header-status-pill pill-sm" id="pillRobotStatus">
+                <div class="header-status-pill pill-sm" id="pillRobotStatus" style="display: none;">
                     <span class="status-dot-pulse" id="robotStatusDot" style="background-color: #64748B;"></span>
                     <span id="robotStatusText">Robot: Disconnected</span>
                 </div>
@@ -330,7 +331,7 @@
         <div>PSCMR College of Engineering & Technology &bull; Department of CSE (IoT) &bull; TEAM NO. 12</div>
     </footer>
 
-    <!-- Frontend Application Logic Script (With Cache-Buster v=14.0) -->
-    <script src="/static/script.js?v=14.0"></script>
+    <!-- Frontend Application Logic Script (With Cache-Buster v=15.0) -->
+    <script src="/static/script.js?v=15.0"></script>
 </body>
 </html>
