@@ -10,41 +10,47 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- Master Stylesheet (Cache-Buster v=13.0) -->
-    <link rel="stylesheet" href="/static/style.css?v=13.0">
+    <!-- Master Stylesheet (Cache-Buster v=14.0) -->
+    <link rel="stylesheet" href="/static/style.css?v=14.0">
 </head>
 <body class="light-theme-body">
 
     <!-- HEADER BAR Across Top Width -->
     <header class="designer-app-header">
         <div class="header-container">
+            <!-- Left Side: Prominent Project Info & Team Details -->
             <div class="header-brand-box">
                 <div class="header-title-box">
-                    <h1>IoT BASED AUTONOMOUS RANGOLI DRAWING ROBOT</h1>
-                    <div class="college-subtitle">IoT Final Year B.Tech Project &bull; PSCMR College of Engineering & Technology &bull; Team No. 12</div>
-                    <div class="header-meta">
-                        <span class="meta-tag">Department of CSE (IoT)</span>
-                        <span class="meta-sep">•</span>
+                    <h1 class="project-main-title">IoT BASED AUTONOMOUS RANGOLI DRAWING ROBOT</h1>
+                    <div class="project-subtitle-row">
+                        <span class="badge-project-type">B.Tech Final Year Project</span>
+                        <span class="sep">•</span>
+                        <span class="info-bold">PSCMR College of Engineering & Technology</span>
+                        <span class="sep">•</span>
+                        <span class="info-bold">Department of CSE (IoT)</span>
+                        <span class="sep">•</span>
+                        <span class="badge-team">Team No. 12</span>
+                        <span class="sep">•</span>
                         <span class="workspace-pill">Workspace: 610 × 610 mm (2 × 2 ft)</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Header Right Action Buttons & Independent Status Pills -->
+            <!-- Right Side: Compact Controls & Status Badges -->
             <div class="header-right-actions">
-                <div class="mode-switch-group">
-                    <button id="btnModeDemo" class="btn-mode active" onclick="setRobotMode('DEMO')">🟡 DEMO ROBOT</button>
-                    <button id="btnModeReal" class="btn-mode" onclick="setRobotMode('REAL')">🔴 REAL ROBOT</button>
+                <div class="mode-switch-group sm-switch">
+                    <button id="btnModeDemo" class="btn-mode btn-mode-sm active" onclick="setRobotMode('DEMO')">🟡 DEMO ROBOT</button>
+                    <button id="btnModeReal" class="btn-mode btn-mode-sm" onclick="setRobotMode('REAL')">🔴 REAL ROBOT</button>
                 </div>
-                <button id="btnDiscoverRobots" class="btn-scan-header" onclick="openRobotDiscoveryModal()" style="display: none;">🔍 Discover Robots</button>
+                <button id="btnDiscoverRobots" class="btn-scan-header btn-sm-header" onclick="openRobotDiscoveryModal()" style="display: none;">🔍 Discover Robots</button>
                 
-                <div class="header-status-pill" id="pillWsBackend">
+                <div class="header-status-pill pill-sm" id="pillWsBackend">
                     <span class="status-dot-pulse" id="backendStatusDot" style="background-color: #EF4444;"></span>
                     <span id="backendStatusText">Backend: Disconnected</span>
                 </div>
-                <div class="header-status-pill" id="pillRobotStatus" style="margin-left: 6px;">
+                <div class="header-status-pill pill-sm" id="pillRobotStatus">
                     <span class="status-dot-pulse" id="robotStatusDot" style="background-color: #64748B;"></span>
-                    <span id="robotStatusText">REAL ROBOT — Disconnected</span>
+                    <span id="robotStatusText">Robot: Disconnected</span>
                 </div>
             </div>
         </div>
@@ -324,7 +330,7 @@
         <div>PSCMR College of Engineering & Technology &bull; Department of CSE (IoT) &bull; TEAM NO. 12</div>
     </footer>
 
-    <!-- Frontend Application Logic Script (With Cache-Buster v=13.0) -->
-    <script src="/static/script.js?v=13.0"></script>
+    <!-- Frontend Application Logic Script (With Cache-Buster v=14.0) -->
+    <script src="/static/script.js?v=14.0"></script>
 </body>
 </html>
