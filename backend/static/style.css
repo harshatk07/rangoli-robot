@@ -1,37 +1,38 @@
 /**
  * IoT-Based Autonomous Rangoli Drawing Robot
  * Student B.Tech Project Master Stylesheet
- * High-Tech Drone Delivery Telemetry HUD UI Theme (Dark Flight Aesthetic)
+ * Cyberpunk Robotics Control Center + Rangoli Workstation Theme
  */
 
 :root {
-    --bg-dark: #0B0F19;
-    --header-bg: #111827;
-    --card-bg: #161E2E;
-    --card-border: #26334D;
-    --card-border-hover: #3B82F6;
+    --bg-dark: #0A0D12;
+    --header-bg: #0E121A;
+    --card-bg: #161C26;
+    --card-border: #232E42;
+    --card-border-hover: #FF2E4D;
     --primary-blue: #3B82F6;
     --primary-blue-hover: #2563EB;
+    --cyber-red: #FF2E4D;
+    --cyber-red-hover: #E53935;
     --accent-green: #10B981;
     --accent-amber: #F59E0B;
-    --accent-red: #EF4444;
     --text-main: #F8FAFC;
     --text-muted: #94A3B8;
-    --hud-bg: #0F172A;
-    --hud-border: #1E293B;
-    --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
-    --card-shadow-hover: 0 16px 40px rgba(59, 130, 246, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3);
+    --hud-bg: #0D1117;
+    --hud-border: #1E2638;
+    --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --card-shadow-hover: 0 12px 40px rgba(255, 46, 77, 0.18), 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Chakra Petch', 'Inter', -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
 }
 
-body {
+body.cyberpunk-theme {
     background-color: var(--bg-dark);
     color: var(--text-main);
     padding: 0;
@@ -40,16 +41,16 @@ body {
     line-height: 1.5;
 }
 
-/* App Header Across Top Width (Drone Delivery Dark HUD Header) */
+/* App Header Across Top Width (Cyberpunk Robotics Control Header) */
 .app-header {
     background: var(--header-bg);
     border-bottom: 1px solid var(--card-border);
     padding: 16px 36px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
     position: sticky;
     top: 0;
     z-index: 100;
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(14px);
 }
 
 .header-container {
@@ -67,16 +68,18 @@ body {
 }
 
 .header-title-box h1 {
-    font-size: 1.25rem;
+    font-size: 1.28rem;
     font-weight: 800;
     color: #F8FAFC;
-    letter-spacing: -0.02em;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(255, 46, 77, 0.2);
 }
 
 .college-subtitle {
     font-size: 0.82rem;
     color: #94A3B8;
-    font-weight: 500;
+    font-weight: 600;
     margin-top: 2px;
 }
 
@@ -90,12 +93,12 @@ body {
 }
 
 .dept-badge {
-    background: #1E3A8A;
-    color: #60A5FA;
+    background: rgba(255, 46, 77, 0.15);
+    color: var(--cyber-red);
     padding: 2px 8px;
-    border-radius: 6px;
-    font-weight: 600;
-    border: 1px solid #1D4ED8;
+    border-radius: 4px;
+    font-weight: 700;
+    border: 1px solid rgba(255, 46, 77, 0.4);
 }
 
 .team-meta-badge {
@@ -104,7 +107,12 @@ body {
 }
 
 .meta-divider {
-    color: #334155;
+    color: #232E42;
+}
+
+.workspace-pill {
+    color: #CBD5E1;
+    font-weight: 600;
 }
 
 .header-right-actions {
@@ -115,10 +123,10 @@ body {
 
 .mode-switch-group {
     display: flex;
-    background: #0F172A;
+    background: #0D1117;
     padding: 3px;
-    border-radius: 8px;
-    border: 1px solid #1E293B;
+    border-radius: 6px;
+    border: 1px solid #1E2638;
 }
 
 .btn-mode {
@@ -126,12 +134,14 @@ body {
     font-size: 0.8rem;
     font-weight: 700;
     border: none;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
     background: transparent;
     color: #94A3B8;
     transition: all 0.2s ease;
     user-select: none;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .btn-mode.active#btnModeDemo {
@@ -143,7 +153,7 @@ body {
 .btn-mode.active#btnModeReal {
     background: #10B981;
     color: #FFFFFF;
-    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
 }
 
 .btn-scan-header {
@@ -151,7 +161,7 @@ body {
     color: #FFFFFF;
     border: none;
     padding: 8px 16px;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 0.82rem;
     font-weight: 700;
     cursor: pointer;
@@ -159,23 +169,18 @@ body {
     user-select: none;
 }
 
-.btn-scan-header:hover {
-    background: #2563EB;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
 .header-status-pill {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #0F172A;
-    border: 1px solid #1E293B;
+    background: #0D1117;
+    border: 1px solid #1E2638;
     padding: 8px 16px;
     border-radius: 20px;
     font-size: 0.82rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #E2E8F0;
+    letter-spacing: 0.02em;
 }
 
 .status-dot-pulse {
@@ -187,7 +192,7 @@ body {
 
 @keyframes pulseGlow {
     0% { transform: scale(0.95); opacity: 0.8; }
-    50% { transform: scale(1.2); opacity: 1; }
+    50% { transform: scale(1.25); opacity: 1; }
     100% { transform: scale(0.95); opacity: 0.8; }
 }
 
@@ -205,12 +210,12 @@ body {
     align-items: start;
 }
 
-/* Drone Telemetry Cards (Dark Glassmorphic HUD Cards) */
+/* Cyberpunk Telemetry Panels */
 .card {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: 16px;
-    padding: 22px;
+    border-radius: 12px;
+    padding: 20px;
     margin-bottom: 20px;
     box-shadow: var(--card-shadow);
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -225,27 +230,45 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 
 .card-header h2 {
     font-size: 1.05rem;
     font-weight: 700;
     color: #F8FAFC;
-    letter-spacing: -0.01em;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
 }
 
 .grid-badge {
     font-size: 0.75rem;
-    background: #1E3A8A;
+    background: rgba(59, 130, 246, 0.15);
     color: #60A5FA;
     border: 1px solid #1D4ED8;
     padding: 4px 10px;
-    border-radius: 6px;
+    border-radius: 4px;
     font-weight: 700;
 }
 
-/* Workspace Canvas Viewport (Dark Flight Navigation HUD) */
+.hud-tag {
+    font-size: 0.72rem;
+    background: rgba(59, 130, 246, 0.15);
+    color: #60A5FA;
+    border: 1px solid #1D4ED8;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.hud-tag.red-tag {
+    background: rgba(255, 46, 77, 0.15);
+    color: var(--cyber-red);
+    border-color: rgba(255, 46, 77, 0.4);
+}
+
+/* 610x610 Physical Canvas Viewport (No 8x8 Grid Cells) */
 .canvas-workspace-wrapper {
     margin-top: 10px;
 }
@@ -272,52 +295,166 @@ body {
     border-radius: 50%;
 }
 
-.dot-start { background: #10B981; box-shadow: 0 0 6px #10B981; }
-.dot-end { background: #EF4444; box-shadow: 0 0 6px #EF4444; }
-.dot-draw { background: #3B82F6; box-shadow: 0 0 6px #3B82F6; }
-.dot-completed { background: #10B981; box-shadow: 0 0 6px #10B981; }
+.dot-start { background: #10B981; box-shadow: 0 0 8px #10B981; }
+.dot-end { background: #EF4444; box-shadow: 0 0 8px #EF4444; }
+.dot-draw { background: var(--cyber-red); box-shadow: 0 0 8px var(--cyber-red); }
+.dot-completed { background: #10B981; box-shadow: 0 0 8px #10B981; }
 .dot-travel { background: #64748B; }
 
 .canvas-viewport {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #0F172A;
-    border: 2px solid #3B82F6;
-    border-radius: 12px;
+    background: #0A0D12;
+    border: 2px solid var(--cyber-red);
+    border-radius: 10px;
     padding: 6px;
     position: relative;
-    box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.15), 0 8px 24px rgba(59, 130, 246, 0.1);
+    box-shadow: inset 0 0 24px rgba(255, 46, 77, 0.15), 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 #simCanvas {
-    background: #0F172A;
-    border-radius: 8px;
+    background: #0A0D12;
+    border-radius: 6px;
     display: block;
 }
 
-/* Control Buttons */
+/* Compact Telemetry Grid (BOT-01) */
+.telemetry-compact-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #0D1117;
+    border: 1px solid #1E2638;
+    padding: 14px;
+    border-radius: 8px;
+}
+
+.telemetry-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.telemetry-row:last-child {
+    border-bottom: none;
+}
+
+.tel-label {
+    font-weight: 700;
+    color: #94A3B8;
+    letter-spacing: 0.03em;
+}
+
+.tel-value {
+    font-weight: 800;
+    color: #F8FAFC;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.green-text {
+    color: #10B981 !important;
+}
+
+.status-badge {
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+}
+
+.badge-idle { background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid #1D4ED8; }
+.badge-on { background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid #059669; }
+.badge-off { background: rgba(239, 68, 68, 0.15); color: #EF4444; border: 1px solid #B91C1C; }
+
+/* Upload Dropzone (Cyberpunk HUD Upload) */
+.upload-dropzone {
+    border: 2px dashed #232E42;
+    background: #0D1117;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.upload-dropzone:hover {
+    border-color: var(--cyber-red);
+    background: #161C26;
+    box-shadow: 0 0 14px rgba(255, 46, 77, 0.15);
+}
+
+.dropzone-icon {
+    font-size: 1.8rem;
+    margin-bottom: 4px;
+}
+
+.dropzone-text strong {
+    color: #F8FAFC;
+    font-weight: 700;
+}
+
+.dropzone-sub {
+    font-size: 0.76rem;
+    color: #94A3B8;
+}
+
+.url-input-container {
+    margin-top: 12px;
+}
+
+.input-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #94A3B8;
+    margin-bottom: 4px;
+}
+
+.url-row {
+    display: flex;
+    gap: 8px;
+}
+
+.text-input {
+    flex: 1;
+    padding: 8px 12px;
+    background: #0D1117;
+    border: 1px solid #232E42;
+    border-radius: 6px;
+    color: #F8FAFC;
+    font-size: 0.84rem;
+}
+
+.text-input:focus {
+    border-color: var(--cyber-red);
+    outline: none;
+}
+
+/* Control Buttons & Options */
 .btn {
-    padding: 11px 20px;
-    font-size: 0.88rem;
+    padding: 11px 18px;
+    font-size: 0.86rem;
     font-weight: 700;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     user-select: none;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .btn:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-}
-
-.btn:active:not(:disabled) {
-    transform: translateY(0);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 .btn:disabled {
@@ -326,61 +463,37 @@ body {
 }
 
 .btn-primary { 
-    background: linear-gradient(135deg, #3B82F6, #1D4ED8); 
+    background: linear-gradient(135deg, #FF2E4D, #C41E3A); 
     color: white; 
-    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+    box-shadow: 0 4px 14px rgba(255, 46, 77, 0.35);
 }
+
+.btn-sm { padding: 8px 14px; font-size: 0.8rem; }
+.btn-full { width: 100%; margin-top: 12px; padding: 11px; }
+
 .btn-secondary { background: #334155; color: white; }
-.btn-warning { background: #F59E0B; color: #0F172A; }
-.btn-resume { background: #10B981; color: white; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); }
+.btn-warning { background: #F59E0B; color: #0D1117; }
+.btn-resume { background: #10B981; color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
 .btn-stop { background: #475569; color: white; }
-.btn-danger { 
-    background: linear-gradient(135deg, #EF4444, #B91C1C); 
+.btn-reset { background: #2563EB; color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+.btn-danger.btn-estop { 
+    background: linear-gradient(135deg, #EF4444, #991B1B); 
     color: white; 
-    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
 }
 
-/* Telemetry HUD Metric Cards */
-.metric-box {
-    background: #0F172A;
-    border: 1px solid #1E293B;
-    padding: 12px 14px;
-    border-radius: 10px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+/* Drawing Size & Line Width Options Grid */
+.divider-top {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #1E2638;
 }
 
-.metric-box:hover {
-    border-color: #3B82F6;
-    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.1);
-}
-
-.metric-label {
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: #94A3B8;
-    display: block;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-}
-
-.metric-value {
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: #F8FAFC;
-    margin-top: 2px;
-    display: block;
-    font-family: 'JetBrains Mono', 'Roboto Mono', consolas, monospace;
-}
-
-.badge-on { color: #10B981 !important; font-weight: 700; }
-.badge-off { color: #EF4444 !important; font-weight: 700; }
-
-/* Setting Options Grid */
 .setting-options-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 10px;
+    gap: 8px;
+    margin-top: 8px;
 }
 
 .setting-options-grid.grid-3 {
@@ -391,12 +504,12 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 11px 14px;
-    background: #0F172A;
-    border: 1px solid #1E293B;
-    border-radius: 8px;
-    font-size: 0.84rem;
-    font-weight: 600;
+    padding: 10px 12px;
+    background: #0D1117;
+    border: 1px solid #232E42;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
     color: #CBD5E1;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -404,29 +517,142 @@ body {
 }
 
 .btn-option:hover {
-    background: #1E293B;
+    background: #161C26;
     border-color: #334155;
     color: #F8FAFC;
 }
 
 .btn-option.active {
-    background: #1E3A8A !important;
-    border-color: #3B82F6 !important;
-    color: #60A5FA !important;
-    font-weight: 700 !important;
-    box-shadow: 0 0 12px rgba(59, 130, 246, 0.25) !important;
+    background: rgba(255, 46, 77, 0.15) !important;
+    border-color: var(--cyber-red) !important;
+    color: var(--cyber-red) !important;
+    font-weight: 800 !important;
+    box-shadow: 0 0 12px rgba(255, 46, 77, 0.25) !important;
 }
 
-/* Dropzone Interface (Dark Flight Upload HUD) */
-.upload-dropzone {
-    border: 2px dashed #334155 !important;
-    background: #0F172A !important;
-    color: #F8FAFC !important;
+.active-config-badge {
+    margin-top: 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--cyber-red);
+    background: rgba(255, 46, 77, 0.12);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 46, 77, 0.3);
+    text-align: center;
+    letter-spacing: 0.02em;
 }
 
-.upload-dropzone:hover {
-    border-color: #3B82F6 !important;
-    background: #1E293B !important;
+/* Bottom Workstation Bar */
+.bottom-workstation-bar {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.progress-card {
+    margin-bottom: 0 !important;
+}
+
+.progress-pct-text {
+    font-weight: 800;
+    color: var(--cyber-red);
+    font-size: 1.15rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.progress-track {
+    width: 100%;
+    background: #0D1117;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 10px;
+    border: 1px solid #1E2638;
+}
+
+.progress-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyber-red), #10B981);
+    box-shadow: 0 0 10px var(--cyber-red);
+    transition: width 0.2s ease;
+}
+
+/* Compact Statistics Grid Section */
+.statistics-card {
+    margin-bottom: 0 !important;
+}
+
+.info-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+}
+
+@media (max-width: 1280px) {
+    .info-metrics-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.metric-box {
+    background: #0D1117;
+    border: 1px solid #1E2638;
+    padding: 10px;
+    border-radius: 8px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.metric-box:hover {
+    border-color: var(--cyber-red);
+    box-shadow: 0 2px 10px rgba(255, 46, 77, 0.15);
+}
+
+.metric-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #94A3B8;
+    display: block;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.metric-value {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #F8FAFC;
+    margin-top: 2px;
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.red-highlight {
+    color: var(--cyber-red) !important;
+}
+
+/* Robot Action Bar */
+.robot-controls-card {
+    margin-bottom: 0 !important;
+}
+
+.controls-action-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-cta {
+    flex: 2;
+    min-width: 180px;
+}
+
+.controls-action-bar .btn {
+    flex: 1;
+    min-width: 110px;
 }
 
 /* Footer */
@@ -436,11 +662,12 @@ body {
     color: #64748B;
     font-size: 0.82rem;
     margin-top: 40px;
-    border-top: 1px solid #1E293B;
-    background: #111827;
+    border-top: 1px solid #1E2638;
+    background: #0E121A;
 }
 
 .footer-title {
     font-weight: 700;
     color: #F8FAFC;
+    letter-spacing: 0.03em;
 }

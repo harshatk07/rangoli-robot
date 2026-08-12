@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IoT Based Autonomous Rangoli Drawing Robot</title>
+    <title>IoT Based Autonomous Rangoli Drawing Robot — Cyberpunk Control Center</title>
     
-    <!-- Google Fonts -->
+    <!-- Google Fonts: Chakra Petch & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
     
-    <!-- Master Stylesheet (Cache-Buster v=8.0) -->
-    <link rel="stylesheet" href="/static/style.css?v=8.0">
+    <!-- Master Stylesheet (Cache-Buster v=9.0) -->
+    <link rel="stylesheet" href="/static/style.css?v=9.0">
 </head>
-<body>
+<body class="cyberpunk-theme">
 
-    <!-- Header Across Top Width -->
+    <!-- Header Across Top Width (Cyberpunk Robotics Control Header) -->
     <header class="app-header">
         <div class="header-container">
             <div class="header-brand-box">
@@ -26,20 +26,21 @@
                         <span class="dept-badge">B.Tech Project</span>
                         <span class="team-meta-badge">TEAM NO. 12</span>
                         <span class="meta-divider">&bull;</span>
-                        <span>Workspace: 610 × 610 mm (2 × 2 ft)</span>
+                        <span class="workspace-pill">Physical Workspace: 610 × 610 mm</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Header Right Action Buttons & Status -->
+            <!-- Header Right Action Buttons & Independent Status Pills -->
             <div class="header-right-actions">
                 <div class="mode-switch-group">
                     <button id="btnModeDemo" class="btn-mode active" onclick="setRobotMode('DEMO')">🟡 DEMO ROBOT</button>
                     <button id="btnModeReal" class="btn-mode" onclick="setRobotMode('REAL')">🟢 REAL ROBOT</button>
                 </div>
                 <button id="btnDiscoverRobots" class="btn-scan-header" onclick="openRobotDiscoveryModal()" style="display: none;">🔵 DISCOVER ROBOTS</button>
+                
                 <div class="header-status-pill" id="pillWsBackend">
-                    <span class="status-dot-pulse" id="backendStatusDot" style="background-color: #64748B;"></span>
+                    <span class="status-dot-pulse" id="backendStatusDot" style="background-color: #EF4444;"></span>
                     <span id="backendStatusText">Backend: Disconnected</span>
                 </div>
                 <div class="header-status-pill" id="pillRobotStatus" style="margin-left: 6px;">
@@ -50,40 +51,40 @@
         </div>
     </header>
 
-    <!-- Main Dashboard Layout (Two Columns) -->
+    <!-- Main Workstation Layout (Desktop Control Workstation) -->
     <main class="page-layout">
         <div class="main-dashboard">
             
-            <!-- LEFT COLUMN: Workspace Preview -> Drawing Progress -> Robot Controls -->
+            <!-- LEFT COLUMN: Physical 610 x 610 mm Workspace Canvas Viewport -->
             <div class="left-column">
                 
-                <!-- 1. Workspace Preview (610 x 610 mm) -->
                 <section class="card workspace-card" id="sectionWorkspace">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <h2>Workspace Preview (610 × 610 mm)</h2>
-                        <span class="grid-badge" style="background: #EFF6FF; color: #1D4ED8; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem;">610 × 610 mm Canvas</span>
+                    <div class="card-header">
+                        <h2>Physical Workspace Navigation Viewport</h2>
+                        <span class="grid-badge">610 × 610 mm Workstation</span>
                     </div>
 
                     <div class="canvas-workspace-wrapper">
-                        <!-- Interactive Legend Overlay -->
+                        <!-- Interactive HUD Legend Overlay -->
                         <div class="workspace-overlay-legend" id="workspaceLegend">
                             <span class="legend-item"><span class="legend-dot dot-start"></span> Start Point</span>
                             <span class="legend-item"><span class="legend-dot dot-end"></span> End Point</span>
-                            <span class="legend-item"><span class="legend-dot dot-draw"></span> Drawing Path (Blue)</span>
-                            <span class="legend-item"><span class="legend-dot dot-completed"></span> Completed Drawing (Green)</span>
-                            <span class="legend-item"><span class="legend-dot dot-travel"></span> Travel Path (Gray)</span>
+                            <span class="legend-item"><span class="legend-dot dot-draw"></span> Drawing Path</span>
+                            <span class="legend-item"><span class="legend-dot dot-completed"></span> Completed Trace</span>
+                            <span class="legend-item"><span class="legend-dot dot-travel"></span> Travel Segment</span>
                         </div>
 
+                        <!-- 610x610 mm Physical Canvas Viewport (No 8x8 grid cells) -->
                         <div class="canvas-viewport" id="canvasContainer">
                             <canvas id="simCanvas" width="600" height="600"></canvas>
 
-                            <!-- SVG Robot Overlay Marker -->
+                            <!-- SVG Robot Vector Overlay Marker -->
                             <svg id="robotSvgVisual" class="robot-vector-marker" width="44" height="48" viewBox="0 0 44 48" style="position: absolute; top: 0px; left: 0px; z-index: 10; pointer-events: none;">
                                 <g transform="translate(22, 24)">
-                                    <rect x="-16" y="-18" width="32" height="36" rx="6" fill="#0F172A" stroke="#2563EB" stroke-width="2"/>
-                                    <rect x="-12" y="-14" width="24" height="28" rx="4" fill="#1E293B"/>
+                                    <rect x="-16" y="-18" width="32" height="36" rx="6" fill="#0D1117" stroke="#FF2E4D" stroke-width="2"/>
+                                    <rect x="-12" y="-14" width="24" height="28" rx="4" fill="#161C26"/>
                                     <circle id="robotStatusLed" cx="0" cy="-6" r="3" fill="#10B981"/>
-                                    <polygon points="0,-20 -5,-14 5,-14" fill="#3B82F6"/>
+                                    <polygon points="0,-20 -5,-14 5,-14" fill="#FF2E4D"/>
                                     <circle id="robotDispenserNozzle" cx="0" cy="18" r="4" fill="#64748B"/>
                                 </g>
                             </svg>
@@ -91,239 +92,248 @@
                     </div>
                 </section>
 
-                <!-- 2. Drawing Progress Card -->
-                <section class="card progress-card" style="margin-top: 16px;">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <h2>Drawing Progress</h2>
-                        <span id="txtProgress" style="font-weight: 700; color: #2563EB; font-size: 1.1rem;">0%</span>
-                    </div>
-                    <div style="width: 100%; background: #E2E8F0; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 10px;">
-                        <div id="barProgress" style="width: 0%; height: 100%; background: linear-gradient(90deg, #2563EB, #10B981); transition: width 0.2s ease;"></div>
-                    </div>
-                </section>
-
-                <!-- 3. Robot Controls Card -->
-                <section class="card robot-controls-card" id="sectionRobotControls" style="margin-top: 16px;">
-                    <div class="card-header">
-                        <h2>Robot Controls</h2>
-                    </div>
-
-                    <div style="margin-top: 12px;">
-                        <button type="button" id="btnStartDrawing" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 700; background: #2563EB; font-size: 0.95rem;">▶ START DRAWING</button>
-                    </div>
-
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <button type="button" id="btnPause" class="btn btn-warning" style="flex: 1; padding: 10px; background: #F59E0B; color: #0F172A; font-weight: 600;">⏸ PAUSE</button>
-                        <button type="button" id="btnResume" class="btn btn-resume" style="flex: 1; padding: 10px; background: #10B981; color: white; font-weight: 600;">▶ RESUME</button>
-                        <button type="button" id="btnStop" class="btn btn-stop" style="flex: 1; padding: 10px; background: #64748B; color: white; font-weight: 600;">■ STOP</button>
-                    </div>
-
-                    <div style="margin-top: 12px;">
-                        <button type="button" id="btnEmergencyStop" class="btn btn-danger" style="width: 100%; padding: 12px; font-weight: 800; background: #DC2626; color: white; border: none; border-radius: 8px; font-size: 0.95rem; cursor: pointer;">
-                            🛑 EMERGENCY STOP
-                        </button>
-                    </div>
-                </section>
-
                 <!-- 5-Stage OpenCV Pipeline Diagnostics (Collapsible) -->
-                <section class="card pipeline-card" id="pipelineCard" style="margin-top: 16px; display: none;">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <h2>OpenCV 5-Stage Diagnostics</h2>
-                        <span id="txtDiagBadge" style="font-size: 0.75rem; background: #EFF6FF; color: #1D4ED8; padding: 3px 8px; border-radius: 6px; font-weight: 700;">Vector Extraction</span>
+                <section class="card pipeline-card" id="pipelineCard" style="display: none; margin-top: 16px;">
+                    <div class="card-header">
+                        <h2>OpenCV 5-Stage Vector Diagnostics</h2>
+                        <span id="txtDiagBadge" class="hud-tag">Vector Processing</span>
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px;">
-                        <div style="text-align: center; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 6px; border-radius: 6px;">
-                            <span style="font-size: 0.7rem; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">1. Original</span>
-                            <img id="imgOriginal" src="" alt="Original Stage" style="width: 100%; height: 90px; object-fit: contain; background: #000; border-radius: 4px;">
+                        <div class="diag-stage-box">
+                            <span class="diag-stage-label">1. Original</span>
+                            <img id="imgOriginal" src="" alt="Original Stage" class="diag-img">
                         </div>
-                        <div style="text-align: center; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 6px; border-radius: 6px;">
-                            <span style="font-size: 0.7rem; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">2. Threshold</span>
-                            <img id="imgThreshold" src="" alt="Threshold Stage" style="width: 100%; height: 90px; object-fit: contain; background: #000; border-radius: 4px;">
+                        <div class="diag-stage-box">
+                            <span class="diag-stage-label">2. Threshold</span>
+                            <img id="imgThreshold" src="" alt="Threshold Stage" class="diag-img">
                         </div>
-                        <div style="text-align: center; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 6px; border-radius: 6px;">
-                            <span style="font-size: 0.7rem; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">3. Morphology</span>
-                            <img id="imgMorphology" src="" alt="Morphology Stage" style="width: 100%; height: 90px; object-fit: contain; background: #000; border-radius: 4px;">
+                        <div class="diag-stage-box">
+                            <span class="diag-stage-label">3. Morphology</span>
+                            <img id="imgMorphology" src="" alt="Morphology Stage" class="diag-img">
                         </div>
-                        <div style="text-align: center; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 6px; border-radius: 6px;">
-                            <span style="font-size: 0.7rem; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">4. Contours</span>
-                            <img id="imgEdges" src="" alt="Contours Stage" style="width: 100%; height: 90px; object-fit: contain; background: #000; border-radius: 4px;">
+                        <div class="diag-stage-box">
+                            <span class="diag-stage-label">4. Contours</span>
+                            <img id="imgEdges" src="" alt="Contours Stage" class="diag-img">
                         </div>
-                        <div style="text-align: center; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 6px; border-radius: 6px;">
-                            <span style="font-size: 0.7rem; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">5. Overlay</span>
-                            <img id="imgGrayscale" src="" alt="Overlay Stage" style="width: 100%; height: 90px; object-fit: contain; background: #000; border-radius: 4px;">
+                        <div class="diag-stage-box">
+                            <span class="diag-stage-label">5. Overlay</span>
+                            <img id="imgGrayscale" src="" alt="Overlay Stage" class="diag-img">
                         </div>
                     </div>
-                    <div id="diagDetails" style="font-size: 0.78rem; color: #64748B; margin-top: 10px; line-height: 1.4; background: #F8FAFC; padding: 8px 12px; border-radius: 6px; border: 1px solid #E2E8F0;"></div>
+                    <div id="diagDetails" class="diag-details-box"></div>
                 </section>
 
             </div>
 
-            <!-- RIGHT COLUMN: Upload Rangoli Design -> Drawing Size & Line Width -> Drawing Statistics -->
+            <!-- RIGHT COLUMN: Compact Robot Telemetry + Upload + Size & Line Width Options -->
             <div class="right-column">
                 
-                <!-- 1. Upload Rangoli Design Card -->
+                <!-- 1. Compact Robot Telemetry Panel (BOT-01) -->
+                <section class="card telemetry-card" id="sectionTelemetry">
+                    <div class="card-header">
+                        <h2>Robot Telemetry (BOT-01)</h2>
+                        <span class="hud-tag red-tag">LIVE HUD</span>
+                    </div>
+
+                    <div class="telemetry-compact-grid">
+                        <div class="telemetry-row">
+                            <span class="tel-label">ROBOT STATUS:</span>
+                            <span class="status-badge badge-idle" id="valState">IDLE</span>
+                        </div>
+                        <div class="telemetry-row">
+                            <span class="tel-label">POSITION (X, Y):</span>
+                            <span class="tel-value" id="valPose">22.4, 24.4 mm</span>
+                        </div>
+                        <div class="telemetry-row">
+                            <span class="tel-label">HEADING (IMU °):</span>
+                            <span class="tel-value" id="valHeading">0.0°</span>
+                        </div>
+                        <div class="telemetry-row">
+                            <span class="tel-label">TRAVEL SPEED:</span>
+                            <span class="tel-value" id="valSpeed">80.0 mm/s</span>
+                        </div>
+                        <div class="telemetry-row">
+                            <span class="tel-label">BATTERY LEVEL:</span>
+                            <span class="tel-value green-text" id="valBatteryPct">95% (12.2V)</span>
+                        </div>
+                        <div class="telemetry-row">
+                            <span class="tel-label">POWDER DISPENSER:</span>
+                            <span class="status-badge badge-off" id="valPowder">OFF</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Upload Rangoli Design Panel -->
                 <section class="card upload-card" id="sectionUpload">
                     <div class="card-header">
                         <h2>Upload Rangoli Design</h2>
-                        <div class="subtitle" style="font-size: 0.8rem; color: #64748B; margin-top: 2px;">Drag & Drop, Browse file, or Paste Image URL</div>
                     </div>
 
-                    <form id="uploadForm" enctype="multipart/form-data" style="margin-top: 10px;">
+                    <form id="uploadForm" enctype="multipart/form-data">
                         <!-- Dropzone Interface -->
-                        <div class="upload-dropzone" id="dropzone" style="border: 2px dashed #CBD5E1; border-radius: 8px; padding: 24px; text-align: center; background: #F8FAFC; cursor: pointer; transition: border-color 0.2s;">
-                            <div class="dropzone-icon" style="font-size: 2rem; margin-bottom: 6px;">📥</div>
-                            <div class="dropzone-text" style="font-size: 0.85rem; color: #334155;">
+                        <div class="upload-dropzone" id="dropzone">
+                            <div class="dropzone-icon">📥</div>
+                            <div class="dropzone-text">
                                 <strong>Drag & Drop Rangoli File Here</strong><br>
-                                <span style="font-size: 0.78rem; color: #64748B;">or click to browse from device (JPG, PNG, WEBP, SVG)</span>
+                                <span class="dropzone-sub">Click to browse (JPG, PNG, WEBP, SVG)</span>
                             </div>
                             <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp,image/svg+xml" style="display: none;">
                         </div>
 
                         <!-- URL Import Row -->
-                        <div class="url-input-container" style="margin-top: 14px;">
-                            <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px;">Or Paste Image URL:</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input type="url" id="imageUrlInput" class="text-input" placeholder="https://example.com/rangoli.png" style="flex: 1; padding: 8px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 0.85rem;">
-                                <button type="button" id="btnLoadUrl" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem; background: #2563EB; border: none; border-radius: 6px; color: white; font-weight: 700;">Import</button>
+                        <div class="url-input-container">
+                            <label class="input-label">Or Paste Image URL:</label>
+                            <div class="url-row">
+                                <input type="url" id="imageUrlInput" class="text-input" placeholder="https://example.com/rangoli.png">
+                                <button type="button" id="btnLoadUrl" class="btn btn-primary btn-sm">Import</button>
                             </div>
                         </div>
 
-                        <button type="submit" id="processBtn" class="btn btn-primary" style="width: 100%; margin-top: 14px; padding: 10px; font-weight: 700; background: #2563EB; color: white; border: none; border-radius: 8px;">
-                            Process Rangoli Image
+                        <button type="submit" id="processBtn" class="btn btn-primary btn-full">
+                            PROCESS RANGOLI DESIGN
                         </button>
                     </form>
                 </section>
 
-                <!-- 2. Drawing Size & Line Width Card -->
-                <section class="card drawing-options-card" id="sectionSettings" style="margin-top: 16px;">
+                <!-- 3. Drawing Size & Line Width Controls Panel -->
+                <section class="card drawing-options-card" id="sectionSettings">
                     <div class="card-header">
-                        <h2>Drawing Size</h2>
+                        <h2>Drawing Area Size</h2>
                     </div>
-                    <div class="setting-group" style="margin-top: 10px;">
-                        <div class="setting-options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                            <button type="button" class="btn-option" id="btnSize300" onclick="setDrawingSize(300)" style="padding: 10px; border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer; user-select: none;">Small (300 × 300 mm)</button>
-                            <button type="button" class="btn-option" id="btnSize450" onclick="setDrawingSize(450)" style="padding: 10px; border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer; user-select: none;">Medium (450 × 450 mm)</button>
-                            <button type="button" class="btn-option" id="btnSize525" onclick="setDrawingSize(525)" style="padding: 10px; border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer; user-select: none;">Large (525 × 525 mm)</button>
-                            <button type="button" class="btn-option active" id="btnSize610" onclick="setDrawingSize(610)" style="padding: 10px; border: 1px solid #2563EB; background: #EFF6FF; color: #1D4ED8; border-radius: 6px; font-weight: 700; font-size: 0.82rem; cursor: pointer; user-select: none;">Full (610 × 610 mm)</button>
+                    <div class="setting-group">
+                        <div class="setting-options-grid">
+                            <button type="button" class="btn-option" id="btnSize300" onclick="setDrawingSize(300)">Small (300 × 300 mm)</button>
+                            <button type="button" class="btn-option" id="btnSize450" onclick="setDrawingSize(450)">Medium (450 × 450 mm)</button>
+                            <button type="button" class="btn-option" id="btnSize525" onclick="setDrawingSize(525)">Large (525 × 525 mm)</button>
+                            <button type="button" class="btn-option active" id="btnSize610" onclick="setDrawingSize(610)">Full (610 × 610 mm)</button>
                         </div>
                     </div>
 
-                    <div class="card-header" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #E2E8F0;">
-                        <h2>Line Width</h2>
+                    <div class="card-header divider-top">
+                        <h2>Nozzle Line Width</h2>
                     </div>
-                    <div class="setting-group" style="margin-top: 10px;">
-                        <div class="setting-options-grid grid-3" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-                            <button type="button" class="btn-option" id="btnWidth2" onclick="setLineWidth(2)" style="padding: 10px; border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: pointer; user-select: none;">2 mm</button>
-                            <button type="button" class="btn-option active" id="btnWidth3" onclick="setLineWidth(3)" style="padding: 10px; border: 1px solid #2563EB; background: #EFF6FF; color: #1D4ED8; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: pointer; user-select: none;">3 mm (Default)</button>
-                            <button type="button" class="btn-option" id="btnWidth4" onclick="setLineWidth(4)" style="padding: 10px; border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: pointer; user-select: none;">4 mm</button>
+                    <div class="setting-group">
+                        <div class="setting-options-grid grid-3">
+                            <button type="button" class="btn-option" id="btnWidth2" onclick="setLineWidth(2)">2 mm</button>
+                            <button type="button" class="btn-option active" id="btnWidth3" onclick="setLineWidth(3)">3 mm (Default)</button>
+                            <button type="button" class="btn-option" id="btnWidth4" onclick="setLineWidth(4)">4 mm</button>
                         </div>
                     </div>
 
-                    <div id="txtActiveConfigBadge" style="margin-top: 12px; font-size: 0.78rem; font-weight: 700; color: #2563EB; background: #EFF6FF; padding: 6px 12px; border-radius: 6px; border: 1px solid #BFDBFE; text-align: center;">
+                    <div id="txtActiveConfigBadge" class="active-config-badge">
                         Active Config: Size 610 × 610 mm | Width 3 mm
-                    </div>
-                </section>
-
-                <!-- 3. Drawing Statistics Card -->
-                <section class="card statistics-card" style="margin-top: 16px;">
-                    <div class="card-header">
-                        <h2>Drawing Statistics & Telemetry</h2>
-                    </div>
-
-                    <div class="info-metrics-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
-                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px;">
-                            <span class="metric-label" style="font-size: 0.7rem; font-weight: 700; color: #64748B; display: block;">ESTIMATED DRAWING TIME</span>
-                            <span class="metric-value" id="valEstTime" style="font-size: 1.1rem; font-weight: 800; color: #0F172A;">00:00</span>
-                        </div>
-                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px;">
-                            <span class="metric-label" style="font-size: 0.7rem; font-weight: 700; color: #64748B; display: block;">REMAINING TIME</span>
-                            <span class="metric-value" id="valRemTime" style="font-size: 1.1rem; font-weight: 800; color: #0F172A;">00:00</span>
-                        </div>
-                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px;">
-                            <span class="metric-label" style="font-size: 0.7rem; font-weight: 700; color: #64748B; display: block;">DRAWING DISTANCE</span>
-                            <span class="metric-value" id="valDrawDist" style="font-size: 1.1rem; font-weight: 800; color: #0F172A;">0.0 m</span>
-                        </div>
-                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px;">
-                            <span class="metric-label" style="font-size: 0.7rem; font-weight: 700; color: #64748B; display: block;">TRAVEL DISTANCE</span>
-                            <span class="metric-value" id="valTravelDist" style="font-size: 1.1rem; font-weight: 800; color: #0F172A;">0.0 m</span>
-                        </div>
-                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px;">
-                            <span class="metric-label" style="font-size: 0.7rem; font-weight: 700; color: #64748B; display: block;">TOTAL DISTANCE</span>
-                            <span class="metric-value" id="valTotalDist" style="font-size: 1.1rem; font-weight: 800; color: #0F172A;">0.0 m</span>
-                        </div>
-                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px;">
-                            <span class="metric-label" style="font-size: 0.7rem; font-weight: 700; color: #64748B; display: block;">ESTIMATED POWDER USAGE</span>
-                            <span class="metric-value" id="valPowderUsage" style="font-size: 1.1rem; font-weight: 800; color: #0F172A;">0 g</span>
-                        </div>
-                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px;">
-                            <span class="metric-label" style="font-size: 0.7rem; font-weight: 700; color: #64748B; display: block;">PROGRESS</span>
-                            <span class="metric-value" id="valStatProgress" style="font-size: 1.1rem; font-weight: 800; color: #2563EB;">0 %</span>
-                        </div>
-                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px;">
-                            <span class="metric-label" style="font-size: 0.7rem; font-weight: 700; color: #64748B; display: block;">NUMBER OF PATHS</span>
-                            <span class="metric-value" id="valPathCount" style="font-size: 1.1rem; font-weight: 800; color: #0F172A;">0</span>
-                        </div>
-                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px;">
-                            <span class="metric-label" style="font-size: 0.7rem; font-weight: 700; color: #64748B; display: block;">NUMBER OF TURNS</span>
-                            <span class="metric-value" id="valTurnCount" style="font-size: 1.1rem; font-weight: 800; color: #0F172A;">0</span>
-                        </div>
-                        <div class="metric-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px;">
-                            <span class="metric-label" style="font-size: 0.7rem; font-weight: 700; color: #64748B; display: block;">BATTERY LEVEL</span>
-                            <span class="metric-value" id="valBatteryPct" style="font-size: 1.1rem; font-weight: 800; color: #10B981;">95% (12.2V)</span>
-                        </div>
-                    </div>
-
-                    <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 6px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.82rem; font-weight: 600; color: #475569;">Robot Position (X, Y):</span>
-                            <span id="valPose" style="font-size: 0.85rem; font-weight: 700; color: #0F172A;">0.0, 0.0 mm</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.82rem; font-weight: 600; color: #475569;">Heading (IMU Orientation):</span>
-                            <span id="valHeading" style="font-size: 0.85rem; font-weight: 700; color: #0F172A;">0.0°</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.82rem; font-weight: 600; color: #475569;">Powder Dispenser:</span>
-                            <span class="status-badge badge-off" id="valPowder" style="padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;">OFF</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                            <span style="font-size: 0.85rem; font-weight: 600; color: #475569;">Robot State:</span>
-                            <span class="status-badge badge-idle" id="valState" style="padding: 4px 10px; background: #EFF6FF; color: #1D4ED8; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">IDLE</span>
-                        </div>
                     </div>
                 </section>
 
             </div>
         </div>
+
+        <!-- BOTTOM WORKSTATION BAR: Progress + Compact Statistics + Robot Controls -->
+        <div class="bottom-workstation-bar">
+            
+            <!-- 1. Drawing Progress Bar -->
+            <section class="card progress-card">
+                <div class="card-header">
+                    <h2>Execution Progress</h2>
+                    <span id="txtProgress" class="progress-pct-text">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div id="barProgress" class="progress-fill"></div>
+                </div>
+            </section>
+
+            <!-- 2. Compact Statistics Grid Section -->
+            <section class="card statistics-card">
+                <div class="card-header">
+                    <h2>Drawing Statistics & Path Metrics</h2>
+                </div>
+
+                <div class="info-metrics-grid">
+                    <div class="metric-box">
+                        <span class="metric-label">DRAWING TIME</span>
+                        <span class="metric-value" id="valEstTime">00:00</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">REMAINING TIME</span>
+                        <span class="metric-value" id="valRemTime">00:00</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">DRAWING DISTANCE</span>
+                        <span class="metric-value" id="valDrawDist">0.0 m</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">TRAVEL DISTANCE</span>
+                        <span class="metric-value" id="valTravelDist">0.0 m</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">TOTAL DISTANCE</span>
+                        <span class="metric-value" id="valTotalDist">0.0 m</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">POWDER USAGE</span>
+                        <span class="metric-value" id="valPowderUsage">0 g</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">PROGRESS</span>
+                        <span class="metric-value red-highlight" id="valStatProgress">0 %</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">NUMBER OF PATHS</span>
+                        <span class="metric-value" id="valPathCount">0</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">NUMBER OF TURNS</span>
+                        <span class="metric-value" id="valTurnCount">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Robot Control Action Buttons Section -->
+            <section class="card robot-controls-card" id="sectionRobotControls">
+                <div class="card-header">
+                    <h2>Robot Motion Controls</h2>
+                </div>
+
+                <div class="controls-action-bar">
+                    <button type="button" id="btnStartDrawing" class="btn btn-primary btn-cta">▶ START DRAWING</button>
+                    <button type="button" id="btnPause" class="btn btn-warning">⏸ PAUSE</button>
+                    <button type="button" id="btnResume" class="btn btn-resume">▶ RESUME</button>
+                    <button type="button" id="btnStop" class="btn btn-stop">■ STOP</button>
+                    <button type="button" id="btnReset" class="btn btn-reset">🔄 RESET</button>
+                    <button type="button" id="btnEmergencyStop" class="btn btn-danger btn-estop">🛑 EMERGENCY STOP</button>
+                </div>
+            </section>
+
+        </div>
     </main>
 
     <!-- ESP32 Robot Discovery Modal -->
-    <div id="modalRobotDiscovery" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 1000; align-items: center; justify-content: center;">
-        <div class="modal-content" style="background: #FFFFFF; border-radius: 12px; width: 440px; max-width: 90%; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px;">
-                <h3 style="font-size: 1.1rem; font-weight: 800; color: #0F172A; margin: 0;">ESP32 ROBOTS DISCOVERY</h3>
-                <button type="button" onclick="closeRobotDiscoveryModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748B;">✕</button>
+    <div id="modalRobotDiscovery" class="modal-backdrop" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>ESP32 ROBOT DISCOVERY</h3>
+                <button type="button" onclick="closeRobotDiscoveryModal()" class="btn-close">✕</button>
             </div>
-            <div style="margin-top: 14px; font-size: 0.85rem; color: #475569;">
-                Backend WebSocket: <span style="font-weight: 700; color: #10B981;">● Connected</span>
+            <div class="modal-status">
+                Backend WebSocket: <span class="green-text">● Connected</span>
             </div>
-            <div id="discoveryRobotList" style="margin-top: 16px; min-height: 80px;">
+            <div id="discoveryRobotList" class="modal-list">
                 <!-- Dynamically populated via AJAX call to /api/robots -->
             </div>
-            <div style="margin-top: 20px; text-align: right;">
-                <button type="button" class="btn btn-secondary" onclick="closeRobotDiscoveryModal()" style="padding: 8px 16px; font-size: 0.85rem;">Close</button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeRobotDiscoveryModal()">Close</button>
             </div>
         </div>
     </div>
 
     <!-- Footer -->
-    <footer class="app-footer" style="text-align: center; padding: 24px; color: #64748B; font-size: 0.82rem; margin-top: 40px; border-top: 1px solid #E2E8F0;">
-        <div style="font-weight: 700; color: #0F172A;">IoT BASED AUTONOMOUS RANGOLI DRAWING ROBOT</div>
-        <div>PSCMR College of Engineering and Technology &bull; Department of CSE (IoT) &bull; TEAM NO. 12</div>
+    <footer class="app-footer">
+        <div class="footer-title">IoT BASED AUTONOMOUS RANGOLI DRAWING ROBOT</div>
+        <div>PSCMR College of Engineering & Technology &bull; Department of CSE (IoT) &bull; TEAM NO. 12</div>
     </footer>
 
-    <!-- Frontend Application Logic Script (With Cache-Buster v=8.0) -->
-    <script src="/static/script.js?v=8.0"></script>
+    <!-- Frontend Application Logic Script (With Cache-Buster v=9.0) -->
+    <script src="/static/script.js?v=9.0"></script>
 </body>
 </html>

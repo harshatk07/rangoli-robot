@@ -688,6 +688,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Reset Button Interactivity
+    const btnReset = document.getElementById('btnReset');
+    if (btnReset) {
+        btnReset.addEventListener('click', () => {
+            resetSimulation();
+        });
+    }
+
     // Emergency Stop Button Interactivity
     if (btnEmergencyStop) {
         btnEmergencyStop.addEventListener('click', async () => {
