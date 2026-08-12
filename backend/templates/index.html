@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- Master Stylesheet (Cache-Buster v=17.0) -->
-    <link rel="stylesheet" href="/static/style.css?v=17.0">
+    <!-- Master Stylesheet (Cache-Buster v=18.0) -->
+    <link rel="stylesheet" href="/static/style.css?v=18.0">
 </head>
 <body class="light-theme-body">
 
@@ -90,14 +90,19 @@
                         <div class="canvas-viewport" id="canvasContainer">
                             <canvas id="simCanvas" width="600" height="600"></canvas>
 
-                            <!-- SVG Robot Marker Overlay -->
-                            <svg id="robotSvgVisual" class="robot-vector-marker" width="44" height="48" viewBox="0 0 44 48" style="position: absolute; top: 0px; left: 0px; z-index: 10; pointer-events: none;">
-                                <g transform="translate(22, 24)">
-                                    <rect x="-16" y="-18" width="32" height="36" rx="6" fill="#0F172A" stroke="#2563EB" stroke-width="2"/>
-                                    <rect x="-12" y="-14" width="24" height="28" rx="4" fill="#1E293B"/>
-                                    <circle id="robotStatusLed" cx="0" cy="-6" r="3" fill="#10B981"/>
-                                    <polygon points="0,-20 -5,-14 5,-14" fill="#2563EB"/>
-                                    <circle id="robotDispenserNozzle" cx="0" cy="18" r="4" fill="#64748B"/>
+                            <!-- SVG Circular Robot Marker Overlay -->
+                            <svg id="robotSvgVisual" class="robot-vector-marker" width="44" height="44" viewBox="0 0 44 44" style="position: absolute; top: 0px; left: 0px; z-index: 10; pointer-events: none;">
+                                <g transform="translate(22, 22)">
+                                    <!-- Circular Outer Chassis -->
+                                    <circle cx="0" cy="0" r="18" fill="#0F172A" stroke="#2563EB" stroke-width="2.5"/>
+                                    <!-- Circular Inner Core -->
+                                    <circle cx="0" cy="0" r="12" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+                                    <!-- Directional Pointer Triangle -->
+                                    <polygon points="0,-20 -6,-13 6,-13" fill="#2563EB"/>
+                                    <!-- Robot Center Status LED -->
+                                    <circle id="robotStatusLed" cx="0" cy="0" r="4.5" fill="#10B981"/>
+                                    <!-- Powder Dispenser Center Nozzle -->
+                                    <circle id="robotDispenserNozzle" cx="0" cy="0" r="2.5" fill="#FFFFFF"/>
                                 </g>
                             </svg>
                         </div>
@@ -333,7 +338,7 @@
         <div>PSCMR College of Engineering & Technology &bull; Department of CSE (IoT) &bull; TEAM NO. 12</div>
     </footer>
 
-    <!-- Frontend Application Logic Script (With Cache-Buster v=17.0) -->
-    <script src="/static/script.js?v=17.0"></script>
+    <!-- Frontend Application Logic Script (With Cache-Buster v=18.0) -->
+    <script src="/static/script.js?v=18.0"></script>
 </body>
 </html>
