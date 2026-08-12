@@ -147,6 +147,30 @@ def correct_perspective_if_needed(img: np.ndarray, binary: np.ndarray) -> tuple:
     return img, binary, False
 
 
+def skeletonize_binary_image(binary_img: np.ndarray) -> np.ndarray:
+    """
+    Applies morphological thinning (skeletonization) to convert thick stroke outlines
+    into 1-pixel thin centerline vector paths. Prevents double-outline loops.
+    """
+    img = binary_img.copy()
+    skel = np.zeros(img.shape, dtype=np.uint8)
+    element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
+
+    while True:
+        eroded = cv2.erode(img, element)
+        temp = cv2.dilate(eroded, element)
+        temp = cv2.subtract(img, temp)
+        skel = cv2.bitwise_or(skel, temp)
+        img = eroded.copy()
+
+        if cv2.countNonZero(img) == 0:
+            break
+
+    kernel_conn = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+    skel_connected = cv2.dilate(skel, kernel_conn)
+    return skel_connected
+
+
 def auto_crop_and_center(img: np.ndarray, binary: np.ndarray, target_size=(600, 600), pad_pct: float = 0.05) -> tuple:
     """
     Finds non-empty Rangoli bounding box, crops empty outer margins,
@@ -340,15 +364,16 @@ def preprocess_rangoli_image(image_path_or_bytes, target_size=(600, 600), min_ar
     final_img, final_bin, cropped = auto_crop_and_center(img_corr, bin_corr, target_size=target_size)
     diagnostics['auto_cropped'] = cropped
 
-    # 5. Morphological Closing & Opening
+    # 5. Morphological Closing & Thinning (Skeletonization)
     kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     closing = cv2.morphologyEx(final_bin, cv2.MORPH_CLOSE, kernel_close)
 
-    kernel_open = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    morphology_result = cv2.morphologyEx(closing, cv2.MORPH_OPEN, kernel_open)
+    # Skeletonization converts thick outlines into single 1-pixel centerline paths
+    skeleton = skeletonize_binary_image(closing)
+    morphology_result = skeleton
 
-    # 6. FindContours (RETR_TREE, CHAIN_APPROX_NONE)
-    contours, hierarchy = cv2.findContours(morphology_result, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    # 6. FindContours (RETR_LIST, CHAIN_APPROX_NONE for centerline paths)
+    contours, hierarchy = cv2.findContours(morphology_result, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
     diagnostics['total_contours_found'] = len(contours)
 
     # 7. Min Area Filtering

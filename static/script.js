@@ -521,11 +521,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Render Light Grid Background
+    function drawCanvasLightGrid() {
+        if (!ctx) return;
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, 600, 600);
+
+        ctx.strokeStyle = '#F1F5F9';
+        ctx.lineWidth = 1.0;
+
+        for (let x = 0; x <= 600; x += 50) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, 600);
+            ctx.stroke();
+        }
+        for (let y = 0; y <= 600; y += 50) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(600, y);
+            ctx.stroke();
+        }
+
+        ctx.strokeStyle = '#CBD5E1';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(0, 0, 600, 600);
+    }
+
     // Render Canvas Viewport & Exact Robot Placement via physicalToCanvas
     function renderViewport() {
         if (!ctx) return;
 
-        ctx.clearRect(0, 0, 600, 600);
+        drawCanvasLightGrid();
         drawPlannedPathLayer();
 
         const canvasRobotPt = physicalToCanvas(robotX, robotY);

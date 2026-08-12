@@ -99,9 +99,9 @@ async function refreshDiscoveryRobotList() {
 
         if (robots.length === 0) {
             listContainer.innerHTML = `
-                <div style="background: #0D1117; border: 1px dashed #232E42; border-radius: 8px; padding: 20px; text-align: center; color: #94A3B8; font-size: 0.88rem;">
+                <div style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; padding: 20px; text-align: center; color: #64748B; font-size: 0.88rem;">
                     No ESP32 robots currently connected.<br>
-                    <span style="font-size: 0.78rem; color: #64748B;">Connect physical ESP32 to /robot/ws WebSocket endpoint.</span>
+                    <span style="font-size: 0.78rem; color: #94A3B8;">Connect physical ESP32 to /robot/ws WebSocket endpoint.</span>
                 </div>
             `;
         } else {
@@ -109,19 +109,19 @@ async function refreshDiscoveryRobotList() {
             robots.forEach(r => {
                 const isSel = r.robot_id === selectedRobotId;
                 html += `
-                    <div style="background: #0D1117; border: 1px solid ${isSel ? '#FF2E4D' : '#232E42'}; border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="background: #F8FAFC; border: 1px solid ${isSel ? '#2563EB' : '#E2E8F0'}; border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <div style="font-weight: 800; color: #F8FAFC; font-size: 0.95rem;">
+                            <div style="font-weight: 800; color: #0F172A; font-size: 0.95rem;">
                                 ${r.robot_id} <span style="color: #10B981; font-size: 0.8rem; font-weight: 700; margin-left: 6px;">● ONLINE</span>
                             </div>
-                            <div style="font-size: 0.78rem; color: #94A3B8; margin-top: 2px;">
+                            <div style="font-size: 0.78rem; color: #64748B; margin-top: 2px;">
                                 IP: ${r.ip || '192.168.4.1'} | Battery: ${r.battery !== undefined ? r.battery + '%' : '—'} (${r.battery_voltage !== undefined ? r.battery_voltage + 'V' : '—'})
                             </div>
-                            <div style="font-size: 0.78rem; color: #94A3B8; margin-top: 1px;">
+                            <div style="font-size: 0.78rem; color: #64748B; margin-top: 1px;">
                                 State: ${r.state || 'IDLE'} | Last heartbeat: ${r.last_seen_sec || 0.8}s ago
                             </div>
                         </div>
-                        <button type="button" class="btn btn-primary" onclick="selectRobotTarget('${r.robot_id}')" style="padding: 6px 12px; font-size: 0.8rem; background: ${isSel ? '#10B981' : '#FF2E4D'};">
+                        <button type="button" class="btn btn-primary" onclick="selectRobotTarget('${r.robot_id}')" style="padding: 6px 12px; font-size: 0.8rem; background: ${isSel ? '#10B981' : '#2563EB'};">
                             ${isSel ? '✓ SELECTED' : 'SELECT ROBOT'}
                         </button>
                     </div>
@@ -163,15 +163,21 @@ window.setDrawingSize = function(size) {
         if (btn) {
             if (val === s) {
                 btn.classList.add('active');
+                btn.style.border = '1px solid #2563EB';
+                btn.style.background = '#EFF6FF';
+                btn.style.color = '#1D4ED8';
             } else {
                 btn.classList.remove('active');
+                btn.style.border = '1px solid #CBD5E1';
+                btn.style.background = '#F8FAFC';
+                btn.style.color = '#0F172A';
             }
         }
     });
 
     const gridBadge = document.querySelector('.grid-badge');
     if (gridBadge) {
-        gridBadge.textContent = `${s} × ${s} mm Workstation`;
+        gridBadge.textContent = `Workspace: 610 × 610 mm (Drawing Area: ${s} × ${s} mm)`;
     }
 
     window.updateActiveConfigBadge();
@@ -188,8 +194,14 @@ window.setLineWidth = function(width) {
         if (btn) {
             if (val === w) {
                 btn.classList.add('active');
+                btn.style.border = '1px solid #2563EB';
+                btn.style.background = '#EFF6FF';
+                btn.style.color = '#1D4ED8';
             } else {
                 btn.classList.remove('active');
+                btn.style.border = '1px solid #CBD5E1';
+                btn.style.background = '#F8FAFC';
+                btn.style.color = '#0F172A';
             }
         }
     });
@@ -206,7 +218,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const valState = document.getElementById('valState');
     const valPose = document.getElementById('valPose');
     const valHeading = document.getElementById('valHeading');
-    const valSpeed = document.getElementById('valSpeed');
     const valPowder = document.getElementById('valPowder');
     const valBatteryPct = document.getElementById('valBatteryPct');
     const txtProgress = document.getElementById('txtProgress');
@@ -219,7 +230,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnPause = document.getElementById('btnPause');
     const btnResume = document.getElementById('btnResume');
     const btnStop = document.getElementById('btnStop');
-    const btnReset = document.getElementById('btnReset');
     const btnEmergencyStop = document.getElementById('btnEmergencyStop');
 
     // Upload & Form Controls
@@ -351,19 +361,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         dropzone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            dropzone.style.borderColor = '#FF2E4D';
-            dropzone.style.background = '#161C26';
+            dropzone.style.borderColor = '#2563EB';
+            dropzone.style.background = '#EFF6FF';
         });
 
         dropzone.addEventListener('dragleave', () => {
-            dropzone.style.borderColor = '#232E42';
-            dropzone.style.background = '#0D1117';
+            dropzone.style.borderColor = '#CBD5E1';
+            dropzone.style.background = '#F8FAFC';
         });
 
         dropzone.addEventListener('drop', (e) => {
             e.preventDefault();
-            dropzone.style.borderColor = '#232E42';
-            dropzone.style.background = '#0D1117';
+            dropzone.style.borderColor = '#CBD5E1';
+            dropzone.style.background = '#F8FAFC';
 
             if (e.dataTransfer.files.length > 0) {
                 imageInput.files = e.dataTransfer.files;
@@ -416,18 +426,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawPlannedPathLayer() {
         if (!ctx || !executionSegments || executionSegments.length === 0) return;
 
-        // 1. Render Path Preview Layer (Cyber Red for DRAW, Dashed Slate for TRAVEL)
+        // 1. Render Path Preview Layer (Solid Blue for DRAW, Dashed Gray for TRAVEL)
         executionSegments.forEach(seg => {
             const pts = seg.pts;
             if (pts.length < 2) return;
 
             ctx.beginPath();
             if (seg.type === 'DRAW' && seg.dispense) {
-                ctx.strokeStyle = '#FF2E4D'; // Cyber Red = Drawing path preview
+                ctx.strokeStyle = '#2563EB'; // Solid Blue = Drawing path preview
                 ctx.lineWidth = 2.0;
                 ctx.setLineDash([]);
             } else {
-                ctx.strokeStyle = '#64748B'; // Dashed Slate = Travel path preview
+                ctx.strokeStyle = '#94A3B8'; // Dashed Gray = Travel path preview
                 ctx.lineWidth = 1.2;
                 ctx.setLineDash([4, 4]);
             }
@@ -443,9 +453,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ctx.setLineDash([]);
 
-        // 2. Render Executed Completed Drawing Layer (Solid Neon Green #10B981) Behind Robot
+        // 2. Render Executed Completed Drawing Layer (Solid Emerald Green #10B981) Behind Robot
         if (segIdx > 0 || ptIdx > 0 || lerpProgress > 0 || robotState === 'COMPLETED') {
-            ctx.strokeStyle = '#10B981'; // Neon Green = Completed Rangoli drawing
+            ctx.strokeStyle = '#10B981'; // Emerald Green = Completed Rangoli drawing
             ctx.lineWidth = Math.max(2.5, window.drawingConfig.lineWidth);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
@@ -511,11 +521,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Render Light Grid Background
+    function drawCanvasLightGrid() {
+        if (!ctx) return;
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, 600, 600);
+
+        ctx.strokeStyle = '#F1F5F9';
+        ctx.lineWidth = 1.0;
+
+        for (let x = 0; x <= 600; x += 50) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, 600);
+            ctx.stroke();
+        }
+        for (let y = 0; y <= 600; y += 50) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(600, y);
+            ctx.stroke();
+        }
+
+        ctx.strokeStyle = '#CBD5E1';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(0, 0, 600, 600);
+    }
+
     // Render Canvas Viewport & Exact Robot Placement via physicalToCanvas
     function renderViewport() {
         if (!ctx) return;
 
-        ctx.clearRect(0, 0, 600, 600);
+        drawCanvasLightGrid();
         drawPlannedPathLayer();
 
         const canvasRobotPt = physicalToCanvas(robotX, robotY);
@@ -548,27 +586,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentRobotMode === 'REAL') {
             const isRobotConnected = selectedRobotId && activeOnlineRobots.some(r => r.robot_id === selectedRobotId);
             if (!isRobotConnected) {
-                if (valState) valState.textContent = 'DISCONNECTED';
-                if (valPose) valPose.textContent = '--, -- mm';
-                if (valHeading) valHeading.textContent = '--';
-                if (valSpeed) valSpeed.textContent = '--';
+                if (valState) valState.textContent = 'OFFLINE';
+                if (valPose) valPose.textContent = 'N/A';
+                if (valHeading) valHeading.textContent = 'N/A';
                 if (valPowder) {
                     valPowder.textContent = 'OFF';
                     valPowder.className = 'status-badge badge-off';
                 }
-                if (valBatteryPct) valBatteryPct.textContent = '--';
+                if (valBatteryPct) valBatteryPct.textContent = 'N/A';
             }
         } else {
             // DEMO mode simulated telemetry
             if (valState) valState.textContent = robotState;
-            if (valPose) valPose.textContent = `${robotX.toFixed(1)}, ${robotY.toFixed(1)} mm`;
+            if (valPose) valPose.textContent = `${robotX.toFixed(1)}, ${robotY.toFixed(1)} mm (SIM)`;
             if (valHeading) valHeading.textContent = `${robotTheta.toFixed(1)}°`;
-            if (valSpeed) valSpeed.textContent = isRunning ? (isPowderOn ? '80.0 mm/s' : '150.0 mm/s') : '0.0 mm/s';
             if (valPowder) {
                 valPowder.textContent = isPowderOn ? 'ON' : 'OFF';
                 valPowder.className = isPowderOn ? 'status-badge badge-on' : 'status-badge badge-off';
             }
-            if (valBatteryPct) valBatteryPct.textContent = '95% (12.2V)';
+            if (valBatteryPct) valBatteryPct.textContent = '95% (SIM)';
         }
     }
 
@@ -832,7 +868,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (err) {
             } finally {
                 processBtn.disabled = false;
-                processBtn.textContent = 'PROCESS RANGOLI DESIGN';
+                processBtn.textContent = 'Process Rangoli Image';
             }
         });
     }
@@ -867,16 +903,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (data.telemetry && currentRobotMode === 'REAL') {
                     const tel = data.telemetry;
-                    if (valPose) valPose.textContent = (tel.x !== undefined && tel.x !== null) ? `${tel.x}, ${tel.y} mm` : '--, -- mm';
+                    if (valPose) valPose.textContent = (tel.x !== undefined && tel.x !== null) ? `${tel.x}, ${tel.y} mm` : 'N/A';
                     const valHeading = document.getElementById('valHeading');
-                    if (valHeading) valHeading.textContent = (tel.heading !== undefined && tel.heading !== null) ? `${tel.heading}°` : '--';
+                    if (valHeading) valHeading.textContent = (tel.heading !== undefined && tel.heading !== null) ? `${tel.heading}°` : 'N/A';
                     const valBatteryPct = document.getElementById('valBatteryPct');
-                    if (valBatteryPct) valBatteryPct.textContent = (tel.battery_pct !== undefined && tel.battery_pct !== null) ? `${tel.battery_pct}% (${tel.battery_voltage || ''}V)` : '--';
+                    if (valBatteryPct) valBatteryPct.textContent = (tel.battery_pct !== undefined && tel.battery_pct !== null) ? `${tel.battery_pct}% (${tel.battery_voltage || ''}V)` : 'N/A';
                     if (valPowder) {
                         valPowder.textContent = tel.powder_active ? 'ON' : 'OFF';
                         valPowder.className = tel.powder_active ? 'status-badge badge-on' : 'status-badge badge-off';
                     }
-                    if (valState) valState.textContent = tel.state || 'DISCONNECTED';
+                    if (valState) valState.textContent = tel.state || 'OFFLINE';
                 }
             } catch (err) {}
         };
