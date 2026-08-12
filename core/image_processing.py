@@ -42,7 +42,6 @@ def extract_white_boundary_outline(img_bgr: np.ndarray, gray_img: np.ndarray) ->
     """
     hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
     sat = hsv[:, :, 1]
-    val = hsv[:, :, 2]
 
     max_sat = float(np.max(sat))
     mean_sat = float(np.mean(sat))
@@ -57,35 +56,48 @@ def extract_white_boundary_outline(img_bgr: np.ndarray, gray_img: np.ndarray) ->
     # If image contains colored powders (high saturation present)
     if mean_sat > 25.0 or max_sat > 70.0:
         image_type = "Colored Rangoli (White Boundary Extracted, Colors Ignored)"
-        # Mask for white/light lines: Low Saturation (S <= 50), High Value (V >= 125)
-        lower_white = np.array([0, 0, 125], dtype=np.uint8)
-        upper_white = np.array([180, 50, 255], dtype=np.uint8)
+        lower_white = np.array([0, 0, 115], dtype=np.uint8)
+        upper_white = np.array([180, 55, 255], dtype=np.uint8)
         white_mask = cv2.inRange(hsv, lower_white, upper_white)
 
         blurred = cv2.GaussianBlur(white_mask, (5, 5), 0)
-        _, binary = cv2.threshold(blurred, 100, 255, cv2.THRESH_BINARY)
+        _, binary = cv2.threshold(blurred, 90, 255, cv2.THRESH_BINARY)
     else:
         # Monochromatic / Black & White Rangoli
         std_gray = float(np.std(gray_img))
-        if std_gray > 45.0 and 40.0 < mean_corner < 215.0:
+        blurred = cv2.GaussianBlur(gray_img, (5, 5), 0)
+
+        if mean_corner > 140.0:
+            image_type = "Black Outline on White Background"
+            _, binary = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        elif std_gray > 45.0 and 40.0 < mean_corner < 215.0:
             image_type = "Camera Photograph (Adaptive Gaussian)"
             clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
             equalized = clahe.apply(gray_img)
-            blurred = cv2.GaussianBlur(equalized, (5, 5), 0)
+            blurred_eq = cv2.GaussianBlur(equalized, (5, 5), 0)
             binary = cv2.adaptiveThreshold(
-                blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 19, 5
+                blurred_eq, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 19, 5
             )
         else:
-            blurred = cv2.GaussianBlur(gray_img, (5, 5), 0)
-            _, binary = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+            image_type = "White Outline on Dark Background"
+            _, binary = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-            if mean_corner > 160.0:
-                image_type = "Black Outline on White Background"
-            else:
-                image_type = "White Outline on Dark Background"
-
-    if np.mean(binary) > 127:
+    # Check corners of binary mask: Background corners MUST be 0 (black)!
+    corner_bin = np.concatenate([
+        binary[:20, :20].ravel(),
+        binary[:20, -20:].ravel(),
+        binary[-20:, :20].ravel(),
+        binary[-20:, -20:].ravel()
+    ])
+    if np.mean(corner_bin) > 127:
         binary = cv2.bitwise_not(binary)
+
+    # If binary mask has no non-zero pixels, trigger Canny Edge Detection fallback!
+    if cv2.countNonZero(binary) < 50:
+        image_type += " (Canny Edge Detection Fallback)"
+        edges = cv2.Canny(gray_img, 30, 120)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        binary = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
 
     return binary, image_type
 
@@ -275,16 +287,40 @@ def preprocess_rangoli_image(image_path_or_bytes, target_size=(600, 600), min_ar
         'failed_stage': None
     }
 
-    # 1. Image Loading
+    # 1. Image Loading with PIL Fallback for WebP / PNG Alpha Transparency
+    img = None
     if isinstance(image_path_or_bytes, str):
-        img = cv2.imread(image_path_or_bytes)
+        img = cv2.imread(image_path_or_bytes, cv2.IMREAD_UNCHANGED)
+        if img is None:
+            try:
+                from PIL import Image
+                pil_img = Image.open(image_path_or_bytes).convert('RGB')
+                img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+            except Exception as e_pil:
+                print(f"[PIPELINE WARNING] PIL load failed: {e_pil}")
     else:
         file_bytes = np.frombuffer(image_path_or_bytes, dtype=np.uint8)
-        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        img = cv2.imdecode(file_bytes, cv2.IMREAD_UNCHANGED)
+        if img is None:
+            try:
+                from PIL import Image
+                import io
+                pil_img = Image.open(io.BytesIO(image_path_or_bytes)).convert('RGB')
+                img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+            except Exception as e_pil:
+                print(f"[PIPELINE WARNING] PIL decode failed: {e_pil}")
 
     if img is None:
         diagnostics['failed_stage'] = "Image Loading: Could not read image file or buffer."
         raise ValueError(diagnostics['failed_stage'])
+
+    # Handle 4-channel BGRA images (e.g. transparent PNG / WebP)
+    if img.ndim == 3 and img.shape[2] == 4:
+        alpha = img[:, :, 3]
+        bgr = img[:, :, :3]
+        white_bg = np.ones_like(bgr, dtype=np.uint8) * 255
+        alpha_factor = alpha[:, :, np.newaxis] / 255.0
+        img = (bgr * alpha_factor + white_bg * (1.0 - alpha_factor)).astype(np.uint8)
 
     orig_h, orig_w = img.shape[:2]
     diagnostics['image_size_px'] = [orig_w, orig_h]
@@ -315,19 +351,32 @@ def preprocess_rangoli_image(image_path_or_bytes, target_size=(600, 600), min_ar
     contours, hierarchy = cv2.findContours(morphology_result, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     diagnostics['total_contours_found'] = len(contours)
 
-    if not contours:
-        diagnostics['failed_stage'] = "FindContours: No contours found in thresholded binary image."
-
     # 7. Min Area Filtering
     valid_contours_raw = []
     removed_small = 0
     for cnt in contours:
         area = cv2.contourArea(cnt)
         arc_len = cv2.arcLength(cnt, True)
-        if area >= min_area and arc_len >= 10.0:
+        if area >= min_area or arc_len >= 10.0:
             valid_contours_raw.append(cnt)
         else:
             removed_small += 1
+
+    # Canny Edge Detection Fallback if 0 valid contours were found!
+    if not contours or len(valid_contours_raw) == 0:
+        print("[PIPELINE] Standard thresholding produced 0 contours. Executing Canny edge detection fallback...")
+        edges = cv2.Canny(gray, 30, 120)
+        kernel_canny = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        morphology_result = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel_canny)
+        contours, hierarchy = cv2.findContours(morphology_result, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        diagnostics['total_contours_found'] = len(contours)
+        diagnostics['image_type_detected'] += " (Canny Fallback)"
+
+        valid_contours_raw = []
+        for cnt in contours:
+            arc_len = cv2.arcLength(cnt, True)
+            if arc_len >= 8.0:
+                valid_contours_raw.append(cnt)
 
     # 8. Duplicate Contour Removal
     valid_contours, dups_removed = remove_duplicate_contours(valid_contours_raw)
@@ -335,8 +384,10 @@ def preprocess_rangoli_image(image_path_or_bytes, target_size=(600, 600), min_ar
     diagnostics['duplicate_contours_merged'] = dups_removed
     diagnostics['valid_contours_count'] = len(valid_contours)
 
-    if len(valid_contours) == 0 and diagnostics['failed_stage'] is None:
-        diagnostics['failed_stage'] = f"Min Area & Duplicate Filter: All {len(contours)} contours were removed."
+    if len(valid_contours) > 0:
+        diagnostics['failed_stage'] = None
+    else:
+        diagnostics['failed_stage'] = f"Min Area & Duplicate Filter: All {len(contours)} contours were filtered out."
 
     t_end = time.time()
     diagnostics['processing_time_ms'] = round((t_end - t_start) * 1000.0, 1)
