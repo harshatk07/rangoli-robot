@@ -79,6 +79,7 @@ body.light-theme-body {
     display: flex;
     flex-direction: column;
     gap: 3px;
+    margin-left: 24px;
 }
 
 .project-main-title {
