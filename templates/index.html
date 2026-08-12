@@ -45,13 +45,15 @@
                 </div>
                 <button id="btnDiscoverRobots" class="btn-scan-header btn-sm-header" onclick="openRobotDiscoveryModal()" style="display: none;">🔍 Discover Robots</button>
                 
-                <div class="header-status-pill pill-sm" id="pillWsBackend">
-                    <span class="status-dot-pulse" id="backendStatusDot" style="background-color: #10B981;"></span>
-                    <span id="backendStatusText">Backend: Connected</span>
-                </div>
-                <div class="header-status-pill pill-sm" id="pillRobotStatus">
-                    <span class="status-dot-pulse" id="robotStatusDot" style="background-color: #64748B;"></span>
-                    <span id="robotStatusText">Robot: Disconnected</span>
+                <div class="header-status-column">
+                    <div class="header-status-pill pill-sm" id="pillWsBackend">
+                        <span class="status-dot-pulse" id="backendStatusDot" style="background-color: #10B981;"></span>
+                        <span id="backendStatusText">Backend: Connected</span>
+                    </div>
+                    <div class="header-status-pill pill-sm" id="pillRobotStatus">
+                        <span class="status-dot-pulse" id="robotStatusDot" style="background-color: #64748B;"></span>
+                        <span id="robotStatusText">Robot: Disconnected</span>
+                    </div>
                 </div>
             </div>
         </div>

@@ -204,15 +204,22 @@ body.light-theme-body {
     user-select: none;
 }
 
+.header-status-column {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: flex-end;
+}
+
 .header-status-pill.pill-sm {
     display: flex;
     align-items: center;
     gap: 6px;
     background: #F8FAFC;
     border: 1px solid #E2E8F0;
-    padding: 5px 12px;
-    border-radius: 16px;
-    font-size: 0.74rem;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 0.72rem;
     font-weight: 700;
     color: #334155;
 }

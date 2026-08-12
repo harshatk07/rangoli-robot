@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- Master Stylesheet (Cache-Buster v=16.0) -->
-    <link rel="stylesheet" href="/static/style.css?v=16.0">
+    <!-- Master Stylesheet (Cache-Buster v=17.0) -->
+    <link rel="stylesheet" href="/static/style.css?v=17.0">
 </head>
 <body class="light-theme-body">
 
@@ -37,7 +37,7 @@
                 </div>
             </div>
 
-            <!-- Right Side: Compact Controls & Status Badges -->
+            <!-- Right Side: Compact Controls & Status Badges (2-Line Stacked Column) -->
             <div class="header-right-actions">
                 <div class="mode-switch-group sm-switch">
                     <button id="btnModeDemo" class="btn-mode btn-mode-sm active" onclick="setRobotMode('DEMO')">🟡 DEMO ROBOT</button>
@@ -45,13 +45,15 @@
                 </div>
                 <button id="btnDiscoverRobots" class="btn-scan-header btn-sm-header" onclick="openRobotDiscoveryModal()" style="display: none;">🔍 Discover Robots</button>
                 
-                <div class="header-status-pill pill-sm" id="pillWsBackend">
-                    <span class="status-dot-pulse" id="backendStatusDot" style="background-color: #10B981;"></span>
-                    <span id="backendStatusText">Backend: Connected</span>
-                </div>
-                <div class="header-status-pill pill-sm" id="pillRobotStatus">
-                    <span class="status-dot-pulse" id="robotStatusDot" style="background-color: #64748B;"></span>
-                    <span id="robotStatusText">Robot: Disconnected</span>
+                <div class="header-status-column">
+                    <div class="header-status-pill pill-sm" id="pillWsBackend">
+                        <span class="status-dot-pulse" id="backendStatusDot" style="background-color: #10B981;"></span>
+                        <span id="backendStatusText">Backend: Connected</span>
+                    </div>
+                    <div class="header-status-pill pill-sm" id="pillRobotStatus">
+                        <span class="status-dot-pulse" id="robotStatusDot" style="background-color: #64748B;"></span>
+                        <span id="robotStatusText">Robot: Disconnected</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -331,7 +333,7 @@
         <div>PSCMR College of Engineering & Technology &bull; Department of CSE (IoT) &bull; TEAM NO. 12</div>
     </footer>
 
-    <!-- Frontend Application Logic Script (With Cache-Buster v=16.0) -->
-    <script src="/static/script.js?v=16.0"></script>
+    <!-- Frontend Application Logic Script (With Cache-Buster v=17.0) -->
+    <script src="/static/script.js?v=17.0"></script>
 </body>
 </html>
